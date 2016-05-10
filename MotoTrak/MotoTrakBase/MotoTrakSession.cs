@@ -152,8 +152,10 @@ namespace MotoTrakBase
             }
 
             //At this point, we need to read the MotoTrak configuration file to determine how to load in stages
-
+            MotoTrakConfiguration config = MotoTrakConfiguration.GetInstance();
+            config.ReadConfigurationFile();
                 
+
         }
 
         #endregion

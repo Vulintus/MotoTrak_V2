@@ -45,6 +45,7 @@
     <Compile Include="MotorDeviceType.cs" />
     <Compile Include="MotorTrial.cs" />
     <Compile Include="MotorTrialResult.cs" />
+    <Compile Include="MotoTrakConfiguration.cs" />
     <Compile Include="MotoTrakException.cs" />
     <Compile Include="MotoTrakSession.cs" />
     <Compile Include="NotifyPropertyChangedObject.cs" />
