@@ -15,6 +15,7 @@ namespace MotoTrakBase
 
         private char[] seps = new char[4] { ' ', '\t', '\n', '\r' };
         private SerialPort _serialConnection = null;
+        private const int MinimumArduinoSketchVersion = 30;
 
         #endregion
 
@@ -281,7 +282,7 @@ namespace MotoTrakBase
         /// </summary>
         /// <param name="deviceIndex">The device index we want to check.</param>
         /// <returns></returns>
-        public int GetDevice()
+        public int GetBoardDeviceValue()
         {
             return this.SimpleReturn("DA", 0);
         }
@@ -446,6 +447,48 @@ namespace MotoTrakBase
             {
                 SerialConnection.ReadExisting();
             }
+        }
+
+        #endregion
+
+        #region V2 Methods
+
+        /// <summary>
+        /// Queries the MotoTrak controller board version and returns a true/false value indicating whether the board is supported
+        /// by this version of MotoTrak or not.
+        /// </summary>
+        /// <returns>Boolean value indicating whether the connected MotoTrak board is supported.</returns>
+        public bool DoesSketchMeetMinimumRequirements ()
+        {
+            bool valid = false;
+
+            if (IsSerialConnectionValid)
+            {
+                int version = this.CheckVersion();
+                valid = (version >= MinimumArduinoSketchVersion);
+            }
+
+            return valid;
+        }
+
+        /// <summary>
+        /// Queries the MotoTrak controller for the device that is connected to it.  This version of MotoTrak supports only one device
+        /// being connected to a controller.
+        /// </summary>
+        /// <returns>A MotoDevice object that reperesents the device connected to the MotoTrak controller.</returns>
+        public MotorDevice GetMotorDevice ()
+        {
+            //Grab the device value form the MotoTrak controller
+            int device_value = this.GetBoardDeviceValue();
+
+            //Convert the value to a device type
+            MotorDeviceType device_type = MotorDevice.ConvertArdyDeviceValueToDeviceType(device_value);
+
+            //Create a new device object for the device
+            MotorDevice device = new MotorDevice(device_type, 1);
+
+            //Return the device
+            return device;
         }
 
         #endregion
