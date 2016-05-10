@@ -1,1 +1,2 @@
 c:\users\dtp110020\documents\visual studio 2015\Projects\MotoTrak\MotoTrak\bin\Debug\MotoTrak.exe.config
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MotoTrak.exe.config
