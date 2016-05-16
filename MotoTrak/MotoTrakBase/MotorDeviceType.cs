@@ -12,9 +12,6 @@ namespace MotoTrakBase
     {
         Unknown,
         Knob,
-        Wheel,
-        Lever,
-        LeverHD,
         Pull
     }
 }

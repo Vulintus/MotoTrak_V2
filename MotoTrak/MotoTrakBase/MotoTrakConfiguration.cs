@@ -64,6 +64,8 @@ namespace MotoTrakBase
         {
             try
             {
+                bool isConfigVersionSet = false;
+
                 //Open the configuration file using a stream reader.
                 StreamReader reader = new StreamReader(ConfigurationFileName);
 
@@ -93,6 +95,7 @@ namespace MotoTrakBase
                     else if (key.Equals("CONFIGURATION VERSION"))
                     {
                         ConfigurationVersion = Int32.Parse(value);
+                        isConfigVersionSet = true;
                     }
                     else if (key.Equals("STAGE URL"))
                     {
@@ -106,6 +109,11 @@ namespace MotoTrakBase
                     {
                         SecondaryDataPath = value;
                     }
+                }
+
+                if (!isConfigVersionSet)
+                {
+                    ConfigurationVersion = 1;
                 }
             }
             catch (Exception e)

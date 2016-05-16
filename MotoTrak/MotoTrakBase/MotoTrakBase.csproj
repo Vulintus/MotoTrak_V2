@@ -43,6 +43,13 @@
     <Compile Include="MotorBoard.cs" />
     <Compile Include="MotorDevice.cs" />
     <Compile Include="MotorDeviceType.cs" />
+    <Compile Include="MotorStage.cs" />
+    <Compile Include="MotorStageAdaptiveThresholdType.cs" />
+    <Compile Include="MotorStageAdaptiveThresholdTypeConverter.cs" />
+    <Compile Include="MotorStageHitThresholdType.cs" />
+    <Compile Include="MotorStageHitThresholdTypeConverter.cs" />
+    <Compile Include="MotorStageStimulationType.cs" />
+    <Compile Include="MotorStageStimulationTypeConverter.cs" />
     <Compile Include="MotorTrial.cs" />
     <Compile Include="MotorTrialResult.cs" />
     <Compile Include="MotoTrakConfiguration.cs" />
