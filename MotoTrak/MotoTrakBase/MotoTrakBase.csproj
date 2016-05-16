@@ -43,6 +43,7 @@
     <Compile Include="MotorBoard.cs" />
     <Compile Include="MotorDevice.cs" />
     <Compile Include="MotorDeviceType.cs" />
+    <Compile Include="MotorDeviceTypeConverter.cs" />
     <Compile Include="MotorStage.cs" />
     <Compile Include="MotorStageAdaptiveThresholdType.cs" />
     <Compile Include="MotorStageAdaptiveThresholdTypeConverter.cs" />
@@ -57,6 +58,12 @@
     <Compile Include="MotoTrakSession.cs" />
     <Compile Include="NotifyPropertyChangedObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MotoTrakUtilities\MotoTrakUtilities.csproj">
+      <Project>{9fa143ac-97aa-4662-9ca7-1c0887a833b4}</Project>
+      <Name>MotoTrakUtilities</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

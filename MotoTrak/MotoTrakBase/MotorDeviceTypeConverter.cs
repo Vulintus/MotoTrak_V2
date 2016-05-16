@@ -5,18 +5,18 @@ using System.Reflection;
 namespace MotoTrakBase
 {
     /// <summary>
-    /// This static class exists for converting string descriptions of stimulation types to values of an enumerated type and vice versa.
+    /// This class is meant to convert a string description of a motor device into an enumerated type, and vice versa.
     /// </summary>
-    public static class MotorStageStimulationTypeConverter
+    public static class MotorDeviceTypeConverter
     {
         /// <summary>
-        /// Converts a string to a stimulation type.
+        /// Converts a string to a motor device type.
         /// </summary>
-        /// <param name="description">String description of a stimulation type</param>
-        /// <returns>Stimulation type</returns>
-        public static MotorStageStimulationType ConvertToMotorStageStimulationType(string description)
+        /// <param name="description">String description of a motor device</param>
+        /// <returns>Motor device type</returns>
+        public static MotorDeviceType ConvertToMotorDeviceType(string description)
         {
-            var type = typeof(MotorStageStimulationType);
+            var type = typeof(MotorDeviceType);
 
             foreach (var field in type.GetFields())
             {
@@ -25,24 +25,24 @@ namespace MotoTrakBase
                 if (attribute != null)
                 {
                     if (attribute.Description == description)
-                        return (MotorStageStimulationType)field.GetValue(null);
+                        return (MotorDeviceType)field.GetValue(null);
                 }
                 else
                 {
                     if (field.Name == description)
-                        return (MotorStageStimulationType)field.GetValue(null);
+                        return (MotorDeviceType)field.GetValue(null);
                 }
             }
 
-            return MotorStageStimulationType.Off;
+            return MotorDeviceType.Unknown;
         }
 
         /// <summary>
-        /// Converts a stimulation type to a string description.
+        /// Converts a motor device type to a string description.
         /// </summary>
-        /// <param name="thresholdType">Stimulation type</param>
-        /// <returns>String description of the stimulation type.</returns>
-        public static string ConvertToDescription(MotorStageStimulationType thresholdType)
+        /// <param name="thresholdType">Motor device type</param>
+        /// <returns>String description of the motor device type.</returns>
+        public static string ConvertToDescription(MotorDeviceType thresholdType)
         {
             FieldInfo fi = thresholdType.GetType().GetField(thresholdType.ToString());
 
