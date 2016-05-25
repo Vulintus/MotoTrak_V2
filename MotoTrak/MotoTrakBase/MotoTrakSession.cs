@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MotoTrakUtilities;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -330,10 +331,16 @@ namespace MotoTrakBase
 
             //Define some variables that will be needed throughout our endless loop.
             //First, we want to define an array that holds the raw stream of data
-            List<List<int>> raw_stream_data = new List<List<int>>();
+            List<List<int>> stream_data_raw = new List<List<int>>();
 
             //Define a list in which we will keep signal data from the device.
-            List<double> raw_signal_data = new List<double>();
+            List<double> device_signal_transformed = new List<double>();
+
+            //Define a list that will be used as the buffer for the device signal during the trial.
+            List<double> trial_device_signal = new List<double>();
+
+            //Define an integer that will be used to keep track of the index at which a hit occurred, if so.
+            int TrialHitSampleIndex = -1;
 
             //Get the index of the device signal within the data stream
             int device_signal_index = SelectedStage.DataStreamTypes.IndexOf(MotorBoardDataStreamType.DeviceValue);
@@ -348,11 +355,11 @@ namespace MotoTrakBase
             while (!backgroundLoop.CancellationPending)
             {
                 //Read in new datapoints from the Arduino board
-                ReadNewDataFromArduino(raw_stream_data, buffer_size);
+                int number_of_new_data_points = ReadNewDataFromArduino(stream_data_raw, buffer_size);
 
                 //Convert the raw stream data to a form that is useable by the program (transform it by the slope and baseline
                 //according to the device settings.  This happens regardless of what stage has been selected).
-                raw_signal_data = raw_stream_data.Select(x => (Device.Slope * (x[device_signal_index] - Device.Baseline))).ToList();
+                device_signal_transformed = stream_data_raw.Select(x => (Device.Slope * (x[device_signal_index] - Device.Baseline))).ToList();
 
                 //Now we will act upon the signal based upon what run-state we are in, and also based upon the stage selected by the user.
                 switch (SessionState)
@@ -363,18 +370,96 @@ namespace MotoTrakBase
 
                         //Make a "hard" copy of the signal data and assign it to the MonitoredSignal variable, which is what the user sees
                         //on the plot.  The "ToList" function makes a copy of the data, rather than copying a pointer.  This is important!
-                        MonitoredSignal = raw_signal_data.ToList();
+                        MonitoredSignal = device_signal_transformed.ToList();
 
                         break;
                     case SessionRunState.TrialWait:
+
+                        //Run code specific to this stage to check for trial initiation
+                        int trial_initiation_index = SelectedStage.StageImplementation.CheckSignalForTrialInitiation(device_signal_transformed, SelectedStage);
+                        
+                        //Handle the case in which a trial was initiated
+                        if (trial_initiation_index > -1)
+                        {
+                            //Create a new motor trial
+                            trial = new MotorTrial();
+
+                            //Initiate a new trial.
+                            //The following method basically just fills the "trial_device_signal" object with the data that occured up until the device value
+                            //broke the trial initiation threshold.  It also fills the same data into the "trial" object, but in raw form.
+                            HandleTrialInitiation(buffer_size, trial_initiation_index, stream_data_raw, device_signal_transformed, trial, trial_device_signal);
+
+                            //Unmark the previous trial's "hit sample index" if need be
+                            TrialHitSampleIndex = -1;
+
+                            //Change the session state
+                            SessionState = SessionRunState.TrialRun;
+                        }
+
                         break;
                     case SessionRunState.TrialRun:
+
+                        //If we are in this state, it indicates that a new trial has already begun.  We are currently in the midst of running
+                        //that trial.  Therefore, in this state we should take any new data that is coming in, and process that data 
+                        //according to how the selected stage dictates that it should be processed.  If it is deemed a successful trial,
+                        //then we should follow the procedure for a successful trial based on the stage settings (typically a feed, and also
+                        //maybe a VNS stimulus or other output).  After the trial time has expired, we should move on to the next state.
+                        //Trial success does NOT immediately move us to the next state.  ONLY TIME.
+
+                        //First, we must grab any new stream data from the MotoTrak controller board.
+                        var new_data = device_signal_transformed.GetRange(device_signal_transformed.Count - number_of_new_data_points, number_of_new_data_points);
+
+                        //Add the new data to the trial device signal, starting at the end of the current data that we already have.
+                        trial_device_signal.ReplaceRange(new_data, trial.TrialData.Count);
+
+                        //Add the new raw data to the trial object to be saved to disk later.
+                        trial.TrialData.AddRange(stream_data_raw.GetRange(stream_data_raw.Count - number_of_new_data_points, number_of_new_data_points));
+
+                        //Check to see if the animal has succeeded up until this point in the trial, based on this stage's criterion for success.
+                        if (trial.Result == MotorTrialResult.Unknown)
+                        {
+                            //Check to see whether the trial was a success, based on the criterion defined by the stage definition.
+                            var success = SelectedStage.StageImplementation.CheckForTrialSuccess(trial_device_signal, SelectedStage);
+                            
+                            if (success.Item1 == MotorTrialResult.Hit)
+                            {
+                                //Record the results.
+                                trial.Result = success.Item1;
+                                trial.HitTime = DateTime.Now;
+                                TrialHitSampleIndex = success.Item2;
+
+                                //If the trial was successful, take certain actions as described by the stage definition.
+                                var success_actions = SelectedStage.StageImplementation.ReactToTrialSuccess(trial_device_signal, SelectedStage);
+                                TakeAction(success_actions);
+                            }
+                        }
+
+                        //Perform any necessary actions that need to be taken according to the stage parameters that are unrelated to
+                        //actions that are taken given the success of a trial.
+                        var actions = SelectedStage.StageImplementation.PerformActionDuringTrial(trial_device_signal, SelectedStage);
+                        TakeAction(actions);
+
+                        //Check to see if this trial has finished
+                        if (trial.TrialData.Count >= SelectedStage.TotalRecordedSamplesPerTrial)
+                        {
+                            //Change the session state to end this trial.
+                            SessionState = SessionRunState.TrialEnd;
+                        }
+
+                        //Report progress on this trial to the main UI thread
+                        MonitoredSignal = trial_device_signal;
+                        backgroundLoop.ReportProgress(0, null);
+
                         break;
                     case SessionRunState.TrialEnd:
                         break;
                     case SessionRunState.TrialManualFeed:
                         break;
                     case SessionRunState.Pause:
+
+                        //In this state we should discard all data and never update the UI.  Animals will not get any pellets
+                        //for any work performed, and no new trials will be initiated.
+
                         break;
                 }
 
@@ -389,17 +474,80 @@ namespace MotoTrakBase
             //tells anyone who is listening that the background worker is being cancelled.
             e.Cancel = true;
         }
-
-        private void ReadNewDataFromArduino ( List<List<int>> raw_stream_data, int buffer_size )
+        
+        private int ReadNewDataFromArduino ( List<List<int>> raw_stream_data, int buffer_size )
         {
             //Read in new streaming data from the Arduino board
             List<List<int>> new_data_points = ArdyBoard.ReadStream();
+            int number_of_new_data_points = new_data_points.Count;
 
             //Add the new data points to our buffer
             raw_stream_data.AddRange(new_data_points);
 
             //Now reduce the size of raw stream data if the size has exceeded our max buffer size.
             raw_stream_data = raw_stream_data.Skip(Math.Max(0, raw_stream_data.Count - buffer_size)).Take(buffer_size).ToList();
+
+            return number_of_new_data_points;
+        }
+
+        private void HandleTrialInitiation ( int buffer_size, int trial_initiation_index, List<List<int>> stream_data_raw, List<double> device_signal_transformed, 
+            MotorTrial trial, List<double> trial_device_signal )
+        {
+            //From the point where threshold was broken, we want to go back and grab X seconds of data from before the initiation
+            //event, depending on how much data this stage asks for.
+            int point_to_start_keeping_data = trial_initiation_index - SelectedStage.TotalRecordedSamplesBeforeHitWindow;
+            if (point_to_start_keeping_data < 0)
+            {
+                point_to_start_keeping_data = 0;
+            }
+
+            //Now that we know when threshold was broken, transfer all the data that pertains to the actual trial over to the trial variables
+            trial.TrialData = stream_data_raw.GetRange(point_to_start_keeping_data, trial_initiation_index - point_to_start_keeping_data + 1);
+            if (trial.TrialData.Count < SelectedStage.TotalRecordedSamplesBeforeHitWindow)
+            {
+                //If not enough samples were in the buffer to fill out the necessary number of samples needed, we will simply zero-pad the 
+                //beginning of the signal.
+                int number_of_samples_needed = SelectedStage.TotalRecordedSamplesBeforeHitWindow - trial.TrialData.Count;
+                List<List<int>> samples_to_prepend = Enumerable.Repeat<List<int>>(new List<int>() { 0, 0, 0 }, number_of_samples_needed).ToList();
+                samples_to_prepend.AddRange(trial.TrialData);
+                trial.TrialData = samples_to_prepend;
+            }
+
+            //Do the same for the transformed device signal
+            var pre_trial_device_signal = device_signal_transformed.GetRange(point_to_start_keeping_data,
+                trial_initiation_index - point_to_start_keeping_data + 1);
+            if (pre_trial_device_signal.Count < SelectedStage.TotalRecordedSamplesBeforeHitWindow)
+            {
+                //Zero-pad if needed.  Same as above.
+                int number_of_samples_needed = SelectedStage.TotalRecordedSamplesBeforeHitWindow - pre_trial_device_signal.Count;
+                List<double> samples_to_prepend = Enumerable.Repeat<double>(0, number_of_samples_needed).ToList();
+                samples_to_prepend.AddRange(pre_trial_device_signal);
+                pre_trial_device_signal = samples_to_prepend;
+            }
+
+            //Now add the device signal from the X seconds before the hit window to our buffer in which we keep the whole trial device signal
+            trial_device_signal = Enumerable.Repeat<double>(0, buffer_size).ToList();
+            trial_device_signal.ReplaceRange(pre_trial_device_signal, 0);
+        }
+
+        private void TakeAction (List<MotorTrialAction> actions)
+        {
+            //Go through the list of actions to take, and perform each of them.
+            foreach (MotorTrialAction a in actions)
+            {
+                switch (a)
+                {
+                    case MotorTrialAction.TriggerFeeder:
+                        ArdyBoard.TriggerFeeder();
+                        break;
+                    case MotorTrialAction.PlaySound:
+                        //this needs to be implemented
+                        break;
+                    case MotorTrialAction.SendStimulationTrigger:
+                        ArdyBoard.TriggerStim();
+                        break;
+                }
+            }
         }
 
         #endregion

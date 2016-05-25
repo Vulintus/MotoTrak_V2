@@ -23,6 +23,8 @@ namespace MotoTrakBase
 
         private List<MotorBoardDataStreamType> _dataStreamTypes = new List<MotorBoardDataStreamType>()
             {  MotorBoardDataStreamType.Timestamp, MotorBoardDataStreamType.DeviceValue, MotorBoardDataStreamType.IRSensorValue };
+
+        private IMotorStageImplementation _stageImplementation = null;
         
         #endregion
 
@@ -88,6 +90,21 @@ namespace MotoTrakBase
             set
             {
                 _dataStreamTypes = value;
+            }
+        }
+
+        /// <summary>
+        /// References the functions that know how to run this stage within a session.
+        /// </summary>
+        public IMotorStageImplementation StageImplementation
+        {
+            get
+            {
+                return _stageImplementation;
+            }
+            private set
+            {
+                _stageImplementation = value;
             }
         }
 
