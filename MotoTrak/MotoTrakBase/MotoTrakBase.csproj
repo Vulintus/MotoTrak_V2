@@ -40,7 +40,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IMotorStageImplementation.cs" />
     <Compile Include="MotorBoard.cs" />
+    <Compile Include="MotorBoardDataStreamType.cs" />
     <Compile Include="MotorDevice.cs" />
     <Compile Include="MotorDeviceType.cs" />
     <Compile Include="MotorDeviceTypeConverter.cs" />

@@ -449,6 +449,11 @@ namespace MotoTrakBase
             }
         }
 
+        public void KnobToggle (int toggle_value)
+        {
+            this.SimpleCommand("Ei", toggle_value);
+        }
+
         #endregion
 
         #region V2 Methods

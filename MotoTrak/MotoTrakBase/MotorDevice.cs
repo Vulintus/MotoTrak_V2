@@ -15,10 +15,12 @@ namespace MotoTrakBase
         //Constants used to identify devices
         private const int LEVERHD_MIN_VALUE = 50;
         private const int LEVERHD_MAX_VALUE = 99;
+
         private const int KNOB_MIN_VALUE = 100;
         private const int KNOB_MAX_VALUE = 449;
         private const int PULL_MIN_VALUE = 450;
         private const int PULL_MAX_VALUE = 550;
+
         private const int LEVER_MIN_VALUE = 800;
         private const int LEVER_MAX_VALUE = 949;
         private const int WHEEL_MIN_VALUE = 950;
@@ -49,6 +51,20 @@ namespace MotoTrakBase
             DeviceType = type;
             DeviceIndex = index;
             InitializeDevice();
+        }
+
+        #endregion
+
+        #region Destructors
+
+        ~MotorDevice()
+        {
+            if (DeviceType == MotorDeviceType.Knob)
+            {
+                //Turn off SPI communication for the knob.
+                MotorBoard board = MotorBoard.GetInstance();
+                board.KnobToggle(0);
+            }
         }
 
         #endregion
@@ -90,20 +106,6 @@ namespace MotoTrakBase
                 //It's a pull
                 return MotorDeviceType.Pull;
             }
-            else if (deviceValue >= LEVER_MIN_VALUE && deviceValue <= LEVER_MAX_VALUE)
-            {
-                //It's a lever
-                return MotorDeviceType.Lever;
-            }
-            else if (deviceValue >= WHEEL_MIN_VALUE && deviceValue <= WHEEL_MAX_VALUE)
-            {
-                //It's a wheel
-                return MotorDeviceType.Wheel;
-            }
-            else if (deviceValue >= LEVERHD_MIN_VALUE && deviceValue <= LEVERHD_MAX_VALUE)
-            {
-                return MotorDeviceType.LeverHD;
-            }
             else
             {
                 //It's undefined
@@ -124,9 +126,18 @@ namespace MotoTrakBase
             switch (DeviceType)
             {
                 case MotorDeviceType.Knob:
-                    Slope = 0.5;
-                    break;
-                case MotorDeviceType.Lever:
+
+                    //Toggle the knob as being turned on.  This is important because it initiates SPI communication, which is important
+                    //for the knob to work properly.
+                    motorBoard.KnobToggle(1);
+
+                    //The slope is set to a default of 0.25 for the Knob task.  This is due to the specific kind of rotary encoders we are using.
+                    Slope = 0.25;
+
+                    //The baseline level should be set to what the device value currently is.  This means the device should not be in use when
+                    //the program is initializing.
+                    Baseline = motorBoard.ReadDevice();
+                    
                     break;
                 case MotorDeviceType.Pull:
                     //Set the baseline of the pull apparatus
@@ -135,12 +146,6 @@ namespace MotoTrakBase
                     //Set the slope of the pull apparatus
                     Slope = motorBoard.CalGrams();
                     Slope /= motorBoard.NPerCalGrams();
-                    break;
-                case MotorDeviceType.Wheel:
-                    Slope = 0.5;
-                    break;
-                case MotorDeviceType.LeverHD:
-                    Slope = 0.5;
                     break;
                 default:
                     break;
