@@ -400,15 +400,36 @@ namespace MotoTrakBase
 
                         stage.Position = Double.Parse(stageLine[4]);
                         stage.AdaptiveThresholdType = MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdType(stageLine[5]);
-                        stage.HitThresholdMinimum = Double.Parse(stageLine[6]);
-                        stage.HitThresholdMaximum = Double.Parse(stageLine[7]);
-                        stage.HitThresholdIncrement = Double.Parse(stageLine[8]);
-                        stage.TrialInitiationThreshold = Double.Parse(stageLine[9]);
+
+                        double hit_min = double.NaN;
+                        bool success = Double.TryParse(stageLine[6], out hit_min);
+                        stage.HitThresholdMinimum = hit_min;
+
+                        double hit_max = double.NaN;
+                        success = Double.TryParse(stageLine[7], out hit_max);
+                        stage.HitThresholdMaximum = hit_max;
+
+                        double hit_inc = double.NaN;
+                        success = Double.TryParse(stageLine[8], out hit_inc);
+                        stage.HitThresholdIncrement = hit_inc;
+
+                        double trial_init = double.NaN;
+                        success = Double.TryParse(stageLine[9], out trial_init);
+                        stage.TrialInitiationThreshold = trial_init;
+                        
                         stage.HitThresholdType = MotorStageHitThresholdTypeConverter.ConvertToMotorStageHitThresholdType(stageLine[10]);
+                        
                         stage.HitWindowInSeconds = Double.Parse(stageLine[11]);
                         stage.SamplePeriodInMilliseconds = Int32.Parse(stageLine[12]);
+                        
                         stage.StimulationType = MotorStageStimulationTypeConverter.ConvertToMotorStageStimulationType(stageLine[13]);
                         
+                        //Set the implementation of this stage
+                        if (stage.DeviceType == MotorDeviceType.Pull)
+                        {
+                            stage.StageImplementation = PullStageImplementation.GetInstance();
+                        }
+
                         //Add the stage to our list of stages
                         stages.Add(stage);
                     }

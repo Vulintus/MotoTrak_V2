@@ -19,6 +19,9 @@ namespace MotoTrakBase
         private enum SessionRunState
         {
             Scan,                   //This is the idle state
+            SessionBegin,
+            SessionEnd,
+            TrialSetup,
             TrialWait,
             TrialRun,
             TrialEnd,
@@ -40,6 +43,8 @@ namespace MotoTrakBase
         private MotorStage _selectedStage = new MotorStage();
         private List<MotorStage> _allStages = new List<MotorStage>();
 
+        private Object session_state_lock = new Object();
+
         #endregion
 
         #region Private properties
@@ -55,8 +60,16 @@ namespace MotoTrakBase
             get { return _sessionState; }
             set
             {
-                _sessionState = value;
+                //The session state can be modified by both the UI thread and the background thread
+                //So we need to make sure that it is within a semaphore.
+                lock (session_state_lock)
+                {
+                    _sessionState = value;
+                }
+
                 NotifyPropertyChanged("SessionState");
+                NotifyPropertyChanged("IsSessionRunning");
+                NotifyPropertyChanged("IsSessionPaused");
             }
         }
 
@@ -98,6 +111,7 @@ namespace MotoTrakBase
             set
             {
                 _boothNumber = value;
+                NotifyPropertyChanged("BoothNumber");
             }
         }
 
@@ -110,6 +124,7 @@ namespace MotoTrakBase
             set
             {
                 _device = value;
+                NotifyPropertyChanged("Device");
             }
         }
 
@@ -122,6 +137,7 @@ namespace MotoTrakBase
             set
             {
                 _ratName = value;
+                NotifyPropertyChanged("RatName");
             }
         }
 
@@ -137,6 +153,7 @@ namespace MotoTrakBase
             set
             {
                 _selectedStage = value;
+                NotifyPropertyChanged("SelectedStage");
             }
         }
 
@@ -153,6 +170,8 @@ namespace MotoTrakBase
             set
             {
                 _allStages = value;
+                NotifyPropertyChanged("Stages");
+                NotifyPropertyChanged("AvailableStages");
             }
         }
 
@@ -166,6 +185,28 @@ namespace MotoTrakBase
                 //Filter the stages based on whether each stage's defined device type equals the type of device currently being used.
                 var filtered_stages = Stages.Where(stage => stage.DeviceType == Device.DeviceType).ToList();
                 return filtered_stages;
+            }
+        }
+
+        /// <summary>
+        /// A boolean value indicating whether the session is currently idle or running.
+        /// </summary>
+        public bool IsSessionRunning
+        {
+            get
+            {
+                return (SessionState != SessionRunState.Scan);
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether the session is currently paused
+        /// </summary>
+        public bool IsSessionPaused
+        {
+            get
+            {
+                return (SessionState == SessionRunState.Pause);
             }
         }
 
@@ -250,6 +291,61 @@ namespace MotoTrakBase
 
         #endregion
 
+        #region Methods that alter the session state, called by the UI thread, affecting the background worker thread
+
+        /// <summary>
+        /// Starts a new MotoTrak session.
+        /// </summary>
+        public void StartSession ()
+        {
+            SessionState = SessionRunState.SessionBegin;
+        }
+
+        /// <summary>
+        /// Stops the session that is currently running.
+        /// </summary>
+        public void StopSession ()
+        {
+            SessionState = SessionRunState.SessionEnd;
+        }
+
+        /// <summary>
+        /// Pauses the session that is currently running
+        /// </summary>
+        /// <param name="pause">True if the user wants to pause, false to unpause</param>
+        public void PauseSession (bool pause)
+        {
+            if (pause)
+            {
+                SessionState = SessionRunState.Pause;
+            }
+            else
+            {
+                SessionState = SessionRunState.TrialSetup;
+            }
+        }
+
+        /// <summary>
+        /// Triggers a manual feed
+        /// </summary>
+        public void TriggerManualFeed ()
+        {
+            SessionState = SessionRunState.TrialManualFeed;
+        }
+
+        /// <summary>
+        /// This function is called when the user closes MotoTrak
+        /// </summary>
+        public void CancelBackgroundLoop ()
+        {
+            if (backgroundLoop != null)
+            {
+                backgroundLoop.CancelAsync();
+            }
+        }
+
+        #endregion
+
         #region Properties pertaining to the background worker thread, but not edited by that thread
 
         BackgroundWorker backgroundLoop = null;
@@ -259,11 +355,12 @@ namespace MotoTrakBase
         #region Private properties edited by the background worker thread
 
         private List<double> _monitoredSignal = new List<double>();
+        private List<MotorTrial> _trials = new List<MotorTrial>();
 
         #endregion
 
         #region Properties edited by the background worker thread
-        
+
         /// <summary>
         /// This property contains the current "monitored" signal that gets displayed to the user.
         /// This property can ONLY be set by the background worker thread, in order to keep the application
@@ -279,6 +376,26 @@ namespace MotoTrakBase
             private set
             {
                 _monitoredSignal = value;
+                NotifyPropertyChanged("MonitoredSignal");
+            }
+        }
+
+        /// <summary>
+        /// This property contains the set of all trials for the session that is currently running.
+        /// This property can ONLY be set by the background worker thread, in order to keep the application
+        /// thread-safe.  This property can be read at any time by the main thread (the UI thread), but it should not
+        /// be set by that thread.
+        /// </summary>
+        public List<MotorTrial> Trials
+        {
+            get
+            {
+                return _trials;
+            }
+            private set
+            {
+                _trials = value;
+                NotifyPropertyChanged("Trials");
             }
         }
 
@@ -357,6 +474,9 @@ namespace MotoTrakBase
                 //Read in new datapoints from the Arduino board
                 int number_of_new_data_points = ReadNewDataFromArduino(stream_data_raw, buffer_size);
 
+                //Now reduce the size of raw stream data if the size has exceeded our max buffer size.
+                stream_data_raw = stream_data_raw.Skip(Math.Max(0, stream_data_raw.Count - buffer_size)).Take(buffer_size).ToList();
+
                 //Convert the raw stream data to a form that is useable by the program (transform it by the slope and baseline
                 //according to the device settings.  This happens regardless of what stage has been selected).
                 device_signal_transformed = stream_data_raw.Select(x => (Device.Slope * (x[device_signal_index] - Device.Baseline))).ToList();
@@ -371,6 +491,33 @@ namespace MotoTrakBase
                         //Make a "hard" copy of the signal data and assign it to the MonitoredSignal variable, which is what the user sees
                         //on the plot.  The "ToList" function makes a copy of the data, rather than copying a pointer.  This is important!
                         MonitoredSignal = device_signal_transformed.ToList();
+
+                        break;
+                    case SessionRunState.SessionBegin:
+
+                        //Create an empty list of trials for the new session.
+                        Trials = Enumerable.Empty<MotorTrial>().ToList();
+
+                        //Set the session state to wait for trials to begin
+                        SessionState = SessionRunState.TrialSetup;
+
+                        break;
+                    case SessionRunState.SessionEnd:
+
+                        //Do any work needed to finish up a session here.
+
+                        //Set the session state to idle
+                        SessionState = SessionRunState.Scan;
+                        
+                        break;
+                    case SessionRunState.TrialSetup:
+
+                        //Reset the raw stream data buffer for the next trial
+                        List<int> empty_sample = Enumerable.Repeat<int>(0, SelectedStage.TotalDataStreams).ToList();
+                        stream_data_raw = Enumerable.Repeat<List<int>>(empty_sample, buffer_size).ToList();
+
+                        //Wait for a new trial to begin.
+                        SessionState = SessionRunState.TrialWait;
 
                         break;
                     case SessionRunState.TrialWait:
@@ -452,8 +599,24 @@ namespace MotoTrakBase
 
                         break;
                     case SessionRunState.TrialEnd:
+
+                        //In this state, we finalize a trial and save it to the disk.
+
+                        //First, add the trial to our collection of total trials for the currently running session.
+                        Trials.Add(trial);
+
+                        //Tell the program to wait for another trial to begin
+                        SessionState = SessionRunState.TrialSetup;
+
                         break;
                     case SessionRunState.TrialManualFeed:
+
+                        //Trigger a manual feed
+                        ArdyBoard.TriggerFeeder();
+
+                        //Set up a new trial
+                        SessionState = SessionRunState.TrialSetup;
+
                         break;
                     case SessionRunState.Pause:
 
@@ -475,18 +638,15 @@ namespace MotoTrakBase
             e.Cancel = true;
         }
         
-        private int ReadNewDataFromArduino ( List<List<int>> raw_stream_data, int buffer_size )
+        private int ReadNewDataFromArduino ( List<List<int>> stream_data_raw, int buffer_size )
         {
             //Read in new streaming data from the Arduino board
             List<List<int>> new_data_points = ArdyBoard.ReadStream();
             int number_of_new_data_points = new_data_points.Count;
 
             //Add the new data points to our buffer
-            raw_stream_data.AddRange(new_data_points);
-
-            //Now reduce the size of raw stream data if the size has exceeded our max buffer size.
-            raw_stream_data = raw_stream_data.Skip(Math.Max(0, raw_stream_data.Count - buffer_size)).Take(buffer_size).ToList();
-
+            stream_data_raw.AddRange(new_data_points);
+            
             return number_of_new_data_points;
         }
 
@@ -508,7 +668,11 @@ namespace MotoTrakBase
                 //If not enough samples were in the buffer to fill out the necessary number of samples needed, we will simply zero-pad the 
                 //beginning of the signal.
                 int number_of_samples_needed = SelectedStage.TotalRecordedSamplesBeforeHitWindow - trial.TrialData.Count;
-                List<List<int>> samples_to_prepend = Enumerable.Repeat<List<int>>(new List<int>() { 0, 0, 0 }, number_of_samples_needed).ToList();
+
+                //Reset the raw stream data buffer for the next trial
+                List<int> empty_sample = Enumerable.Repeat<int>(0, SelectedStage.TotalDataStreams).ToList();
+                List<List<int>> samples_to_prepend = Enumerable.Repeat<List<int>>(empty_sample, number_of_samples_needed).ToList();
+
                 samples_to_prepend.AddRange(trial.TrialData);
                 trial.TrialData = samples_to_prepend;
             }

@@ -8,15 +8,32 @@ namespace MotoTrakBase
 {
     /// <summary>
     /// Implements the IMotorStageImplementation interface and handles all logic for controlling the pull task.
+    /// This class is a singleton.  All stages that use it should simply ask for the singleton instance.
     /// </summary>
     public class PullStageImplementation : IMotorStageImplementation
     {
-        #region Constructors
+        #region Singleton implementation
+
+        private static PullStageImplementation _instance = null;
 
         /// <summary>
         /// Basic constructor for pull stage implementation.
         /// </summary>
-        PullStageImplementation() { /* empty */ }
+        private PullStageImplementation() { /* empty */ }
+
+        /// <summary>
+        /// Gets the one and only instance of this class that is allowed to exist.
+        /// </summary>
+        /// <returns>Instance of PullStageImplementation class</returns>
+        public static PullStageImplementation GetInstance()
+        {
+            if (_instance == null)
+            {
+                _instance = new PullStageImplementation();
+            }
+
+            return _instance;
+        }
 
         #endregion
 

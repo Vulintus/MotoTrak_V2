@@ -1,0 +1,7 @@
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\MotoTrakBase.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\MotoTrakBase.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\MotoTrakUtilities.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\MotoTrakUtilities.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\obj\Debug\MotoTrakBase.csprojResolveAssemblyReference.cache
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\obj\Debug\MotoTrakBase.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\obj\Debug\MotoTrakBase.pdb

@@ -26,7 +26,7 @@ namespace MotoTrakBase
         /// <summary>
         /// Gets the one and only instance of this class that is allowed to exist.
         /// </summary>
-        /// <returns>Instance of ArdyMotorBoard class</returns>
+        /// <returns>Instance of MotoTrakConfiguration class</returns>
         public static MotoTrakConfiguration GetInstance()
         {
             if (_instance == null)

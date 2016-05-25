@@ -81,7 +81,7 @@ namespace MotoTrakBase
         {
             get
             {
-                return DeviceType.ToString();
+                return MotorDeviceTypeConverter.ConvertToDescription(this.DeviceType);
             }
         }
 
