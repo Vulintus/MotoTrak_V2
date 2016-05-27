@@ -65,13 +65,22 @@ namespace MotoTrakBase
             if (stage.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Static)
             {
                 //Find the point at which the animal exceeds the hit threshold.  This function returns -1 if nothing is found.
-                int i = trial_signal.FindIndex(x => (x >= stage.HitThreshold));
+                //int i = trial_signal.FindIndex(x => (x >= stage.HitThreshold));
 
-                if (i >= stage.TotalRecordedSamplesBeforeHitWindow && i < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))
+                var l = Enumerable.Range(0, trial_signal.Count)
+                    .Where(index => trial_signal[index] >= stage.HitThreshold &&
+                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) &&
+                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).ToList();
+                if (l != null && l.Count > 0)
+                {
+                    result = new Tuple<MotorTrialResult, int>(MotorTrialResult.Hit, l[0]);
+                }
+
+                /*if (i >= stage.TotalRecordedSamplesBeforeHitWindow && i < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))
                 {
                     //If the index "i" is within the range of the hit window, then we know the animal was successful.
                     result = new Tuple<MotorTrialResult, int>(MotorTrialResult.Hit, i);
-                }
+                }*/
             }
 
             //Return the result
@@ -98,6 +107,28 @@ namespace MotoTrakBase
             //no actions will be taken for this stage type (so far).
 
             return actions;
+        }
+
+        public string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<double> trial_signal, MotorStage stage)
+        {
+            string msg = string.Empty;
+
+            int hit_win_pk_force = Convert.ToInt32(trial_signal.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max());
+
+            msg += "Trial " + trial_number.ToString() + " ";
+
+            if (successful_trial)
+            {
+                msg += "HIT, ";
+            }
+            else
+            {
+                msg += "MISS, ";
+            }
+
+            msg += "maximal force = " + hit_win_pk_force.ToString() + " grams.";
+
+            return msg;
         }
 
         #endregion

@@ -1,7 +1,9 @@
 ﻿using MotoTrakUtilities;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -356,6 +358,9 @@ namespace MotoTrakBase
 
         private List<double> _monitoredSignal = new List<double>();
         private List<MotorTrial> _trials = new List<MotorTrial>();
+        private MotorTrial _currentTrial = null;
+        private ObservableCollection<Tuple<MotoTrakMessageType, string>> _messages = new ObservableCollection<Tuple<MotoTrakMessageType, string>>();
+        private int fps = 0;
 
         #endregion
 
@@ -399,6 +404,56 @@ namespace MotoTrakBase
             }
         }
 
+        /// <summary>
+        /// A MotorTrial object representing the current trial that is taking place (if one is taking place).
+        /// </summary>
+        public MotorTrial CurrentTrial
+        {
+            get
+            {
+                return _currentTrial;
+            }
+            private set
+            {
+                _currentTrial = value;
+                NotifyPropertyChanged("CurrentTrial");
+            }
+        }
+
+        /// <summary>
+        /// This observable collection contains a set of tuples that define messages for the user.
+        /// These messages have a message "type" associated with each one (the first item of the tuple), and a string that contains
+        /// the actual message text (the second item of the tuple).
+        /// </summary>
+        public ObservableCollection<Tuple<MotoTrakMessageType, string>> Messages
+        {
+            get
+            {
+                return _messages;
+            }
+            set
+            {
+                _messages = value;
+            }
+        }
+
+        /// <summary>
+        /// This is meant more as a debugging property.  It allows us to see how fast our program can loop and process data.
+        /// This property is set by the HandleStreaming method.
+        /// </summary>
+        public int FramesPerSecond
+        {
+            get
+            {
+                return fps;
+            }
+            set
+            {
+                fps = value;
+                NotifyPropertyChanged("FramesPerSecond");
+            }
+        }
+
         #endregion
 
         #region BackgroundWorker methods
@@ -422,6 +477,7 @@ namespace MotoTrakBase
         private void NotifyMainThreadOfNewData(object sender, ProgressChangedEventArgs e)
         {
             //currently empty
+            //nothing really needs to happen here
         }
 
         /// <summary>
@@ -441,7 +497,7 @@ namespace MotoTrakBase
             ArdyBoard.EnableStreaming(1);
 
             //Create a null trial object as a placeholder for new trials that will be created
-            MotorTrial trial = null;
+            CurrentTrial = null;
 
             //Define the buffer size for streaming data from the Arduino board
             int buffer_size = SelectedStage.TotalRecordedSamplesPerTrial;
@@ -450,6 +506,10 @@ namespace MotoTrakBase
             //First, we want to define an array that holds the raw stream of data
             List<List<int>> stream_data_raw = new List<List<int>>();
 
+            List<int> empty_sample_test = Enumerable.Repeat<int>(0, SelectedStage.TotalDataStreams).ToList();
+            empty_sample_test[SelectedStage.DataStreamTypes.IndexOf(MotorBoardDataStreamType.DeviceValue)] = Convert.ToInt32(Device.Baseline);
+            stream_data_raw = Enumerable.Repeat<List<int>>(empty_sample_test, buffer_size).ToList();
+
             //Define a list in which we will keep signal data from the device.
             List<double> device_signal_transformed = new List<double>();
 
@@ -457,20 +517,41 @@ namespace MotoTrakBase
             List<double> trial_device_signal = new List<double>();
 
             //Define an integer that will be used to keep track of the index at which a hit occurred, if so.
-            int TrialHitSampleIndex = -1;
+            //int TrialHitSampleIndex = -1;
 
             //Get the index of the device signal within the data stream
             int device_signal_index = SelectedStage.DataStreamTypes.IndexOf(MotorBoardDataStreamType.DeviceValue);
             if (device_signal_index == -1)
             {
                 //If no stream position was defined for the device signal for this stage
-                throw new MotoTrakException("No way to tell which signal is the device signal!");
+                Messages.Add(new Tuple<MotoTrakMessageType, string>(MotoTrakMessageType.Error,
+                    "The device signal is undefined!  Please select a stage that properly defines the device signal."));
             }
+            
+            Messages.Add(new Tuple<MotoTrakMessageType, string>(MotoTrakMessageType.Normal, "Welcome to MotoTrak!"));
+
+            //Set up a stopwatch timer to track frame rate
+            Stopwatch stop_watch = new Stopwatch();
+            stop_watch.Start();
+            int frames = 0;
 
             //This loop is endless, for all intents and purposes.
             //It will exit when the user closes the MotoTrak window.
             while (!backgroundLoop.CancellationPending)
             {
+                //Handle the "frames-per-second" measurement for debugging purposes.
+                if (stop_watch.ElapsedMilliseconds >= 1000)
+                {
+                    FramesPerSecond = frames;
+                    frames = 0;
+                    stop_watch.Reset();
+                    stop_watch.Start();
+                }
+                else
+                {
+                    frames++;
+                }
+                
                 //Read in new datapoints from the Arduino board
                 int number_of_new_data_points = ReadNewDataFromArduino(stream_data_raw, buffer_size);
 
@@ -498,6 +579,9 @@ namespace MotoTrakBase
                         //Create an empty list of trials for the new session.
                         Trials = Enumerable.Empty<MotorTrial>().ToList();
 
+                        //Clear all messages for the new session to begin
+                        Messages.Clear();
+
                         //Set the session state to wait for trials to begin
                         SessionState = SessionRunState.TrialSetup;
 
@@ -514,6 +598,7 @@ namespace MotoTrakBase
 
                         //Reset the raw stream data buffer for the next trial
                         List<int> empty_sample = Enumerable.Repeat<int>(0, SelectedStage.TotalDataStreams).ToList();
+                        empty_sample[SelectedStage.DataStreamTypes.IndexOf(MotorBoardDataStreamType.DeviceValue)] = Convert.ToInt32(Device.Baseline);
                         stream_data_raw = Enumerable.Repeat<List<int>>(empty_sample, buffer_size).ToList();
 
                         //Wait for a new trial to begin.
@@ -529,19 +614,23 @@ namespace MotoTrakBase
                         if (trial_initiation_index > -1)
                         {
                             //Create a new motor trial
-                            trial = new MotorTrial();
+                            CurrentTrial = new MotorTrial();
 
                             //Initiate a new trial.
                             //The following method basically just fills the "trial_device_signal" object with the data that occured up until the device value
                             //broke the trial initiation threshold.  It also fills the same data into the "trial" object, but in raw form.
-                            HandleTrialInitiation(buffer_size, trial_initiation_index, stream_data_raw, device_signal_transformed, trial, trial_device_signal);
+                            HandleTrialInitiation(buffer_size, trial_initiation_index, stream_data_raw, device_signal_transformed, CurrentTrial, out trial_device_signal);
 
                             //Unmark the previous trial's "hit sample index" if need be
-                            TrialHitSampleIndex = -1;
+                            CurrentTrial.HitIndex = -1;
 
                             //Change the session state
                             SessionState = SessionRunState.TrialRun;
                         }
+
+                        //Make a "hard" copy of the signal data and assign it to the MonitoredSignal variable, which is what the user sees
+                        //on the plot.  The "ToList" function makes a copy of the data, rather than copying a pointer.  This is important!
+                        MonitoredSignal = device_signal_transformed.ToList();
 
                         break;
                     case SessionRunState.TrialRun:
@@ -557,13 +646,13 @@ namespace MotoTrakBase
                         var new_data = device_signal_transformed.GetRange(device_signal_transformed.Count - number_of_new_data_points, number_of_new_data_points);
 
                         //Add the new data to the trial device signal, starting at the end of the current data that we already have.
-                        trial_device_signal.ReplaceRange(new_data, trial.TrialData.Count);
+                        trial_device_signal.ReplaceRange(new_data, CurrentTrial.TrialData.Count);
 
                         //Add the new raw data to the trial object to be saved to disk later.
-                        trial.TrialData.AddRange(stream_data_raw.GetRange(stream_data_raw.Count - number_of_new_data_points, number_of_new_data_points));
+                        CurrentTrial.TrialData.AddRange(stream_data_raw.GetRange(stream_data_raw.Count - number_of_new_data_points, number_of_new_data_points));
 
                         //Check to see if the animal has succeeded up until this point in the trial, based on this stage's criterion for success.
-                        if (trial.Result == MotorTrialResult.Unknown)
+                        if (CurrentTrial.Result == MotorTrialResult.Unknown)
                         {
                             //Check to see whether the trial was a success, based on the criterion defined by the stage definition.
                             var success = SelectedStage.StageImplementation.CheckForTrialSuccess(trial_device_signal, SelectedStage);
@@ -571,9 +660,9 @@ namespace MotoTrakBase
                             if (success.Item1 == MotorTrialResult.Hit)
                             {
                                 //Record the results.
-                                trial.Result = success.Item1;
-                                trial.HitTime = DateTime.Now;
-                                TrialHitSampleIndex = success.Item2;
+                                CurrentTrial.Result = success.Item1;
+                                CurrentTrial.HitTime = DateTime.Now;
+                                CurrentTrial.HitIndex = success.Item2;
 
                                 //If the trial was successful, take certain actions as described by the stage definition.
                                 var success_actions = SelectedStage.StageImplementation.ReactToTrialSuccess(trial_device_signal, SelectedStage);
@@ -587,7 +676,7 @@ namespace MotoTrakBase
                         TakeAction(actions);
 
                         //Check to see if this trial has finished
-                        if (trial.TrialData.Count >= SelectedStage.TotalRecordedSamplesPerTrial)
+                        if (CurrentTrial.TrialData.Count >= SelectedStage.TotalRecordedSamplesPerTrial)
                         {
                             //Change the session state to end this trial.
                             SessionState = SessionRunState.TrialEnd;
@@ -595,15 +684,23 @@ namespace MotoTrakBase
 
                         //Report progress on this trial to the main UI thread
                         MonitoredSignal = trial_device_signal;
-                        backgroundLoop.ReportProgress(0, null);
 
                         break;
                     case SessionRunState.TrialEnd:
 
                         //In this state, we finalize a trial and save it to the disk.
 
+                        //Create an end of trial message
+                        string msg = SelectedStage.StageImplementation.CreateEndOfTrialMessage(CurrentTrial.Result == MotorTrialResult.Hit,
+                            Trials.Count + 1, trial_device_signal, SelectedStage);
+                        Messages.Add(new Tuple<MotoTrakMessageType, string>(MotoTrakMessageType.Normal, msg));
+
                         //First, add the trial to our collection of total trials for the currently running session.
-                        Trials.Add(trial);
+                        Trials.Add(CurrentTrial);
+
+                        //Set the current trial to null.  This will subsequently send notifications up to the UI,
+                        //telling the UI that there is not currently a trial taking place.
+                        CurrentTrial = null;
 
                         //Tell the program to wait for another trial to begin
                         SessionState = SessionRunState.TrialSetup;
@@ -625,12 +722,9 @@ namespace MotoTrakBase
 
                         break;
                 }
-
-                //After handling whatever state the program is in, notify the UI/main thread of any changes
-                backgroundLoop.ReportProgress(0, null);
-
-                //Sleep the thread for 10 milliseconds so we don't consume too much CPU time
-                Thread.Sleep(10);
+                
+                //Sleep the thread for 12 milliseconds so we don't consume too much CPU time
+                Thread.Sleep(12);
             }
 
             //If we reach this point in the code, it means that user has decided to close the MotoTrak window.  This next line of code
@@ -651,7 +745,7 @@ namespace MotoTrakBase
         }
 
         private void HandleTrialInitiation ( int buffer_size, int trial_initiation_index, List<List<int>> stream_data_raw, List<double> device_signal_transformed, 
-            MotorTrial trial, List<double> trial_device_signal )
+            MotorTrial trial, out List<double> trial_device_signal )
         {
             //From the point where threshold was broken, we want to go back and grab X seconds of data from before the initiation
             //event, depending on how much data this stage asks for.

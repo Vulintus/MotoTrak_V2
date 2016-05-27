@@ -58,6 +58,7 @@
     <Compile Include="MotorTrialResult.cs" />
     <Compile Include="MotoTrakConfiguration.cs" />
     <Compile Include="MotoTrakException.cs" />
+    <Compile Include="MotoTrakMessageType.cs" />
     <Compile Include="MotoTrakSession.cs" />
     <Compile Include="NotifyPropertyChangedObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

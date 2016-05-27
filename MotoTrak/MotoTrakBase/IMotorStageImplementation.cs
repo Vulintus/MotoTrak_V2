@@ -50,6 +50,15 @@ namespace MotoTrakBase
         /// <param name="stage">The currently selected stage</param>
         /// <returns></returns>
         List<MotorTrialAction> PerformActionDuringTrial(List<double> trial_signal, MotorStage stage);
-        
+
+        /// <summary>
+        /// Allows the creator of this stage to make custom messages that get shown to the user at the 
+        /// end of each trial
+        /// </summary>
+        /// <param name="successful_trial">Whether or not this trial was successful</param>
+        /// <param name="trial_signal">The trial's signal</param>
+        /// <param name="stage">The motor stage</param>
+        /// <returns>A message as a string</returns>
+        string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<double> trial_signal, MotorStage stage);
     }
 }

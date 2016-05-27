@@ -63,6 +63,10 @@
 
         <oxy:PlotView Grid.Row="1" MinHeight="250" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Model="{Binding MotoTrakPlot}" />
 
+        <!-- This UI element is for debugging purposes only -->
+        <TextBlock Text="{Binding Path=FrameRate, FallbackValue=60}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="1"
+                   Margin="0,0,20,50" FontWeight="Bold" FontSize="14" Visibility="{Binding Path=DebuggingVisibility}" />
+
         <Grid Name="ButtonsAndMessagesRegion" Height="100" Grid.Row="2" Margin="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="150" />
@@ -97,7 +101,8 @@
                             />
             </StackPanel>
 
-            <ListBox Grid.Column="1" Margin="5,0,0,0"  Name="MessagesListBox" ItemsSource="{Binding Path=MessageItems, Mode=OneWay}" />
+            <ListBox Grid.Column="1" Margin="5,0,0,0"  Name="MessagesListBox" ItemsSource="{Binding Path=MessageItems, Mode=OneWay}"
+                     SelectedIndex="{Binding Path=MessagesSelectedIndex, Mode=OneWay}" SelectionChanged="MessagesListBox_SelectionChanged" />
 
         </Grid>
         

@@ -155,7 +155,13 @@ namespace MotoTrakBase
         /// <summary>
         /// The fixed hit threshold for this stage
         /// </summary>
-        public double HitThreshold { get; set; }
+        public double HitThreshold
+        {
+            get
+            {
+                return HitThresholdMaximum;
+            }
+        }
 
         /// <summary>
         /// The trial initiation threshold for this stage

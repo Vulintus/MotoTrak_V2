@@ -87,5 +87,10 @@ namespace MotoTrak
                 MotorBoard.GetInstance().DisconnectFromArduino();
             }
         }
+
+        private void MessagesListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            MessagesListBox.ScrollIntoView(MessagesListBox.SelectedItem);
+        }
     }
 }
