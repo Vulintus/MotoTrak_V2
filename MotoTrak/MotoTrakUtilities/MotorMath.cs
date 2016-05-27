@@ -123,5 +123,29 @@ namespace MotoTrakUtilities
 
             return peaks;
         }
+        
+        /// <summary>
+        /// A function which finds the median of an array of numbers.
+        /// </summary>
+        /// <param name="numbers">An array of numbers</param>
+        /// <returns>The median of the numbers in the array</returns>
+        public static double Median(List<double> numbers)
+        {
+            int numberCount = numbers.Count();
+            int halfIndex = numbers.Count() / 2;
+            var sortedNumbers = numbers.OrderBy(n => n);
+            double median;
+            if ((numberCount % 2) == 0)
+            {
+                int halfIndexMinus1 = halfIndex - 1;
+                median = (sortedNumbers.ElementAt(halfIndex) + sortedNumbers.ElementAt(halfIndexMinus1)) / 2;
+            }
+            else
+            {
+                median = sortedNumbers.ElementAt(halfIndex);
+            }
+
+            return median;
+        }
     }
 }

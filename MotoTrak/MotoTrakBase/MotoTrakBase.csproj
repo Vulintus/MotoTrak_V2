@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BasicStageImplementation.cs" />
     <Compile Include="IMotorStageImplementation.cs" />
     <Compile Include="MotorBoard.cs" />
     <Compile Include="MotorBoardDataStreamType.cs" />
@@ -63,6 +64,7 @@
     <Compile Include="NotifyPropertyChangedObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PullStageImplementation.cs" />
+    <Compile Include="SustainedPullStageImplementation.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MotoTrakUtilities\MotoTrakUtilities.csproj">

@@ -60,5 +60,12 @@ namespace MotoTrakBase
         /// <param name="stage">The motor stage</param>
         /// <returns>A message as a string</returns>
         string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<double> trial_signal, MotorStage stage);
+
+        /// <summary>
+        /// Allows the creator of the stage to adjust the hit threshold at the end of each trial.
+        /// </summary>
+        /// <param name="all_trials">All trials from the session up until the current point in time</param>
+        /// <param name="stage">The stage that is currently being run</param>
+        void AdjustDynamicHitThreshold(List<MotorTrial> all_trials, List<double> trial_signal, MotorStage stage);
     }
 }

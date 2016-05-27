@@ -689,14 +689,17 @@ namespace MotoTrakBase
                     case SessionRunState.TrialEnd:
 
                         //In this state, we finalize a trial and save it to the disk.
-
+                        
                         //Create an end of trial message
                         string msg = SelectedStage.StageImplementation.CreateEndOfTrialMessage(CurrentTrial.Result == MotorTrialResult.Hit,
                             Trials.Count + 1, trial_device_signal, SelectedStage);
                         Messages.Add(new Tuple<MotoTrakMessageType, string>(MotoTrakMessageType.Normal, msg));
-
+                        
                         //First, add the trial to our collection of total trials for the currently running session.
                         Trials.Add(CurrentTrial);
+
+                        //Adjust the hit threshold for adaptive stages
+                        SelectedStage.StageImplementation.AdjustDynamicHitThreshold(Trials, trial_device_signal, SelectedStage);
 
                         //Set the current trial to null.  This will subsequently send notifications up to the UI,
                         //telling the UI that there is not currently a trial taking place.

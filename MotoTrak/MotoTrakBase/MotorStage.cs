@@ -25,6 +25,8 @@ namespace MotoTrakBase
             {  MotorBoardDataStreamType.Timestamp, MotorBoardDataStreamType.DeviceValue, MotorBoardDataStreamType.IRSensorValue };
 
         private IMotorStageImplementation _stageImplementation = null;
+
+        private double _hitThreshold = 0;
         
         #endregion
 
@@ -108,6 +110,8 @@ namespace MotoTrakBase
             }
         }
 
+        public int TrialsToRetainForAdaptiveAdjustments { get; set; }
+
         #endregion
 
         #region Properties - V1
@@ -159,7 +163,11 @@ namespace MotoTrakBase
         {
             get
             {
-                return HitThresholdMaximum;
+                return _hitThreshold;
+            }
+            set
+            {
+                _hitThreshold = value;
             }
         }
 
@@ -429,11 +437,25 @@ namespace MotoTrakBase
                         stage.SamplePeriodInMilliseconds = Int32.Parse(stageLine[12]);
                         
                         stage.StimulationType = MotorStageStimulationTypeConverter.ConvertToMotorStageStimulationType(stageLine[13]);
-                        
-                        //Set the implementation of this stage
-                        if (stage.DeviceType == MotorDeviceType.Pull)
+
+                        //For all "version 1" stages, this value will be 10.
+                        stage.TrialsToRetainForAdaptiveAdjustments = 10;
+
+                        if (stage.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Static)
                         {
-                            stage.StageImplementation = PullStageImplementation.GetInstance();
+                            //Set the "current" hit threshold to the maximum hit threshold for static stages
+                            stage.HitThreshold = stage.HitThresholdMaximum;
+                        }
+                        else
+                        {
+                            //Set the "current" hit threshold to the minimum hit threshold for adaptive stages
+                            stage.HitThreshold = stage.HitThresholdMinimum;
+                        }
+
+                        //Set the implementation of this stage
+                        if (stage.HitThresholdType == MotorStageHitThresholdType.PeakForce)
+                        {
+                            stage.StageImplementation = new PullStageImplementation();
                         }
 
                         //Add the stage to our list of stages
