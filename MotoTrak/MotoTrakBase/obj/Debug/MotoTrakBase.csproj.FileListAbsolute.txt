@@ -5,3 +5,16 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\MotoTr
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\obj\Debug\MotoTrakBase.csprojResolveAssemblyReference.cache
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\obj\Debug\MotoTrakBase.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\obj\Debug\MotoTrakBase.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\IronPython.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\IronPython.Modules.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\Microsoft.Dynamic.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\Microsoft.Scripting.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\Microsoft.Scripting.Metadata.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\IronPython.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\IronPython.Modules.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\Microsoft.Dynamic.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\Microsoft.Scripting.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\Microsoft.Scripting.Metadata.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\Dynamitey.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\Dynamitey.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\Dynamitey.xml

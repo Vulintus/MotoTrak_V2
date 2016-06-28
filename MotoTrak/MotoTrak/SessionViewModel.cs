@@ -34,7 +34,7 @@ namespace MotoTrak
             
             LinearAxis y_axis = new LinearAxis();
             y_axis.Minimum = -10;
-            y_axis.Maximum = 300;
+            //y_axis.Maximum = 300;
             y_axis.Position = AxisPosition.Left;
 
             LinearAxis x_axis = new LinearAxis();
@@ -477,6 +477,13 @@ namespace MotoTrak
                 NotifyPropertyChanged("StartButtonEnabled");
                 NotifyPropertyChanged("StartButtonColor");
                 NotifyPropertyChanged("StartOrStopButtonText");
+
+                var y_axis = MotoTrakPlot.Axes.Where(a => a.Position == AxisPosition.Left).FirstOrDefault();
+                if (y_axis != null)
+                {
+                    y_axis.MinimumRange = SessionModel.SelectedStage.HitThresholdMaximum * 2;
+                    MotoTrakPlot.InvalidatePlot(true);
+                }
             }
             else if (prop_name.Equals("AvailableStages"))
             {

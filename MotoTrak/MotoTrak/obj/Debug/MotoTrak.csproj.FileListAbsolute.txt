@@ -29,3 +29,14 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\MotoTrak.e
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\MotoTrak.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\PortSelectionUI.g.cs
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\PortSelectionUI.baml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Microsoft.Scripting.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\IronPython.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Microsoft.Dynamic.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Microsoft.Scripting.Metadata.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Microsoft.Scripting.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\IronPython.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Microsoft.Dynamic.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Microsoft.Scripting.Metadata.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Dynamitey.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Dynamitey.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Dynamitey.xml

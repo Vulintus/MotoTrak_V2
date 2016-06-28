@@ -455,7 +455,10 @@ namespace MotoTrakBase
                         //Set the implementation of this stage
                         if (stage.HitThresholdType == MotorStageHitThresholdType.PeakForce)
                         {
-                            stage.StageImplementation = new PullStageImplementation();
+                            //stage.StageImplementation = new PullStageImplementation();
+                            string stage_file = @"C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakPythonCode\PythonBasicStageImplementation.py";
+                            stage.StageImplementation = new PythonStageImplementation(stage_file);
+                            //stage.StageImplementation = new PythonStageImplementation("PythonBasicStageImplementation.py");
                         }
 
                         //Add the stage to our list of stages

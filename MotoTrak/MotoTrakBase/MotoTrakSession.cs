@@ -20,22 +20,36 @@ namespace MotoTrakBase
         /// </summary>
         private enum SessionRunState
         {
-            Scan,                   //This is the idle state
             SessionBegin,
+            SessionRunning,
             SessionEnd,
+            SessionNotRunning,
+            SessionPaused,
+            SessionUnpaused,
+        }
+
+        /// <summary>
+        /// Enumerates the possible states of a trial within a session.
+        /// "Idle" indicates that no trial is currently happening.
+        /// </summary>
+        private enum TrialRunState
+        {
+            Idle,
             TrialSetup,
             TrialWait,
             TrialRun,
             TrialEnd,
-            TrialManualFeed,
-            Pause
+            TrialManualFeed
         }
 
         #endregion
 
         #region Private data members
 
-        private SessionRunState _sessionState = SessionRunState.Scan;
+        private SessionRunState _sessionState = SessionRunState.SessionNotRunning;
+        private TrialRunState _trialState = TrialRunState.Idle;
+        private bool _triggerManualFeed = false;
+        
         private MotorBoard _ardy = MotorBoard.GetInstance();
 
         private int _boothNumber = int.MinValue;
@@ -46,17 +60,25 @@ namespace MotoTrakBase
         private List<MotorStage> _allStages = new List<MotorStage>();
 
         private Object session_state_lock = new Object();
-
+        private Object trial_state_lock = new Object();
+        private Object manual_feed_lock = new object();
+        
         #endregion
 
         #region Private properties
 
+        /// <summary>
+        /// The motor controller board object
+        /// </summary>
         private MotorBoard ArdyBoard
         {
             get { return _ardy; }
             set { _ardy = value; }
         }
 
+        /// <summary>
+        /// The state of the session: whether it is running, not running, beginning, ending, or paused.
+        /// </summary>
         private SessionRunState SessionState
         {
             get { return _sessionState; }
@@ -72,9 +94,44 @@ namespace MotoTrakBase
                 NotifyPropertyChanged("SessionState");
                 NotifyPropertyChanged("IsSessionRunning");
                 NotifyPropertyChanged("IsSessionPaused");
+                NotifyPropertyChanged("TrialState");
             }
         }
 
+        /// <summary>
+        /// The state of the current trial within the session.  If this is set to "Idle", it means that no session
+        /// is running, and no trial is running.  Therefore MotoTrak is in idle mode.  When a session is running,
+        /// this should never be set to idle.
+        /// </summary>
+        private TrialRunState TrialState
+        {
+            get { return _trialState; }
+            set
+            {
+                lock(trial_state_lock)
+                {
+                    _trialState = value;
+                }
+
+                NotifyPropertyChanged("TrialState");
+            }
+        }
+
+        /// <summary>
+        /// Whether or not a manual feed should be triggered ASAP.
+        /// </summary>
+        private bool IsTriggerManualFeed
+        {
+            get { return _triggerManualFeed; }
+            set
+            {
+                lock(manual_feed_lock)
+                {
+                    _triggerManualFeed = value;
+                }
+            }
+        }
+        
         #endregion
 
         #region Private methods
@@ -197,7 +254,7 @@ namespace MotoTrakBase
         {
             get
             {
-                return (SessionState != SessionRunState.Scan);
+                return (SessionState == SessionRunState.SessionRunning);
             }
         }
 
@@ -208,7 +265,7 @@ namespace MotoTrakBase
         {
             get
             {
-                return (SessionState == SessionRunState.Pause);
+                return (SessionState == SessionRunState.SessionPaused);
             }
         }
 
@@ -319,11 +376,11 @@ namespace MotoTrakBase
         {
             if (pause)
             {
-                SessionState = SessionRunState.Pause;
+                SessionState = SessionRunState.SessionPaused;
             }
             else
             {
-                SessionState = SessionRunState.TrialSetup;
+                SessionState = SessionRunState.SessionUnpaused;
             }
         }
 
@@ -332,7 +389,7 @@ namespace MotoTrakBase
         /// </summary>
         public void TriggerManualFeed ()
         {
-            SessionState = SessionRunState.TrialManualFeed;
+            IsTriggerManualFeed = true;
         }
 
         /// <summary>
@@ -356,7 +413,7 @@ namespace MotoTrakBase
 
         #region Private properties edited by the background worker thread
 
-        private List<double> _monitoredSignal = new List<double>();
+        private SynchronizedCollection<double> _monitoredSignal = new SynchronizedCollection<double>();
         private List<MotorTrial> _trials = new List<MotorTrial>();
         private MotorTrial _currentTrial = null;
         private ObservableCollection<Tuple<MotoTrakMessageType, string>> _messages = new ObservableCollection<Tuple<MotoTrakMessageType, string>>();
@@ -372,7 +429,7 @@ namespace MotoTrakBase
         /// thread-safe.  This property can be read at any time by the main thread (the UI thread), but it should not
         /// be set by that thread.
         /// </summary>
-        public List<double> MonitoredSignal
+        public SynchronizedCollection<double> MonitoredSignal
         {
             get
             {
@@ -381,7 +438,7 @@ namespace MotoTrakBase
             private set
             {
                 _monitoredSignal = value;
-                NotifyPropertyChanged("MonitoredSignal");
+                BackgroundPropertyChanged("MonitoredSignal");
             }
         }
 
@@ -400,7 +457,7 @@ namespace MotoTrakBase
             private set
             {
                 _trials = value;
-                NotifyPropertyChanged("Trials");
+                BackgroundPropertyChanged("Trials");
             }
         }
 
@@ -416,7 +473,7 @@ namespace MotoTrakBase
             private set
             {
                 _currentTrial = value;
-                NotifyPropertyChanged("CurrentTrial");
+                BackgroundPropertyChanged("CurrentTrial");
             }
         }
 
@@ -450,7 +507,7 @@ namespace MotoTrakBase
             set
             {
                 fps = value;
-                NotifyPropertyChanged("FramesPerSecond");
+                BackgroundPropertyChanged("FramesPerSecond");
             }
         }
 
@@ -476,8 +533,15 @@ namespace MotoTrakBase
         /// <param name="e"></param>
         private void NotifyMainThreadOfNewData(object sender, ProgressChangedEventArgs e)
         {
-            //currently empty
-            //nothing really needs to happen here
+            lock (propertyNamesLock)
+            {
+                foreach (var name in propertyNames)
+                {
+                    NotifyPropertyChanged(name);
+                }
+
+                propertyNames.Clear();
+            }
         }
 
         /// <summary>
@@ -539,6 +603,9 @@ namespace MotoTrakBase
             //It will exit when the user closes the MotoTrak window.
             while (!backgroundLoop.CancellationPending)
             {
+                //Report progress at the beginning of each loop iteration
+                backgroundLoop.ReportProgress(0, null);
+
                 //Handle the "frames-per-second" measurement for debugging purposes.
                 if (stop_watch.ElapsedMilliseconds >= 1000)
                 {
@@ -562,53 +629,90 @@ namespace MotoTrakBase
                 //according to the device settings.  This happens regardless of what stage has been selected).
                 device_signal_transformed = stream_data_raw.Select(x => (Device.Slope * (x[device_signal_index] - Device.Baseline))).ToList();
 
-                //Now we will act upon the signal based upon what run-state we are in, and also based upon the stage selected by the user.
+                //Check to see if a manual feed needs to be triggered
+                if (IsTriggerManualFeed)
+                {
+                    TrialState = TrialRunState.TrialManualFeed;
+                    IsTriggerManualFeed = false;
+                }
+
+                //Act on any changes to the session state
                 switch (SessionState)
                 {
-                    case SessionRunState.Scan:
-
-                        //This is essentially the "idle" state of the program, when no animal is actually running.
-
-                        //Make a "hard" copy of the signal data and assign it to the MonitoredSignal variable, which is what the user sees
-                        //on the plot.  The "ToList" function makes a copy of the data, rather than copying a pointer.  This is important!
-                        MonitoredSignal = device_signal_transformed.ToList();
-
-                        break;
                     case SessionRunState.SessionBegin:
 
                         //Create an empty list of trials for the new session.
                         Trials = Enumerable.Empty<MotorTrial>().ToList();
 
-                        //Clear all messages for the new session to begin
+                        //Clear all messages for the new session to begin.
                         Messages.Clear();
 
-                        //Set the session state to wait for trials to begin
-                        SessionState = SessionRunState.TrialSetup;
+                        //Set the session state to be running
+                        SessionState = SessionRunState.SessionRunning;
+
+                        //Set the trial state
+                        TrialState = TrialRunState.TrialSetup;
 
                         break;
                     case SessionRunState.SessionEnd:
 
-                        //Do any work needed to finish up a session here.
+                        //Do any work to finish up a session here.
 
-                        //Set the session state to idle
-                        SessionState = SessionRunState.Scan;
+                        //Set the trial state to idle
+                        TrialState = TrialRunState.Idle;
+
+                        //Set the session state to "not running"
+                        SessionState = SessionRunState.SessionNotRunning;
+
+                        break;
+                    case SessionRunState.SessionPaused:
+
+                        //In the case that the session is paused, the trial state will be set to "Idle".
+                        //This is the ONLY time in which the trial state is "Idle" while a session is running.
+                        //This will allow the pull handle output to still be viewed on the window, but trials
+                        //cannot be initiated.
+                        TrialState = TrialRunState.Idle;
+
+                        break;
+                    case SessionRunState.SessionUnpaused:
+
+                        //In the case that the user has unpaused the session, we simply set the trial state to allow
+                        //trials to begin again
+                        TrialState = TrialRunState.TrialSetup;
+
+                        //Now set the session state to be running
+                        SessionState = SessionRunState.SessionRunning;
+
+                        break;
+                }
+
+                //Perform actions based on which trial state we are in
+                switch (TrialState)
+                {
+                    case TrialRunState.Idle:
+
+                        //This is essentially the "idle" state of the program, when no animal is actually running.
+
+                        //Make a "hard" copy of the signal data and assign it to the MonitoredSignal variable, which is what the user sees
+                        //on the plot.  The "ToList" function makes a copy of the data, rather than copying a pointer.  This is important!
+                        MonitoredSignal = new SynchronizedCollection<double>(new object(), device_signal_transformed.ToList());
                         
                         break;
-                    case SessionRunState.TrialSetup:
+                    case TrialRunState.TrialSetup:
 
                         //Reset the raw stream data buffer for the next trial
                         List<int> empty_sample = Enumerable.Repeat<int>(0, SelectedStage.TotalDataStreams).ToList();
                         empty_sample[SelectedStage.DataStreamTypes.IndexOf(MotorBoardDataStreamType.DeviceValue)] = Convert.ToInt32(Device.Baseline);
-                        stream_data_raw = Enumerable.Repeat<List<int>>(empty_sample, buffer_size).ToList();
+                        //stream_data_raw = Enumerable.Repeat<List<int>>(empty_sample, buffer_size).ToList();
 
                         //Wait for a new trial to begin.
-                        SessionState = SessionRunState.TrialWait;
+                        TrialState = TrialRunState.TrialWait;
 
                         break;
-                    case SessionRunState.TrialWait:
+                    case TrialRunState.TrialWait:
 
                         //Run code specific to this stage to check for trial initiation
-                        int trial_initiation_index = SelectedStage.StageImplementation.CheckSignalForTrialInitiation(device_signal_transformed, SelectedStage);
+                        int trial_initiation_index = SelectedStage.StageImplementation.CheckSignalForTrialInitiation(device_signal_transformed, number_of_new_data_points, SelectedStage);
                         
                         //Handle the case in which a trial was initiated
                         if (trial_initiation_index > -1)
@@ -625,15 +729,16 @@ namespace MotoTrakBase
                             CurrentTrial.HitIndex = -1;
 
                             //Change the session state
-                            SessionState = SessionRunState.TrialRun;
+                            TrialState = TrialRunState.TrialRun;
                         }
 
                         //Make a "hard" copy of the signal data and assign it to the MonitoredSignal variable, which is what the user sees
                         //on the plot.  The "ToList" function makes a copy of the data, rather than copying a pointer.  This is important!
-                        MonitoredSignal = device_signal_transformed.ToList();
+                        //MonitoredSignal = device_signal_transformed.ToList();
+                        MonitoredSignal = new SynchronizedCollection<double>(new object(), device_signal_transformed.ToList());
 
                         break;
-                    case SessionRunState.TrialRun:
+                    case TrialRunState.TrialRun:
 
                         //If we are in this state, it indicates that a new trial has already begun.  We are currently in the midst of running
                         //that trial.  Therefore, in this state we should take any new data that is coming in, and process that data 
@@ -679,14 +784,15 @@ namespace MotoTrakBase
                         if (CurrentTrial.TrialData.Count >= SelectedStage.TotalRecordedSamplesPerTrial)
                         {
                             //Change the session state to end this trial.
-                            SessionState = SessionRunState.TrialEnd;
+                            TrialState = TrialRunState.TrialEnd;
                         }
 
                         //Report progress on this trial to the main UI thread
-                        MonitoredSignal = trial_device_signal;
+                        //MonitoredSignal = trial_device_signal;
+                        MonitoredSignal = new SynchronizedCollection<double>(new object(), trial_device_signal);
 
                         break;
-                    case SessionRunState.TrialEnd:
+                    case TrialRunState.TrialEnd:
 
                         //In this state, we finalize a trial and save it to the disk.
                         
@@ -706,28 +812,22 @@ namespace MotoTrakBase
                         CurrentTrial = null;
 
                         //Tell the program to wait for another trial to begin
-                        SessionState = SessionRunState.TrialSetup;
+                        TrialState = TrialRunState.TrialSetup;
 
                         break;
-                    case SessionRunState.TrialManualFeed:
+                    case TrialRunState.TrialManualFeed:
 
                         //Trigger a manual feed
                         ArdyBoard.TriggerFeeder();
 
                         //Set up a new trial
-                        SessionState = SessionRunState.TrialSetup;
-
-                        break;
-                    case SessionRunState.Pause:
-
-                        //In this state we should discard all data and never update the UI.  Animals will not get any pellets
-                        //for any work performed, and no new trials will be initiated.
+                        TrialState = TrialRunState.TrialSetup;
 
                         break;
                 }
                 
                 //Sleep the thread for 12 milliseconds so we don't consume too much CPU time
-                Thread.Sleep(12);
+                //Thread.Sleep(12);
             }
 
             //If we reach this point in the code, it means that user has decided to close the MotoTrak window.  This next line of code
@@ -808,6 +908,21 @@ namespace MotoTrakBase
                         ArdyBoard.TriggerStim();
                         break;
                 }
+            }
+        }
+
+        #endregion
+
+        #region Background property changed
+
+        private List<string> propertyNames = new List<string>();
+        private object propertyNamesLock = new object();
+
+        private void BackgroundPropertyChanged (string name)
+        {
+            lock (propertyNamesLock)
+            {
+                propertyNames.Add(name);
             }
         }
 

@@ -30,19 +30,30 @@ namespace MotoTrakBase
 
         #region Methods implemented for the IMotorStageImplementation interface
 
-        public virtual int CheckSignalForTrialInitiation(List<double> signal, MotorStage stage)
+        public virtual int CheckSignalForTrialInitiation(List<double> signal, int new_datapoint_count, MotorStage stage)
         {
             //Create a value that will be our return value
             int return_value = -1;
 
-            //Retrieve the maximal value from the device signal
-            double maximal_value = signal.Max();
-
-            if (maximal_value >= stage.TrialInitiationThreshold)
+            //We must have more than 0 new datapoints.  If the code inside the if-statement was run with 0 new datapoints, it would
+            //generate an exception.
+            if (new_datapoint_count > 0)
             {
-                //If the maximal value in the signal exceeded the trial initiation force threshold
-                //Find the position at which the signal exceeded the threshold, and return it.
-                return_value = signal.IndexOf(maximal_value);
+                //Look only at the most recent data from the signal
+                var signal_to_use = signal.Skip(signal.Count - new_datapoint_count).ToList();
+
+                //Calculate the difference in size between the two
+                var difference_in_size = signal.Count - signal_to_use.Count;
+
+                //Retrieve the maximal value from the device signal
+                double maximal_value = signal_to_use.Max();
+
+                if (maximal_value >= stage.TrialInitiationThreshold)
+                {
+                    //If the maximal value in the signal exceeded the trial initiation force threshold
+                    //Find the position at which the signal exceeded the threshold, and return it.
+                    return_value = signal_to_use.IndexOf(maximal_value) + difference_in_size;
+                }
             }
 
             return return_value;

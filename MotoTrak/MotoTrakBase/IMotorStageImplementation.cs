@@ -19,7 +19,7 @@ namespace MotoTrakBase
         /// <param name="stage">The stage that is currently being used.</param>
         /// <returns>An integer representing an index into the signal at which a trial initiation occurred.  Return -1 if no
         /// trial initiation was found.</returns>
-        int CheckSignalForTrialInitiation(List<double> signal, MotorStage stage);
+        int CheckSignalForTrialInitiation(List<double> signal, int new_datapoint_count, MotorStage stage);
 
         /// <summary>
         /// This function takes the current signal within a trial as a parameter, and checks to see if the trial has been
