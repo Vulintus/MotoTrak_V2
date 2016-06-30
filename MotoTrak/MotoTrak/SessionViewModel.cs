@@ -87,103 +87,8 @@ namespace MotoTrak
 
         #endregion
 
-        #region Properties
+        #region Public properties that don't depend on the model
 
-        /// <summary>
-        /// The rat's name, as shown in the GUI.
-        /// </summary>
-        public string RatName
-        {
-            get
-            {
-                return SessionModel.RatName;
-            }
-            set
-            {
-                string rat_name = value;
-                SessionModel.RatName = ViewHelperMethods.CleanInput(rat_name.Trim()).ToUpper();
-                NotifyPropertyChanged("RatName");
-                NotifyPropertyChanged("StartButtonEnabled");
-                NotifyPropertyChanged("StartButtonColor");
-            }
-        }
-
-        /// <summary>
-        /// The booth number for this MotoTrak session.
-        /// </summary>
-        public string BoothNumber
-        {
-            get
-            {
-                return SessionModel.BoothNumber.ToString();
-            }
-        }
-
-        /// <summary>
-        /// The list of all available stages that the user can choose from, given the current device that is connected
-        /// to the MotoTrak controller.
-        /// </summary>
-        public List<string> StageList
-        {
-            get
-            {
-                List<string> stages = new List<string>();
-                foreach (MotorStage s in SessionModel.AvailableStages)
-                {
-                    stages.Add(s.StageNumber + " - " + s.Description);
-                }
-
-                return stages;
-            }
-        }
-
-        /// <summary>
-        /// An index into the list of available stages that indicates the currently selected stage.
-        /// </summary>
-        public int StageSelectedIndex
-        {
-            get
-            {
-                if (SessionModel.SelectedStage != null)
-                {
-                    return SessionModel.AvailableStages.IndexOf(SessionModel.SelectedStage);
-                }
-
-                return 0;
-            }
-            set
-            {
-                SessionModel.SelectedStage = SessionModel.AvailableStages[value];
-                StageChangeRequired = false;
-                NotifyPropertyChanged("StageSelectedIndex");
-                NotifyPropertyChanged("StageChangeRequired");
-                NotifyPropertyChanged("StartButtonEnabled");
-                NotifyPropertyChanged("StartButtonColor");
-            }
-        }
-
-        /// <summary>
-        /// A boolean value indicating whether the user is currently able to change the selected stage.
-        /// </summary>
-        public bool IsStageSelectionEnabled
-        {
-            get
-            {
-                return !SessionModel.IsSessionRunning;
-            }
-        }
-
-        /// <summary>
-        /// The name of the device that is currently connected to the MotoTrak board, as displayed to the user.
-        /// </summary>
-        public string DeviceName
-        {
-            get
-            {
-                return SessionModel.Device.DeviceName;
-            }
-        }
-        
         /// <summary>
         /// The list of possible views that can be plotted
         /// </summary>
@@ -212,8 +117,123 @@ namespace MotoTrak
         }
 
         /// <summary>
+        /// Text of the manual feed button
+        /// </summary>
+        public string ManualFeedButtonText
+        {
+            get
+            {
+                return "Feed";
+            }
+        }
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// The rat's name, as shown in the GUI.
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "RatName" })]
+        public string RatName
+        {
+            get
+            {
+                return SessionModel.RatName;
+            }
+            set
+            {
+                string rat_name = value;
+                SessionModel.RatName = ViewHelperMethods.CleanInput(rat_name.Trim()).ToUpper();
+            }
+        }
+
+        /// <summary>
+        /// The booth number for this MotoTrak session.
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "BoothNumber" })]
+        public string BoothNumber
+        {
+            get
+            {
+                return SessionModel.BoothNumber.ToString();
+            }
+        }
+
+        /// <summary>
+        /// The list of all available stages that the user can choose from, given the current device that is connected
+        /// to the MotoTrak controller.
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "AvailableStages" })]
+        public List<string> StageList
+        {
+            get
+            {
+                List<string> stages = new List<string>();
+                foreach (MotorStage s in SessionModel.AvailableStages)
+                {
+                    stages.Add(s.StageNumber + " - " + s.Description);
+                }
+
+                return stages;
+            }
+        }
+
+        /// <summary>
+        /// An index into the list of available stages that indicates the currently selected stage.
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "SelectedStage", "AvailableStages" })]
+        public int StageSelectedIndex
+        {
+            get
+            {
+                if (SessionModel.SelectedStage != null)
+                {
+                    return SessionModel.AvailableStages.IndexOf(SessionModel.SelectedStage);
+                }
+
+                return 0;
+            }
+            set
+            {
+                //This line of code needs to come before the next one.
+                //The reason is that there are properties that listen for "SelectedStage"
+                //to change on the model, but there verification of that change is by checking
+                //the "StageChangeRequired" boolean value.  So the boolean value needs to be
+                //set before the notification occurs.
+                StageChangeRequired = false;
+                SessionModel.SelectedStage = SessionModel.AvailableStages[value];
+            }
+        }
+
+        /// <summary>
+        /// A boolean value indicating whether the user is currently able to change the selected stage.
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
+        public bool IsStageSelectionEnabled
+        {
+            get
+            {
+                return !SessionModel.IsSessionRunning;
+            }
+        }
+
+        /// <summary>
+        /// The name of the device that is currently connected to the MotoTrak board, as displayed to the user.
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "Device" })]
+        public string DeviceName
+        {
+            get
+            {
+                return SessionModel.Device.DeviceName;
+            }
+        }
+
+        /// <summary>
         /// The string for the start/stop button
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
         public string StartOrStopButtonText
         {
             get
@@ -230,6 +250,7 @@ namespace MotoTrak
         /// <summary>
         /// Whether or not the start button should be enabled
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning", "RatName", "SelectedStage", "Device" })]
         public bool StartButtonEnabled
         {
             get
@@ -246,6 +267,7 @@ namespace MotoTrak
         /// <summary>
         /// The color of the text for the start/stop button
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning", "RatName", "SelectedStage" })]
         public SolidColorBrush StartButtonColor
         {
             get
@@ -271,6 +293,7 @@ namespace MotoTrak
         /// <summary>
         /// The text of the pause button
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning", "IsSessionPaused" })]
         public string PauseOrUnpauseButtonText
         {
             get
@@ -287,6 +310,7 @@ namespace MotoTrak
         /// <summary>
         /// Boolean indicating whether the pause button should be enabled
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
         public bool PauseButtonEnabled
         {
             get
@@ -296,19 +320,9 @@ namespace MotoTrak
         }
 
         /// <summary>
-        /// Text of the manual feed button
-        /// </summary>
-        public string ManualFeedButtonText
-        {
-            get
-            {
-                return "Feed";
-            }
-        }
-
-        /// <summary>
         /// Whether or not the manual feed button is enabled
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning", "IsSessionPaused" })]
         public bool ManualFeedButtonEnabled
         {
             get
@@ -316,10 +330,11 @@ namespace MotoTrak
                 return SessionModel.IsSessionRunning && !SessionModel.IsSessionPaused;
             }
         }
-        
+
         /// <summary>
         /// Indicates whether the session is currently running or idle
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
         public bool IsSessionRunning
         {
             get
@@ -329,8 +344,21 @@ namespace MotoTrak
         }
 
         /// <summary>
+        /// Boolean indicating whether the session is NOT running
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
+        public bool IsSessionNotRunning
+        {
+            get
+            {
+                return !SessionModel.IsSessionRunning;
+            }
+        }
+
+        /// <summary>
         /// A collection of strings that acts as the messages to be displayed to the user.
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
         public List<string> MessageItems
         {
             get
@@ -351,6 +379,25 @@ namespace MotoTrak
         }
 
         /// <summary>
+        /// Visibility of the "reset baseline" button
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
+        public Visibility ResetBaselineVisibility
+        {
+            get
+            {
+                if (IsSessionRunning)
+                {
+                    return Visibility.Collapsed;
+                }
+                else
+                {
+                    return Visibility.Visible;
+                }
+            }
+        }
+
+        /// <summary>
         /// Whether or not to visualize certain debugging elements of the UI.
         /// </summary>
         public Visibility DebuggingVisibility
@@ -365,6 +412,7 @@ namespace MotoTrak
         /// The frame rate of the program for debugging purposes.
         /// This is essentially how fast we are able to loop and process incoming data from the MotoTrak controller board.
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "FramesPerSecond" })]
         public string FrameRate
         {
             get
@@ -377,6 +425,7 @@ namespace MotoTrak
 
         #region Plotting properties
 
+        [ReactToModelPropertyChanged(new string[] { "MonitoredSignal" })]
         public PlotModel MotoTrakPlot { get; private set; }
 
         #endregion
@@ -396,8 +445,8 @@ namespace MotoTrak
         /// </summary>
         public void StopSession ()
         {
-            SessionModel.StopSession();
             StageChangeRequired = true;
+            SessionModel.StopSession();
         }
 
         /// <summary>
@@ -442,42 +491,78 @@ namespace MotoTrak
             //then it does things in the user interface based on those changes (meaning, basically, that is sends up notifications
             //to the UI about those things changing.
 
+            //Grab the name of the property that changed on the model
             string prop_name = e.PropertyName;
-            if (prop_name.Equals("IsSessionRunning"))
-            {
-                NotifyPropertyChanged("IsStageSelectionEnabled");
-                NotifyPropertyChanged("StartOrStopButtonText");
-                NotifyPropertyChanged("StartButtonEnabled");
-                NotifyPropertyChanged("StartButtonColor");
-                NotifyPropertyChanged("PauseButtonEnabled");
-                NotifyPropertyChanged("ManualFeedButtonEnabled");
-                NotifyPropertyChanged("IsSessionRunning");
-                NotifyPropertyChanged("MessageItems");
-            }
-            else if (prop_name.Equals("IsSessionPaused"))
-            {
-                NotifyPropertyChanged("PauseOrUnpauseButtonText");
-            }
-            else if (prop_name.Equals("BoothNumber"))
-            {
-                NotifyPropertyChanged("BoothNumber");
-            }
-            else if (prop_name.Equals("Device"))
-            {
-                NotifyPropertyChanged("DeviceName");
-            }
-            else if (prop_name.Equals("RatName"))
-            {
-                NotifyPropertyChanged("RatName");
-            }
-            else if (prop_name.Equals("SelectedStage"))
-            {
-                NotifyPropertyChanged("StageSelectedIndex");
-                NotifyPropertyChanged("IsStageSelectionEnabled");
-                NotifyPropertyChanged("StartButtonEnabled");
-                NotifyPropertyChanged("StartButtonColor");
-                NotifyPropertyChanged("StartOrStopButtonText");
 
+            //Update the plot if necessary
+            UpdatePlotBasedOnModelPropertyChanged(prop_name);
+
+            //Update other user interface components
+            ExecuteReactionsToModelPropertyChanged(prop_name);
+        }
+
+        private void ExecuteReactionsToModelPropertyChanged(string model_property_changed)
+        {
+            //Get a System.Type object representing the current view-model object
+            System.Type t = typeof(SessionViewModel);
+
+            //Retrieve all property info for the view-model
+            var property_info = t.GetProperties();
+
+            //Iterate through each property
+            foreach (var property in property_info)
+            {
+                //Get the custom attributes defined for this property
+                var attributes = property.GetCustomAttributes(false);
+                foreach (var attribute in attributes)
+                {
+                    //If the property is listening for changes on the model
+                    var a = attribute as ReactToModelPropertyChanged;
+                    if (a != null)
+                    {
+                        //If the property that was changed on the model matches the name
+                        //that this view-model property is listening for...
+                        if (a.ModelPropertyNames.Contains(model_property_changed))
+                        {
+                            //Notify the UI that the view-model property has been changed
+                            NotifyPropertyChanged(property.Name);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void CurrentTrial_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            //This function listens to changes that occur from the current trial that is running, and then it 
+            //does things based off of those changes.
+
+            //Get the property from the current trial that changed
+            string prop_name = e.PropertyName;
+
+            //Udate the plot
+            UpdatePlotBasedOnModelPropertyChanged(prop_name);
+        }
+
+        /// <summary>
+        /// Listens to the model's "Messages" collection and reacts to changes in the collection.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Messages_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            NotifyPropertyChanged("MessageItems");
+            NotifyPropertyChanged("MessagesSelectedIndex");
+        }
+
+        #endregion
+
+        #region Methods that update the plot
+
+        public void UpdatePlotBasedOnModelPropertyChanged ( string prop_name )
+        {
+            if (prop_name.Equals("SelectedStage"))
+            {
                 var y_axis = MotoTrakPlot.Axes.Where(a => a.Position == AxisPosition.Left).FirstOrDefault();
                 if (y_axis != null)
                 {
@@ -485,14 +570,8 @@ namespace MotoTrak
                     MotoTrakPlot.InvalidatePlot(true);
                 }
             }
-            else if (prop_name.Equals("AvailableStages"))
-            {
-                NotifyPropertyChanged("StageList");
-                NotifyPropertyChanged("StageSelectedIndex");
-            }
             else if (prop_name.Equals("MonitoredSignal"))
             {
-
                 var datapoints = SessionModel.MonitoredSignal.Select((y_val, x_val) => new DataPoint(x_val, y_val)).ToList();
 
                 var s = MotoTrakPlot.Series[0] as AreaSeries;
@@ -503,16 +582,6 @@ namespace MotoTrak
                 }
 
                 MotoTrakPlot.InvalidatePlot(true);
-
-                NotifyPropertyChanged("MotoTrakPlot");
-            }
-            else if (prop_name.Equals("FramesPerSecond"))
-            {
-                NotifyPropertyChanged("FrameRate");
-            }
-            else if (prop_name.Equals("Trials"))
-            {
-
             }
             else if (prop_name.Equals("CurrentTrial"))
             {
@@ -545,7 +614,7 @@ namespace MotoTrak
                     hit_threshold_line.Y = SessionModel.SelectedStage.HitThreshold;
                     hit_threshold_line.MinimumX = SessionModel.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
                     hit_threshold_line.MaximumX = SessionModel.SelectedStage.TotalRecordedSamplesBeforeHitWindow + SessionModel.SelectedStage.TotalRecordedSamplesDuringHitWindow;
-                    
+
                     var y_axis = MotoTrakPlot.Axes.Where(a => a.Position == AxisPosition.Left).FirstOrDefault();
                     if (y_axis != null)
                     {
@@ -571,16 +640,7 @@ namespace MotoTrak
                     MotoTrakPlot.InvalidatePlot(true);
                 }
             }
-        }
-
-        private void CurrentTrial_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            //This function listens to changes that occur from the current trial that is running, and then it 
-            //does things based off of those changes.
-
-            string prop_name = e.PropertyName;
-
-            if (prop_name.Equals("HitIndex"))
+            else if (prop_name.Equals("HitIndex"))
             {
                 LineAnnotation hit_line = new LineAnnotation();
                 hit_line.Type = LineAnnotationType.Vertical;
@@ -600,17 +660,6 @@ namespace MotoTrak
                 MotoTrakPlot.Annotations.Add(hit_line);
                 MotoTrakPlot.InvalidatePlot(true);
             }
-        }
-
-        /// <summary>
-        /// Listens to the model's "Messages" collection and reacts to changes in the collection.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Messages_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            NotifyPropertyChanged("MessageItems");
-            NotifyPropertyChanged("MessagesSelectedIndex");
         }
 
         #endregion

@@ -254,7 +254,7 @@ namespace MotoTrakBase
         {
             get
             {
-                return (SessionState == SessionRunState.SessionRunning);
+                return (SessionState != SessionRunState.SessionNotRunning);
             }
         }
 
@@ -618,6 +618,9 @@ namespace MotoTrakBase
                 {
                     frames++;
                 }
+
+                //Run the autopositioner
+                MotoTrakAutopositioner.GetInstance().RunAutopositioner();
                 
                 //Read in new datapoints from the Arduino board
                 int number_of_new_data_points = ReadNewDataFromArduino(stream_data_raw, buffer_size);
@@ -771,14 +774,20 @@ namespace MotoTrakBase
 
                                 //If the trial was successful, take certain actions as described by the stage definition.
                                 var success_actions = SelectedStage.StageImplementation.ReactToTrialSuccess(trial_device_signal, SelectedStage);
-                                TakeAction(success_actions);
+                                foreach (var action in success_actions)
+                                {
+                                    action.ExecuteAction();
+                                }
                             }
                         }
 
                         //Perform any necessary actions that need to be taken according to the stage parameters that are unrelated to
                         //actions that are taken given the success of a trial.
                         var actions = SelectedStage.StageImplementation.PerformActionDuringTrial(trial_device_signal, SelectedStage);
-                        TakeAction(actions);
+                        foreach (var action in actions)
+                        {
+                            action.ExecuteAction();
+                        }
 
                         //Check to see if this trial has finished
                         if (CurrentTrial.TrialData.Count >= SelectedStage.TotalRecordedSamplesPerTrial)
@@ -826,8 +835,8 @@ namespace MotoTrakBase
                         break;
                 }
                 
-                //Sleep the thread for 12 milliseconds so we don't consume too much CPU time
-                //Thread.Sleep(12);
+                //Sleep the thread for 30 milliseconds so we don't consume too much CPU time
+                Thread.Sleep(30);
             }
 
             //If we reach this point in the code, it means that user has decided to close the MotoTrak window.  This next line of code
@@ -889,26 +898,6 @@ namespace MotoTrakBase
             //Now add the device signal from the X seconds before the hit window to our buffer in which we keep the whole trial device signal
             trial_device_signal = Enumerable.Repeat<double>(0, buffer_size).ToList();
             trial_device_signal.ReplaceRange(pre_trial_device_signal, 0);
-        }
-
-        private void TakeAction (List<MotorTrialAction> actions)
-        {
-            //Go through the list of actions to take, and perform each of them.
-            foreach (MotorTrialAction a in actions)
-            {
-                switch (a)
-                {
-                    case MotorTrialAction.TriggerFeeder:
-                        ArdyBoard.TriggerFeeder();
-                        break;
-                    case MotorTrialAction.PlaySound:
-                        //this needs to be implemented
-                        break;
-                    case MotorTrialAction.SendStimulationTrigger:
-                        ArdyBoard.TriggerStim();
-                        break;
-                }
-            }
         }
 
         #endregion

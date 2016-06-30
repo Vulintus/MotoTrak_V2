@@ -27,7 +27,10 @@ namespace MotoTrakBase
         private IMotorStageImplementation _stageImplementation = null;
 
         private double _hitThreshold = 0;
-        
+
+        private string _stageFilePath = string.Empty;
+        private string _stageFileName = string.Empty;
+
         #endregion
 
         #region Constructors
@@ -43,6 +46,48 @@ namespace MotoTrakBase
         #endregion
 
         #region Properties - V2
+
+        /// <summary>
+        /// The path leading to the stage file
+        /// </summary>
+        public string StageFilePath
+        {
+            get
+            {
+                return _stageFilePath;
+            }
+            private set
+            {
+                _stageFilePath = value;
+            }
+        }
+
+        /// <summary>
+        /// The file name (not including the path)
+        /// </summary>
+        public string StageFileName
+        {
+            get
+            {
+                return _stageFileName;
+            }
+            private set
+            {
+                _stageFileName = value;
+            }
+        }
+
+        /// <summary>
+        /// The fully qualified stage file: path + file name.
+        /// This is read-only.
+        /// </summary>
+        public string StageFile
+        {
+            get
+            {
+                return (StageFilePath + StageFileName);
+            }
+        }
 
         /// <summary>
         /// The stage version being used.  A value of 1 indicates that this stage is a MotoTrak V1 style of stage.

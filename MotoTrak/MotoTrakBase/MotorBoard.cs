@@ -16,6 +16,7 @@ namespace MotoTrakBase
         private char[] seps = new char[4] { ' ', '\t', '\n', '\r' };
         private SerialPort _serialConnection = null;
         private const int MinimumArduinoSketchVersion = 30;
+        private double _autopositioner_offset = 48;
 
         #endregion
 
@@ -83,6 +84,22 @@ namespace MotoTrakBase
                 return (SerialConnection != null && SerialConnection.IsOpen);
             }
         }
+
+        /// <summary>
+        /// The offset of the autopositioner.
+        /// </summary>
+        public double AutopositionerOffset
+        {
+            get
+            {
+                return _autopositioner_offset;
+            }
+            set
+            {
+                _autopositioner_offset = value;
+            }
+        }
+
 
         #endregion
 
@@ -330,6 +347,11 @@ namespace MotoTrakBase
         public void TriggerStim()
         {
             this.SimpleCommand("XA", 1);
+        }
+
+        public void Autopositioner ( double pos )
+        {
+            //empty for now
         }
 
         /// <summary>

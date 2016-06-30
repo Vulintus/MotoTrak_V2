@@ -12,6 +12,7 @@ from MotoTrakBase import IMotorStageImplementation
 from MotoTrakBase import MotorStage
 from MotoTrakBase import MotorTrialResult
 from MotoTrakBase import MotorTrialAction
+from MotoTrakBase import MotorTrialActionType
 from MotoTrakBase import MotorStageStimulationType
 from MotoTrakBase import MotorStageAdaptiveThresholdType
 
@@ -59,9 +60,13 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
 
     def ReactToTrialSuccess(self, trial_signal, stage):
         result = List[MotorTrialAction]()
-        result.Add(MotorTrialAction.TriggerFeeder)
+        feed_action = MotorTrialAction()
+        feed_action.ActionType = MotorTrialActionType.TriggerFeeder
+        result.Add(feed_action)
         if stage.StimulationType == MotorStageStimulationType.On:
-            result.Add(MotorTrialAction.SendStimulationTrigger)
+            stim_action = MotorTrialAction()
+            stim_action.ActionType = MotorTrialActionType.SendStimulationTrigger
+            result.Add(stim_action)
         return result
 
     def PerformActionDuringTrial(self, trial_signal, stage):

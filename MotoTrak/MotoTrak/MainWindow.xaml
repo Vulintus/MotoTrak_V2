@@ -99,6 +99,14 @@
                             FontWeight="Bold"
                             FontSize="18"
                             />
+
+                <Button HorizontalAlignment="Left"
+                        Height="30" Width="150" Margin="0,0,0,5"
+                        Content="Reset Baseline"
+                        Click="ResetBaselineButtonClick"
+                        FontWeight="Bold"
+                        FontSize="18"
+                        />
             </StackPanel>
 
             <ListBox Grid.Column="1" Margin="5,0,0,0"  Name="MessagesListBox" ItemsSource="{Binding Path=MessageItems, Mode=OneWay}"

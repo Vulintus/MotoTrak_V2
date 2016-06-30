@@ -81,11 +81,11 @@ namespace MotoTrakBase
         public virtual List<MotorTrialAction> ReactToTrialSuccess(List<double> trial_signal, MotorStage stage)
         {
             List<MotorTrialAction> actions = new List<MotorTrialAction>();
-            actions.Add(MotorTrialAction.TriggerFeeder);
+            actions.Add(new MotorTrialAction() { ActionType = MotorTrialActionType.TriggerFeeder });
 
             if (stage.StimulationType == MotorStageStimulationType.On)
             {
-                actions.Add(MotorTrialAction.SendStimulationTrigger);
+                actions.Add(new MotorTrialAction() { ActionType = MotorTrialActionType.SendStimulationTrigger });
             }
 
             return actions;

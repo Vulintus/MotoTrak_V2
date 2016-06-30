@@ -92,5 +92,10 @@ namespace MotoTrak
         {
             MessagesListBox.ScrollIntoView(MessagesListBox.SelectedItem);
         }
+
+        private void ResetBaselineButtonClick(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

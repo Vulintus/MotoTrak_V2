@@ -1,0 +1,44 @@
+﻿<Window x:Class="StageDesigner.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:StageDesigner"
+        mc:Ignorable="d"
+        Title="MotoTrak Stage Designer" Height="350" Width="525">
+
+    <!-- Define resources for this Window -->
+    <Window.Resources>
+
+        <!-- This is the data template for all the stage definition documents that will be shown in tabs in this window. -->
+        <DataTemplate x:Key="StageDefinitionDataTemplate">
+            <Grid>
+                <TextBlock Text="This is a stage definition" />
+            </Grid>
+        </DataTemplate>
+        
+    </Window.Resources>
+    
+    
+    
+    <StackPanel Orientation="Vertical">
+        <DockPanel Height="25" VerticalAlignment="Top">
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="_File">
+                    <MenuItem Header="_New Stage" Click="NewStage_Click" />
+                    <MenuItem Header="_Open Stage" Click="OpenStage_Click" />
+                    <MenuItem Header="_Save Stage" Click="SaveStage_Click" />
+                    <MenuItem Header="Save Stage _As" Click="SaveStageAs_Click" />
+                    <MenuItem Header="_Close Stage" Click="CloseStage_Click" />
+                    <MenuItem Header="Close All Stages" Click="CloseAllStages_Click" />
+                    <MenuItem Header="E_xit" Click="Exit_Click" />
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+
+        <TabControl Name="StageFileTabControl">
+            <!-- Stage files will become tabs in this tab control when they are opened. -->
+        </TabControl>
+        
+    </StackPanel>
+</Window>

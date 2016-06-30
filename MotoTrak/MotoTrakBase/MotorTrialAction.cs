@@ -7,13 +7,129 @@ using System.Threading.Tasks;
 namespace MotoTrakBase
 {
     /// <summary>
-    /// This enumeration represents the set of actions that MotoTrak can take towards the rat, typically in response to 
-    /// a successful trial, but also in some other scenarios.
+    /// Class that defines an action that needs to take place by MotoTrak
     /// </summary>
-    public enum MotorTrialAction
+    public class MotorTrialAction
     {
-        TriggerFeeder,
-        PlaySound,
-        SendStimulationTrigger
+        #region Private data members
+
+        private MotorTrialActionType _actionType = MotorTrialActionType.Unknown;
+        private Dictionary<object, object> _parameters = new Dictionary<object, object>();
+
+        #endregion
+
+        #region
+
+        /// <summary>
+        /// Parameters that need to be defined when defining an action that plays a sound.
+        /// </summary>
+        public enum SoundActionParameterType
+        {
+            SoundDuration,
+            SoundFrequency
+        }
+
+        /// <summary>
+        /// Parameters that need to be defined when specifying an action for the autopositioner.
+        /// </summary>
+        public enum AutopositionerParameterType
+        {
+            Position
+        }
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public MotorTrialAction()
+        {
+            //empty
+        }
+
+        #endregion
+
+        #region Public properties
+
+        /// <summary>
+        /// The type of action that is to be taken
+        /// </summary>
+        public MotorTrialActionType ActionType
+        {
+            get
+            {
+                return _actionType;
+            }
+            set
+            {
+                _actionType = value;
+            }
+        }
+
+        /// <summary>
+        /// The parameters of the action that needs to take place
+        /// </summary>
+        public Dictionary<object, object> ActionParameters
+        {
+            get
+            {
+                return _parameters;
+            }
+            set
+            {
+                _parameters = value;
+            }
+        }
+
+        #endregion
+
+        #region Public methods
+
+        public void ExecuteAction()
+        {
+            switch (this.ActionType)
+            {
+                case MotorTrialActionType.AdjustAutopositionerPosition:
+
+                    //Unbox the double from the object
+                    double position = (double)this.ActionParameters[AutopositionerParameterType.Position];
+
+                    //Perform the autopositioner action
+                    MotoTrakAutopositioner.GetInstance().SetPosition(position);
+
+                    break;
+                case MotorTrialActionType.AdjustHitThreshold:
+
+                    //TODO: complete this
+
+                    break;
+                case MotorTrialActionType.PlaySound:
+
+                    //Unbox the data from the dictionary
+                    double frequency = (double)this.ActionParameters[SoundActionParameterType.SoundFrequency];
+                    double duration = (double)this.ActionParameters[SoundActionParameterType.SoundDuration];
+
+                    //Perform the sound action
+                    //TO DO: complete this
+
+                    break;
+                case MotorTrialActionType.SendStimulationTrigger:
+
+                    //Perform the stimulation trigger
+                    MotorBoard.GetInstance().TriggerStim();
+
+                    break;
+                case MotorTrialActionType.TriggerFeeder:
+
+                    //Perform the feed
+                    MotorBoard.GetInstance().TriggerFeeder();
+
+                    break;
+            }
+        }
+
+        #endregion
     }
 }
