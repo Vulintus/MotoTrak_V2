@@ -95,7 +95,11 @@ namespace MotoTrak
 
         private void ResetBaselineButtonClick(object sender, RoutedEventArgs e)
         {
-
+            SessionViewModel viewModel = DataContext as SessionViewModel;
+            if (viewModel != null)
+            {
+                viewModel.ResetBaseline();
+            }
         }
     }
 }

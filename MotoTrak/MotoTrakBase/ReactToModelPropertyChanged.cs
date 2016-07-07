@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MotoTrak
+namespace MotoTrakBase
 {
     /// <summary>
     /// This class defines an attribute that view-model properties can use to react to changes
@@ -15,7 +15,7 @@ namespace MotoTrak
     {
         public List<string> ModelPropertyNames = new List<string>();
 
-        public ReactToModelPropertyChanged(string [] propertyNames)
+        public ReactToModelPropertyChanged(string[] propertyNames)
         {
             ModelPropertyNames.AddRange(propertyNames);
         }

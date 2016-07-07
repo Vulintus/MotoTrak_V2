@@ -382,7 +382,7 @@ namespace MotoTrak
         /// Visibility of the "reset baseline" button
         /// </summary>
         [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
-        public Visibility ResetBaselineVisibility
+        public Visibility ResetBaselineButtonVisibility
         {
             get
             {
@@ -398,6 +398,44 @@ namespace MotoTrak
         }
 
         /// <summary>
+        /// Visibility of the pause button
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
+        public Visibility PauseButtonVisibility
+        {
+            get
+            {
+                if (IsSessionRunning)
+                {
+                    return Visibility.Visible;
+                }
+                else
+                {
+                    return Visibility.Collapsed;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Visibility of the manual feed button
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
+        public Visibility ManualFeedButtonVisibility
+        {
+            get
+            {
+                if (IsSessionRunning)
+                {
+                    return Visibility.Visible;
+                }
+                else
+                {
+                    return Visibility.Collapsed;
+                }
+            }
+        }
+
+        /// <summary>
         /// Whether or not to visualize certain debugging elements of the UI.
         /// </summary>
         public Visibility DebuggingVisibility
@@ -408,6 +446,10 @@ namespace MotoTrak
             }
         }
 
+        #endregion
+
+        #region Debugging properties
+
         /// <summary>
         /// The frame rate of the program for debugging purposes.
         /// This is essentially how fast we are able to loop and process incoming data from the MotoTrak controller board.
@@ -417,7 +459,43 @@ namespace MotoTrak
         {
             get
             {
-                return SessionModel.FramesPerSecond.ToString();
+                return (SessionModel.FramesPerSecond.ToString());
+            }
+        }
+
+        /// <summary>
+        /// The baseline value of the device
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "Device" })]
+        public string DeviceBaseline
+        {
+            get
+            {
+                return (SessionModel.Device.Baseline.ToString());
+            }
+        }
+
+        /// <summary>
+        /// The most recent analog value read from the device
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "DeviceAnalogValue" })]
+        public string DeviceAnalogValue
+        {
+            get
+            {
+                return (SessionModel.DeviceAnalogValue.ToString());
+            }
+        }
+
+        /// <summary>
+        /// The most recent calibrated reading from the device
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "DeviceCalibratedValue" })]
+        public string DeviceCalibratedValue
+        {
+            get
+            {
+                return (SessionModel.DeviceCalibratedValue.ToString());
             }
         }
 
@@ -479,6 +557,14 @@ namespace MotoTrak
         public void CancelStreaming ()
         {
             SessionModel.CancelBackgroundLoop();
+        }
+
+        /// <summary>
+        /// Call into the model to reset the baseline.
+        /// </summary>
+        public void ResetBaseline ()
+        {
+            SessionModel.ResetBaseline();
         }
 
         #endregion

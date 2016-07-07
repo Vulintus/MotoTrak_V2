@@ -236,13 +236,27 @@ namespace MotoTrakBase
             Array.Reverse(bytes);
 
             //Now let's convert the bytes that we have into a character string
-            string charRepresentation = System.Text.Encoding.ASCII.GetString(bytes);
+            //string charRepresentation = System.Text.Encoding.ASCII.GetString(bytes);
+            List<char> list_of_char = new List<char>();
+            foreach (byte b in bytes)
+            {
+                list_of_char.Add(Convert.ToChar(b));
+            }
+            string charRepresentation = new string(list_of_char.ToArray());
 
             //Now replace the string "nn" in the command with the correct bytes
             string finalCommandString = newCommandString.Replace("nn", charRepresentation);
 
             //Now break down the full command into individual bytes and send it
-            byte[] commandBytes = Encoding.ASCII.GetBytes(finalCommandString);
+            //byte[] commandBytes = Encoding.ASCII.GetBytes(finalCommandString);
+            List<byte> command_bytes = new List<byte>();
+            foreach (char c in finalCommandString)
+            {
+                command_bytes.Add(BitConverter.GetBytes(c)[0]);
+            }
+
+            byte[] commandBytes = command_bytes.ToArray();
+
             SerialConnection.Write(commandBytes, 0, commandBytes.Length);
         }
 

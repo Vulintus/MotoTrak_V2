@@ -10,9 +10,11 @@ namespace MotoTrakBase
     /// </summary>
     public class MotoTrakException : Exception
     {
+        public MotoTrakExceptionType ExceptionType = MotoTrakExceptionType.Unknown;
+
         public MotoTrakException() : base() { }
-        public MotoTrakException(string message) : base(message) { }
-        public MotoTrakException(string message, System.Exception inner) : base(message, inner) { }
+        public MotoTrakException(MotoTrakExceptionType t, string message) : base(message) { ExceptionType = t; }
+        public MotoTrakException(MotoTrakExceptionType t, string message, System.Exception inner) : base(message, inner) { ExceptionType = t; }
 
         // A constructor is needed for serialization when an 
         // exception propagates from a remoting server to the client.  

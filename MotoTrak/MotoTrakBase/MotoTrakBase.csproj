@@ -61,6 +61,7 @@
     <Compile Include="MotorStageAdaptiveThresholdTypeConverter.cs" />
     <Compile Include="MotorStageHitThresholdType.cs" />
     <Compile Include="MotorStageHitThresholdTypeConverter.cs" />
+    <Compile Include="MotorStageParameter.cs" />
     <Compile Include="MotorStageStimulationType.cs" />
     <Compile Include="MotorStageStimulationTypeConverter.cs" />
     <Compile Include="MotorTrial.cs" />
@@ -70,6 +71,9 @@
     <Compile Include="MotoTrakAutopositioner.cs" />
     <Compile Include="MotoTrakConfiguration.cs" />
     <Compile Include="MotoTrakException.cs" />
+    <Compile Include="MotoTrakExceptionType.cs" />
+    <Compile Include="MotoTrakExceptionTypeConverter.cs" />
+    <Compile Include="MotoTrakFileRead.cs" />
     <Compile Include="MotoTrakMessageType.cs" />
     <Compile Include="MotoTrakSession.cs" />
     <Compile Include="NotifyPropertyChangedObject.cs" />
@@ -77,6 +81,7 @@
     <Compile Include="PullStageImplementation.cs" />
     <Compile Include="PythonEngine.cs" />
     <Compile Include="PythonStageImplementation.cs" />
+    <Compile Include="ReactToModelPropertyChanged.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MotoTrakUtilities\MotoTrakUtilities.csproj">

@@ -9,28 +9,79 @@ namespace MotoTrakBase
     /// </summary>
     public class MotorStage
     {
+        #region Public enumerated type
+
+        #endregion
+
         #region Private data members
-
-        private int _stageVersion = 1;
-
+        
+        /// <summary>
+        /// Some constants
+        /// </summary>
         private const int _defaultPreTrialSamplingPeriodInSeconds = 1;
+        private const int _defaultHitWindowDurationInSeconds = 2;
         private const int _defaultPostTrialSamplingPeriodInSeconds = 2;
-        private const int _defaultTotalDataStreams = 3;
+        private const int _defaultPostTrialTimeoutPeriodInSeconds = 0;
 
-        private int _preTrialSamplingPeriodInSeconds = _defaultPreTrialSamplingPeriodInSeconds;
-        private int _postTrialSamplingPeriodInSeconds = _defaultPostTrialSamplingPeriodInSeconds;
-        private int _totalDataStreams = _defaultTotalDataStreams;
-
-        private List<MotorBoardDataStreamType> _dataStreamTypes = new List<MotorBoardDataStreamType>()
-            {  MotorBoardDataStreamType.Timestamp, MotorBoardDataStreamType.DeviceValue, MotorBoardDataStreamType.IRSensorValue };
-
+        /// <summary>
+        /// This will hold the stage implementation code
+        /// </summary>
         private IMotorStageImplementation _stageImplementation = null;
 
-        private double _hitThreshold = 0;
-
+        /// <summary>
+        /// Strings that hold the path and file name of where this stage is located
+        /// </summary>
         private string _stageFilePath = string.Empty;
         private string _stageFileName = string.Empty;
 
+        private MotorStageParameter _pre_trial_sampling_period_in_seconds = new MotorStageParameter()
+        {
+            ParameterType = MotorStageParameter.StageParameterType.Fixed,
+            InitialValue = _defaultPreTrialSamplingPeriodInSeconds,
+            CurrentValue = _defaultPreTrialSamplingPeriodInSeconds
+        };
+
+        private MotorStageParameter _post_trial_sampling_period_in_seconds = new MotorStageParameter()
+        {
+            ParameterType = MotorStageParameter.StageParameterType.Fixed,
+            InitialValue = _defaultPostTrialSamplingPeriodInSeconds,
+            CurrentValue = _defaultPostTrialSamplingPeriodInSeconds
+        };
+
+        private MotorStageParameter _post_trial_timeout_period_in_seconds = new MotorStageParameter()
+        {
+            ParameterType = MotorStageParameter.StageParameterType.Fixed,
+            InitialValue = _defaultPostTrialTimeoutPeriodInSeconds,
+            CurrentValue = _defaultPostTrialTimeoutPeriodInSeconds
+        };
+
+        private MotorStageParameter _hit_window_in_seconds = new MotorStageParameter()
+        {
+            ParameterType = MotorStageParameter.StageParameterType.Fixed,
+            InitialValue = _defaultHitWindowDurationInSeconds,
+            CurrentValue = _defaultHitWindowDurationInSeconds
+        };
+
+        private MotorStageParameter _position_of_device = new MotorStageParameter()
+        {
+            ParameterType = MotorStageParameter.StageParameterType.Fixed,
+            InitialValue = 0,
+            CurrentValue = 0
+        };
+        
+        private List<MotorBoardDataStreamType> _data_stream_types = new List<MotorBoardDataStreamType>()
+        {
+            MotorBoardDataStreamType.Timestamp,
+            MotorBoardDataStreamType.DeviceValue,
+            MotorBoardDataStreamType.IRSensorValue
+        };
+        
+        private List<MotorStageParameter> _hit_threshold_list = new List<MotorStageParameter>();
+
+        private List<MotorStageParameter> _initiation_threshold_list = new List<MotorStageParameter>();
+
+        private int _trial_count_lookback_for_adaptive_adjustments = 10;
+        
         #endregion
 
         #region Constructors
@@ -45,8 +96,28 @@ namespace MotoTrakBase
 
         #endregion
 
-        #region Properties - V2
+        #region Properties
 
+        /// <summary>
+        /// The number of the stage
+        /// </summary>
+        public string StageName { get; set; }
+
+        /// <summary>
+        /// A text description of the stage
+        /// </summary>
+        public string Description { get; set; }
+
+        /// <summary>
+        /// The type of device the stage uses
+        /// </summary>
+        public MotorDeviceType DeviceType { get; set; }
+
+        /// <summary>
+        /// The number of milliseconds each sample in the signal represents.
+        /// </summary>
+        public int SamplePeriodInMilliseconds { get; set; }
+        
         /// <summary>
         /// The path leading to the stage file
         /// </summary>
@@ -90,35 +161,15 @@ namespace MotoTrakBase
         }
 
         /// <summary>
-        /// The stage version being used.  A value of 1 indicates that this stage is a MotoTrak V1 style of stage.
-        /// A value of 2 indicates that this stage was designed for exclusively for MotoTrak V2.
-        /// </summary>
-        public int StageVersion
-        {
-            get
-            {
-                return _stageVersion;
-            }
-            set
-            {
-                _stageVersion = value;
-            }
-        }
-
-        /// <summary>
-        /// The total number of streams of data that will be streamed from the Arduino based on the settings of this stage.
+        /// The total number of streams of data that will be streamed from the MotoTrak controller board based on the settings of this stage.
         /// The default number is 3 (and this is the number of streams that was used in MotoTrak V1).
-        /// The 3 default streams (in order) are: { timestamp, device value, IR sensor value }
+        /// The 3 default streams (in order) are: { timestamp, pull/knob device value, IR sensor value }
         /// </summary>
         public int TotalDataStreams
         {
             get
             {
-                return _totalDataStreams;
-            }
-            set
-            {
-                _totalDataStreams = value;
+                return _data_stream_types.Count;
             }
         }
 
@@ -132,11 +183,11 @@ namespace MotoTrakBase
         {
             get
             {
-                return _dataStreamTypes;
+                return _data_stream_types;
             }
             set
             {
-                _dataStreamTypes = value;
+                _data_stream_types = value;
             }
         }
 
@@ -155,154 +206,101 @@ namespace MotoTrakBase
             }
         }
 
-        public int TrialsToRetainForAdaptiveAdjustments { get; set; }
-
-        #endregion
-
-        #region Properties - V1
-
         /// <summary>
-        /// The number of the stage
+        /// The number of trials to retain, or rather, the number of trials to "look back" when needing
+        /// to make adaptive adjustments at the end of every trial.
         /// </summary>
-        public string StageNumber { get; set; }
-
-        /// <summary>
-        /// A text description of the stage
-        /// </summary>
-        public string Description { get; set; }
-
-        /// <summary>
-        /// The type of device the stage uses
-        /// </summary>
-        public MotorDeviceType DeviceType { get; set; }
-
-        /// <summary>
-        /// The position of the "peg" for the device on this stage
-        /// </summary>
-        public double Position { get; set; }
-
-        /// <summary>
-        /// The type of adaptive threshold being used for this stage
-        /// </summary>
-        public MotorStageAdaptiveThresholdType AdaptiveThresholdType { get; set; }
-
-        /// <summary>
-        /// The minimum hit threshold for this stage
-        /// </summary>
-        public double HitThresholdMinimum { get; set; }
-
-        /// <summary>
-        /// The maximum hit threshold for this stage
-        /// </summary>
-        public double HitThresholdMaximum { get; set; }
-
-        /// <summary>
-        /// The increment by which the hit threshold changes for this stage
-        /// </summary>
-        public double HitThresholdIncrement { get; set; }
-
-        /// <summary>
-        /// The fixed hit threshold for this stage
-        /// </summary>
-        public double HitThreshold
+        public int TrialsToRetainForAdaptiveAdjustments
         {
             get
             {
-                return _hitThreshold;
+                return _trial_count_lookback_for_adaptive_adjustments;
             }
             set
             {
-                _hitThreshold = value;
+                _trial_count_lookback_for_adaptive_adjustments = value;
             }
         }
 
         /// <summary>
-        /// The trial initiation threshold for this stage
+        /// The position of the "peg" for the device on this stage
         /// </summary>
-        public double TrialInitiationThreshold { get; set; }
+        public MotorStageParameter Position
+        {
+            get
+            {
+                return _position_of_device;
+            }
+            set
+            {
+                _position_of_device = value;
+            }
+        }
 
         /// <summary>
-        /// The type of hit threshold that this stage uses
+        /// The duration of the hit window (in units of seconds)
         /// </summary>
-        public MotorStageHitThresholdType HitThresholdType { get; set; }
-
-        /// <summary>
-        /// The total duration of the hit window (in seconds)
-        /// </summary>
-        public double HitWindowInSeconds { get; set; }
-
-        /// <summary>
-        /// The number of milliseconds each sample in the signal represents.
-        /// </summary>
-        public int SamplePeriodInMilliseconds { get; set; }
+        public MotorStageParameter HitWindowInSeconds
+        {
+            get
+            {
+                return _hit_window_in_seconds;
+            }
+            set
+            {
+                _hit_window_in_seconds = value;
+            }
+        }
         
-        /// <summary>
-        /// The type of stimulation that is delivered on this stage.
-        /// </summary>
-        public MotorStageStimulationType StimulationType { get; set; }
-
         /// <summary>
         /// The total amount of time (in seconds) during which we record samples at the beginning of a trial
         /// before the hit window begins.  In V1 of MotoTrak, the value of this variable was fixed at 1.  In V2
         /// of MotoTrak, this variable may be defined by the stage definition file.
         /// </summary>
-        public int PreTrialSamplingPeriodInSeconds
+        public MotorStageParameter PreTrialSamplingPeriodInSeconds
         {
             get
             {
-                if (StageVersion == 1)
-                {
-                    return _defaultPreTrialSamplingPeriodInSeconds;
-                }
-                else
-                {
-                    return _preTrialSamplingPeriodInSeconds;
-                }
+                return _pre_trial_sampling_period_in_seconds;
             }
             set
             {
-                //In V1, this was a read-only property.
-                //In V2, this can be set by the stage definition.
-                if (StageVersion > 1)
-                {
-                    _preTrialSamplingPeriodInSeconds = value;
-                }
+                _pre_trial_sampling_period_in_seconds = value;
             }
         }
-
+        
         /// <summary>
         /// The total amount of time (in seconds) during which we record samples at the end of a trial (after the
         /// hit window ends).  In V1 of MotoTrak, the value of this variable was fixed at 2.  In V2 of MotoTrak,
         /// this variable may be defined by the stage definition file.
         /// </summary>
-        public int PostTrialSamplingPeriodInSeconds
+        public MotorStageParameter PostTrialSamplingPeriodInSeconds
         {
             get
             {
-                if (StageVersion == 1)
-                { 
-                    return _defaultPostTrialSamplingPeriodInSeconds;
-                }
-                else
-                {
-                    return _postTrialSamplingPeriodInSeconds;
-                }
+                return _post_trial_sampling_period_in_seconds;
             }
             set
             {
-                //In V1, this was a read-only property.
-                //In V2, this can be set by the stage definition.
-                if (StageVersion > 1)
-                {
-                    _postTrialSamplingPeriodInSeconds = value;
-                }
+                _post_trial_sampling_period_in_seconds = value;
             }
         }
 
-        #endregion
-
-        #region Read-only properties - V1
-
+        /// <summary>
+        /// How many seconds must be between the end of one trial and the beginning of the next trial
+        /// </summary>
+        public MotorStageParameter PostTrialTimeoutInSeconds
+        {
+            get
+            {
+                return _post_trial_timeout_period_in_seconds;
+            }
+            set
+            {
+                _post_trial_timeout_period_in_seconds = value;
+            }
+        }
+        
         /// <summary>
         /// The possible hit threshold types that may be available based on the kind of device this stage uses.
         /// </summary>
@@ -348,7 +346,7 @@ namespace MotoTrakBase
         {
             get
             {
-                return (PreTrialSamplingPeriodInSeconds * SamplesPerSecond);
+                return Convert.ToInt32(Math.Round(PreTrialSamplingPeriodInSeconds.CurrentValue * SamplesPerSecond));
             }
         }
 
@@ -360,7 +358,7 @@ namespace MotoTrakBase
         {
             get
             {
-                return (PostTrialSamplingPeriodInSeconds * SamplesPerSecond);
+                return Convert.ToInt32(Math.Round(PostTrialSamplingPeriodInSeconds.CurrentValue * SamplesPerSecond));
             }
         }
 
@@ -372,7 +370,7 @@ namespace MotoTrakBase
         {
             get
             {
-                return Convert.ToInt32(HitWindowInSeconds * SamplesPerSecond);
+                return Convert.ToInt32(Math.Round(HitWindowInSeconds.CurrentValue * SamplesPerSecond));
             }
         }
 
@@ -385,6 +383,36 @@ namespace MotoTrakBase
             get
             {
                 return (TotalRecordedSamplesBeforeHitWindow + TotalRecordedSamplesDuringHitWindow + TotalRecordedSamplesAfterHitWindow);
+            }
+        }
+
+        /// <summary>
+        /// The list of all hit thresholds for this stage
+        /// </summary>
+        public List<MotorStageParameter> HitThresholdList
+        {
+            get
+            {
+                return _hit_threshold_list;
+            }
+            set
+            {
+                _hit_threshold_list = value;
+            }
+        }
+
+        /// <summary>
+        /// The list of all initiation thresholds for this stage
+        /// </summary>
+        public List<MotorStageParameter> InitiationThresholdList
+        {
+            get
+            {
+                return _initiation_threshold_list;
+            }
+            set
+            {
+                _initiation_threshold_list = value;
             }
         }
 
@@ -448,63 +476,92 @@ namespace MotoTrakBase
                 {
                     //Otherwise, set the variables for the new stage appropriately.
                     MotorStage stage = new MotorStage();
+
                     try
                     {
-                        stage.StageNumber = stageLine[0];
+                        stage.StageName = stageLine[0];
                         stage.Description = stageLine[1];
                         stage.DeviceType = MotorDeviceTypeConverter.ConvertToMotorDeviceType(stageLine[2]);
                         
                         //Read the constraint from the stage file and throw it away
                         int trash = Int32.Parse(stageLine[3]);
 
-                        stage.Position = Double.Parse(stageLine[4]);
-                        stage.AdaptiveThresholdType = MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdType(stageLine[5]);
+                        //Read the manipulandum position from the stage file
+                        MotorStageParameter position = new MotorStageParameter();
+                        position.InitialValue = Double.Parse(stageLine[4]);
+                        position.CurrentValue = position.InitialValue;
+                        position.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Static;
+                        stage.Position = position;
 
+                        //Create objects for the hit threshold and initiation threshold for this stage
+                        MotorStageParameter hit_thresh = new MotorStageParameter();
+                        MotorStageParameter init_thresh = new MotorStageParameter();
+
+                        //Read in the hit threshold adaptive type
+                        hit_thresh.AdaptiveThresholdType = MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdType(stageLine[5]);
+                        
+                        //Read in the hit threshold minimum value
                         double hit_min = double.NaN;
                         bool success = Double.TryParse(stageLine[6], out hit_min);
-                        stage.HitThresholdMinimum = hit_min;
-
+                        hit_thresh.MinimumValue = hit_min;
+                        
+                        //Read in the hit threshold maximum value
                         double hit_max = double.NaN;
                         success = Double.TryParse(stageLine[7], out hit_max);
-                        stage.HitThresholdMaximum = hit_max;
+                        hit_thresh.MaximumValue = hit_max;
 
+                        //Read in the hit threshold incremental value
                         double hit_inc = double.NaN;
                         success = Double.TryParse(stageLine[8], out hit_inc);
-                        stage.HitThresholdIncrement = hit_inc;
+                        hit_thresh.Increment = hit_inc;
 
+                        //Read in the trial initiation threshold
                         double trial_init = double.NaN;
                         success = Double.TryParse(stageLine[9], out trial_init);
-                        stage.TrialInitiationThreshold = trial_init;
+                        init_thresh.InitialValue = trial_init;
+                        init_thresh.CurrentValue = init_thresh.InitialValue;
+                        init_thresh.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Static;
+                        stage.InitiationThresholdList.Add(init_thresh);
                         
-                        stage.HitThresholdType = MotorStageHitThresholdTypeConverter.ConvertToMotorStageHitThresholdType(stageLine[10]);
-                        
-                        stage.HitWindowInSeconds = Double.Parse(stageLine[11]);
+                        //Read in the hit threshold type
+                        hit_thresh.HitThresholdType = MotorStageHitThresholdTypeConverter.ConvertToMotorStageHitThresholdType(stageLine[10]);
+
+                        //Read in the duration of the hit window
+                        MotorStageParameter hit_win = new MotorStageParameter();
+                        hit_win.InitialValue = Double.Parse(stageLine[11]);
+                        hit_win.CurrentValue = hit_win.InitialValue;
+                        hit_win.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Static;
+                        stage.HitWindowInSeconds = hit_win;
+
+                        //Read in the sampling rate (the number of milliseconds inbetween each sample we read from the MotoTrak controller board)
                         stage.SamplePeriodInMilliseconds = Int32.Parse(stageLine[12]);
                         
-                        stage.StimulationType = MotorStageStimulationTypeConverter.ConvertToMotorStageStimulationType(stageLine[13]);
+                        //Read in the output trigger type
+                        hit_thresh.OutputTriggerType = MotorStageStimulationTypeConverter.ConvertToMotorStageStimulationType(stageLine[13]);
 
                         //For all "version 1" stages, this value will be 10.
                         stage.TrialsToRetainForAdaptiveAdjustments = 10;
 
-                        if (stage.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Static)
+                        if (hit_thresh.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Static)
                         {
-                            //Set the "current" hit threshold to the maximum hit threshold for static stages
-                            stage.HitThreshold = stage.HitThresholdMaximum;
+                            hit_thresh.CurrentValue = hit_thresh.MaximumValue;
                         }
                         else
                         {
-                            //Set the "current" hit threshold to the minimum hit threshold for adaptive stages
-                            stage.HitThreshold = stage.HitThresholdMinimum;
+                            hit_thresh.CurrentValue = hit_thresh.MinimumValue;
                         }
-
+                        
                         //Set the implementation of this stage
-                        if (stage.HitThresholdType == MotorStageHitThresholdType.PeakForce)
+                        if (hit_thresh.HitThresholdType == MotorStageHitThresholdType.PeakForce)
                         {
-                            //stage.StageImplementation = new PullStageImplementation();
                             string stage_file = @"C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakPythonCode\PythonBasicStageImplementation.py";
                             stage.StageImplementation = new PythonStageImplementation(stage_file);
                             //stage.StageImplementation = new PythonStageImplementation("PythonBasicStageImplementation.py");
+                            //stage.StageImplementation = new PullStageImplementation();
                         }
+
+                        //Add the hit threshold info to the stage
+                        stage.HitThresholdList.Add(hit_thresh);
 
                         //Add the stage to our list of stages
                         stages.Add(stage);
