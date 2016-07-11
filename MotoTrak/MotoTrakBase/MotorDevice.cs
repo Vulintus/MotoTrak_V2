@@ -187,7 +187,7 @@ namespace MotoTrakBase
         #endregion
 
         #region Methods
-
+        
         /// <summary>
         /// Given a value returned from the Arduino with the GetDevice() function on ArdyMotor board, this converts
         /// that value to a MotorDeviceType.

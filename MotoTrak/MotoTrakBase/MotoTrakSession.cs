@@ -118,7 +118,7 @@ namespace MotoTrakBase
             {
                 return _trials;
             }
-            private set
+            set
             {
                 _trials = value;
                 NotifyPropertyChanged("Trials");

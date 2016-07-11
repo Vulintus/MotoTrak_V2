@@ -15,6 +15,9 @@ namespace MotoTrakBase
         [Description("An unknown error occurred within MotoTrak.")]
         Unknown,
 
+        [Description("There was an error while attempting to read the MotoTrak configuration file.")]
+        UnableToReadConfigurationFile,
+
         [Description("Unable to connect to the MotoTrak controller board.")]
         UnableToConnectToControllerBoard,
 

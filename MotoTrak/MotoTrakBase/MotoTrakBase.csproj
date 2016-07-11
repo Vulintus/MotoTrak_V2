@@ -64,9 +64,11 @@
     <Compile Include="MotorStageParameter.cs" />
     <Compile Include="MotorStageStimulationType.cs" />
     <Compile Include="MotorStageStimulationTypeConverter.cs" />
+    <Compile Include="MotorStreamParameters.cs" />
     <Compile Include="MotorTrial.cs" />
     <Compile Include="MotorTrialAction.cs" />
     <Compile Include="MotorTrialActionType.cs" />
+    <Compile Include="MotorTrialEventType.cs" />
     <Compile Include="MotorTrialResult.cs" />
     <Compile Include="MotoTrakAutopositioner.cs" />
     <Compile Include="MotoTrakConfiguration.cs" />

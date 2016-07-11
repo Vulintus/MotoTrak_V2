@@ -60,7 +60,7 @@ namespace MotoTrakBase
             }
 
             //Read in the booth number
-            session.BoothNumber = (SByte)reader.ReadByte();
+            //session.BoothNumber = (SByte)reader.ReadByte();
 
             //Read in the number of characters in the rat's name.
             int N = (SByte)reader.ReadByte();

@@ -129,6 +129,10 @@
       <Project>{e2a22dfd-4af2-4d75-bd72-0cd083865047}</Project>
       <Name>MotoTrakBase</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MotoTrakUtilities\MotoTrakUtilities.csproj">
+      <Project>{9FA143AC-97AA-4662-9CA7-1C0887A833B4}</Project>
+      <Name>MotoTrakUtilities</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

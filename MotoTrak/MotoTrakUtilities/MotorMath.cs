@@ -147,5 +147,34 @@ namespace MotoTrakUtilities
 
             return median;
         }
+
+        /// <summary>
+        /// Transposes a matrix (in this case a List of List<T>).
+        /// Example:
+        /// The following: [ [a1,b1,c1] [a2,b2,c2] [a3,b3,c3] ]
+        /// Becomes: [ [a1,a2,a3] [b1,b2,b3] [c1,c2,c3] ]
+        /// </summary>
+        /// <typeparam name="T">Any type</typeparam>
+        /// <param name="lists">A list of lists</param>
+        /// <returns>The transposed list of lists</returns>
+        public static List<List<T>> Transpose<T> (List<List<T>> lists)
+        {
+            var longest = lists.Any() ? lists.Max(l => l.Count) : 0;
+            List<List<T>> outer = new List<List<T>>(longest);
+            for (int i = 0; i < longest; i++)
+            {
+                outer.Add(new List<T>(lists.Count));
+            }
+
+            for (int j = 0; j < lists.Count; j++)
+            {
+                for (int i = 0; i < longest; i++)
+                {
+                    outer[i].Add(lists[j].Count > i ? lists[j][i] : default(T));
+                }
+            }
+
+            return outer;
+        }
     }
 }

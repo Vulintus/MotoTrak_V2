@@ -30,75 +30,152 @@ namespace MotoTrakBase
 
         #region Methods implemented for the IMotorStageImplementation interface
 
-        public virtual int CheckSignalForTrialInitiation(List<double> signal, int new_datapoint_count, MotorStage stage)
+        public virtual List<List<double>> TransformSignals(List<List<int>> new_data_from_controller, MotorStage stage, MotorDevice device)
+        {
+            //Create a 2d list for our result that we will return
+            List<List<double>> result = new List<List<double>>();
+            
+            //Iterate over each set of streaming parameters that have been defined
+            foreach (var sp in stage.StreamParameters)
+            {
+                if (sp.StreamIndex >= 0)
+                {
+                    //Grab the associated stream
+                    var stream_data = new_data_from_controller[sp.StreamIndex];
+                    List<double> fp_stream_data = new List<double>();
+
+                    switch (sp.StreamType)
+                    {
+                        case MotorBoardDataStreamType.DeviceValue:
+                            //Transform the device data if this is the device stream
+                            fp_stream_data = stream_data.Select(x => (double)(device.Slope * (x - device.Baseline))).ToList();
+                            break;
+                        default:
+                            //Convert all values to floating point values
+                            fp_stream_data = stream_data.Select(x => (double)x).ToList();
+                            break;
+                    }
+                    
+                    //Add this stream to our result
+                    result.Add(fp_stream_data);
+                }
+            }
+            
+            //Return the result
+            return result;
+        }
+
+        public virtual int CheckSignalForTrialInitiation(List<List<double>> signal, int new_datapoint_count, MotorStage stage)
         {
             //Create a value that will be our return value
             int return_value = -1;
 
-            //We must have more than 0 new datapoints.  If the code inside the if-statement was run with 0 new datapoints, it would
-            //generate an exception.
-            if (new_datapoint_count > 0)
+            //Iterate over each set of streaming parameters that have been defined
+            foreach (var sp in stage.StreamParameters)
             {
-                //Look only at the most recent data from the signal
-                var signal_to_use = signal.Skip(signal.Count - new_datapoint_count).ToList();
-
-                //Calculate the difference in size between the two
-                var difference_in_size = signal.Count - signal_to_use.Count;
-
-                //Retrieve the maximal value from the device signal
-                double maximal_value = signal_to_use.Max();
-
-                if (maximal_value >= stage.TrialInitiationThreshold)
+                //If initiation threshold parameters have been set for this stream of data
+                if (sp.InitiationThreshold != null && sp.StreamIndex >= 0)
                 {
-                    //If the maximal value in the signal exceeded the trial initiation force threshold
-                    //Find the position at which the signal exceeded the threshold, and return it.
-                    return_value = signal_to_use.IndexOf(maximal_value) + difference_in_size;
+                    //Get the stream we will be working with
+                    var stream_data = signal[sp.StreamIndex];
+                    
+                    //Check to make sure we actually have new data to consider before going on
+                    if (new_datapoint_count > 0 && new_datapoint_count <= stream_data.Count)
+                    {
+                        //Look only at the most recent data from the signal
+                        var stream_data_to_use = stream_data.Skip(signal.Count - new_datapoint_count).ToList();
+
+                        //Calculate how many OLD elements there are
+                        var difference_in_size = stream_data.Count - stream_data_to_use.Count;
+
+                        //Retrieve the maximal value for the signal
+                        double maximal_value = stream_data_to_use.Max();
+                        
+                        //Check to see if the maximal value exceeds the initiation threshold
+                        if (maximal_value >= sp.InitiationThreshold.CurrentValue)
+                        {
+                            //Set the return value equal to the index at which we found the value that exceeds the initiation threshold
+                            return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size;
+                        }
+                    }
                 }
             }
 
             return return_value;
         }
 
-        public virtual Tuple<MotorTrialResult, int> CheckForTrialSuccess(List<double> trial_signal, MotorStage stage)
+        public virtual List<Tuple<MotorTrialEventType, int>> CheckForTrialEvent(List<List<double>> trial_signal, MotorStage stage)
         {
-            //Instantiate a variable that will be used to return a result from this function.
-            Tuple<MotorTrialResult, int> result = new Tuple<MotorTrialResult, int>(MotorTrialResult.Unknown, -1);
+            //Instantiate a list of tuples that will hold any events that capture as a result of this function.
+            List<Tuple<MotorTrialEventType, int>> result = new List<Tuple<MotorTrialEventType, int>>();
             
-            //Find the point at which the animal exceeds the hit threshold.  This function returns -1 if nothing is found.
-            var l = Enumerable.Range(0, trial_signal.Count)
-                .Where(index => trial_signal[index] >= stage.HitThreshold &&
-                (index >= stage.TotalRecordedSamplesBeforeHitWindow) &&
-                (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).ToList();
-            if (l != null && l.Count > 0)
+            //Iterate over all streaming parameters for this stage
+            foreach (var sp in stage.StreamParameters)
             {
-                result = new Tuple<MotorTrialResult, int>(MotorTrialResult.Hit, l[0]);
-            }
+                //If there is a hit threshold defined for this stream
+                if (sp.HitThreshold != null && sp.HitThresholdType != MotorStageHitThresholdType.Undefined && sp.StreamIndex >= 0)
+                {
+                    //Get the associated stream
+                    var stream_data = trial_signal[sp.StreamIndex];
 
+                    //Get the current value of the hit threshold for this stream
+                    var current_hit_threshold = sp.HitThreshold.CurrentValue;
+
+                    //Check to see if the stream data has exceeded the current hit threshold
+                    var l = Enumerable.Range(0, trial_signal.Count)
+                        .Where(index => stream_data[index] >= current_hit_threshold &&
+                        (index >= stage.TotalRecordedSamplesBeforeHitWindow) &&
+                        (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).ToList();
+                    if (l != null && l.Count > 0)
+                    {
+                        result.Add(new Tuple<MotorTrialEventType, int>(MotorTrialEventType.SuccessfulTrial, l[0]));
+                    }
+                }
+            }
+            
             //Return the result
             return result;
         }
 
-        public virtual List<MotorTrialAction> ReactToTrialSuccess(List<double> trial_signal, MotorStage stage)
+        public virtual List<MotorTrialAction> ReactToTrialEvents(List<Tuple<MotorTrialEventType, int>> trial_events_list, 
+            List<List<double>> trial_signal, MotorStage stage)
         {
+            //Create an empty list of actions that we will return to the caller
             List<MotorTrialAction> actions = new List<MotorTrialAction>();
-            actions.Add(new MotorTrialAction() { ActionType = MotorTrialActionType.TriggerFeeder });
 
-            if (stage.StimulationType == MotorStageStimulationType.On)
+            //Iterate through each event that occurred
+            foreach (var event_tuple in trial_events_list)
             {
-                actions.Add(new MotorTrialAction() { ActionType = MotorTrialActionType.SendStimulationTrigger });
-            }
+                var event_type = event_tuple.Item1;
 
+                switch(event_type)
+                {
+                    case MotorTrialEventType.SuccessfulTrial:
+
+                        //If a successful trial happened, then feed the animal
+                        actions.Add(new MotorTrialAction() { ActionType = MotorTrialActionType.TriggerFeeder });
+
+                        //If stimulation is on for this stage, stimulate the animal
+                        if (stage.OutputTriggerType == MotorStageStimulationType.All)
+                        {
+                            actions.Add(new MotorTrialAction() { ActionType = MotorTrialActionType.SendStimulationTrigger });
+                        }
+
+                        break;
+                }
+            }
+            
             return actions;
         }
 
-        public virtual List<MotorTrialAction> PerformActionDuringTrial(List<double> trial_signal, MotorStage stage)
+        public virtual List<MotorTrialAction> PerformActionDuringTrial(List<List<double>> trial_signal, MotorStage stage)
         {
             //No actions will be taken during the trial.
             List<MotorTrialAction> actions = new List<MotorTrialAction>();
             return actions;
         }
 
-        public virtual string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<double> trial_signal, MotorStage stage)
+        public virtual string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<List<double>> trial_signal, MotorStage stage)
         {
             string msg = string.Empty;
             
@@ -116,27 +193,28 @@ namespace MotoTrakBase
             return msg;
         }
 
-        public virtual void AdjustDynamicHitThreshold(List<MotorTrial> all_trials, List<double> trial_signal, MotorStage stage)
+        public virtual void AdjustDynamicStageParameters(List<MotorTrial> all_trials, List<List<double>> trial_signal, MotorStage stage)
         {
-            if (stage.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Median)
+            //We must now adjust adaptive thresholds for each stream we are monitoring
+            foreach (var sp in stage.StreamParameters)
             {
-                //Find the maximal force of the current trial
-                double max_force = trial_signal.Where((val, index) =>
-                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) &&
-                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max();
-
-                //Retain the maximal force of the most recent 10 trials
-                _peak_force.Add(max_force);
-                if (_peak_force.Count > stage.TrialsToRetainForAdaptiveAdjustments)
+                if (sp.StreamIndex >= 0)
                 {
-                    _peak_force.RemoveAt(0);
-                }
+                    //Grab the signal data for this stream
+                    var stream_data = trial_signal[sp.StreamIndex];
 
-                //Adjust the hit threshold
-                if (_peak_force.Count == stage.TrialsToRetainForAdaptiveAdjustments)
-                {
-                    double median = MotorMath.Median(_peak_force);
-                    stage.HitThreshold = Math.Max(stage.HitThresholdMinimum, Math.Min(stage.HitThresholdMaximum, median));
+                    //If this stream has a hit threshold
+                    if (sp.HitThreshold != null)
+                    {
+                        //Find the maximal force of the current trial
+                        double max_force = stream_data.Where((val, index) =>
+                            (index >= stage.TotalRecordedSamplesBeforeHitWindow) &&
+                            (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max();
+
+                        //Retain the maximal force of the most recent 10 trials
+                        sp.HitThreshold.History.Enqueue(max_force);
+                        sp.HitThreshold.CalculateAndSetBoundedCurrentValue();
+                    }
                 }
             }
         }

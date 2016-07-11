@@ -11,6 +11,7 @@ namespace MotoTrakBase
     /// </summary>
     public enum MotorBoardDataStreamType
     {
+        Unknown,
         Timestamp,
         DeviceValue,
         IRSensorValue

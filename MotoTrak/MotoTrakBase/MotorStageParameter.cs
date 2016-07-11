@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MotoTrakUtilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -46,11 +47,33 @@ namespace MotoTrakBase
         public double MaximumValue = double.NaN;
         public double CurrentValue = double.NaN;
         public double Increment = double.NaN;
+        public FixedSizedQueue<double> History = new FixedSizedQueue<double>() { Limit = 10 };
 
         public MotorStageAdaptiveThresholdType AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Undefined;
-        public MotorStageHitThresholdType HitThresholdType = MotorStageHitThresholdType.Undefined;
-        public MotorStageStimulationType OutputTriggerType = MotorStageStimulationType.Off;
-        
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// This function calculates a new CurrentValue for this parameter based on the History property and the AdaptiveThresholdType.
+        /// </summary>
+        public void CalculateAndSetBoundedCurrentValue ()
+        {
+            if (History.IsFull)
+            {
+                List<double> clone = History.ListClone;
+
+                switch (AdaptiveThresholdType)
+                {
+                    case MotorStageAdaptiveThresholdType.Median:
+                        CurrentValue = Math.Max(MinimumValue, Math.Min(MaximumValue, MotorMath.Median(clone)));
+                        break;
+                }
+                
+            }
+        }
+
         #endregion
     }
 }

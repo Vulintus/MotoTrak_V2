@@ -6,7 +6,7 @@ using Dynamitey;
 
 namespace MotoTrakBase
 {
-    public class PythonStageImplementation : IMotorStageImplementation
+    public class PythonStageImplementation //: IMotorStageImplementation
     {
         #region Private data members
         

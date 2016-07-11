@@ -523,7 +523,7 @@ namespace MotoTrakBase
             int device_value = this.GetBoardDeviceValue();
 
             //Convert the value to a device type
-            MotorDeviceType device_type = MotorDevice.ConvertArdyDeviceValueToDeviceType(device_value);
+            MotorDeviceType device_type = MotorDevice.ConvertAnalogDeviceValueToDeviceType(device_value);
 
             //Create a new device object for the device
             MotorDevice device = new MotorDevice(device_type, 1);

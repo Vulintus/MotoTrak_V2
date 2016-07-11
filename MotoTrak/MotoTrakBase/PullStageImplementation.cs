@@ -23,13 +23,13 @@ namespace MotoTrakBase
 
         #region Methods implemented for the IMotorStageImplementation interface
         
-        public override string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<double> trial_signal, MotorStage stage)
+        public override string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<List<double>> trial_signal, MotorStage stage)
         {
             string msg = string.Empty;
 
-            int hit_win_pk_force = Convert.ToInt32(trial_signal.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max());
+            //int hit_win_pk_force = Convert.ToInt32(trial_signal.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max());
 
-            msg += "Trial " + trial_number.ToString() + " ";
+            //msg += "Trial " + trial_number.ToString() + " ";
 
             if (successful_trial)
             {
@@ -40,12 +40,12 @@ namespace MotoTrakBase
                 msg += "MISS, ";
             }
 
-            msg += "maximal force = " + hit_win_pk_force.ToString() + " grams.";
+            //msg += "maximal force = " + hit_win_pk_force.ToString() + " grams.";
 
-            if (stage.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Median)
-            {
-                msg += "(Hit threshold = " + Math.Floor(stage.HitThreshold).ToString() + " grams)";
-            }
+            //if (stage.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Median)
+            //{
+                //msg += "(Hit threshold = " + Math.Floor(stage.HitThreshold).ToString() + " grams)";
+            //}
 
             return msg;
         }

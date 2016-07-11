@@ -118,7 +118,7 @@ namespace MotoTrakBase
             }
             catch (Exception e)
             {
-                throw new MotoTrakException("There was an error while attempting to read the MotoTrak configuration file.");
+                throw new MotoTrakException(MotoTrakExceptionType.UnableToReadConfigurationFile, string.Empty);
             }
         }
 

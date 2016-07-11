@@ -12,6 +12,13 @@ namespace MotoTrakBase
     public interface IMotorStageImplementation
     {
         /// <summary>
+        /// This function takes in new data from the MotoTrak controller board and performs transforms on the data
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <returns></returns>
+        List<List<double>> TransformSignals(List<List<int>> new_data_from_controller, MotorStage stage, MotorDevice device);
+
+        /// <summary>
         /// This function takes the currently buffered signal as a parameter, and checks the signal to see if a trial initiation
         /// has occurred.  
         /// </summary>
@@ -19,7 +26,7 @@ namespace MotoTrakBase
         /// <param name="stage">The stage that is currently being used.</param>
         /// <returns>An integer representing an index into the signal at which a trial initiation occurred.  Return -1 if no
         /// trial initiation was found.</returns>
-        int CheckSignalForTrialInitiation(List<double> signal, int new_datapoint_count, MotorStage stage);
+        int CheckSignalForTrialInitiation(List<List<double>> signal, int new_datapoint_count, MotorStage stage);
 
         /// <summary>
         /// This function takes the current signal within a trial as a parameter, and checks to see if the trial has been
@@ -30,7 +37,7 @@ namespace MotoTrakBase
         /// <param name="trial_signal">The device signal</param>
         /// <param name="stage">The currently selected stage</param>
         /// <returns></returns>
-        Tuple<MotorTrialResult, int> CheckForTrialSuccess(List<double> trial_signal, MotorStage stage);
+        List<Tuple<MotorTrialEventType, int>> CheckForTrialEvent(List<List<double>> trial_signal, MotorStage stage);
 
         /// <summary>
         /// Creates a list of actions that MotoTrak should take given the success of a trial.
@@ -38,7 +45,8 @@ namespace MotoTrakBase
         /// <param name="trial_signal">The device signal</param>
         /// <param name="stage">The currently selected stage</param>
         /// <returns></returns>
-        List<MotorTrialAction> ReactToTrialSuccess(List<double> trial_signal, MotorStage stage);
+        List<MotorTrialAction> ReactToTrialEvents(List<Tuple<MotorTrialEventType, int>> trial_events_list, 
+            List<List<double>> trial_signal, MotorStage stage);
 
         /// <summary>
         /// Creates a list of actions that MotoTrak should take given some event in a trial that is 
@@ -49,7 +57,7 @@ namespace MotoTrakBase
         /// <param name="trial_signal">The device signal</param>
         /// <param name="stage">The currently selected stage</param>
         /// <returns></returns>
-        List<MotorTrialAction> PerformActionDuringTrial(List<double> trial_signal, MotorStage stage);
+        List<MotorTrialAction> PerformActionDuringTrial(List<List<double>> trial_signal, MotorStage stage);
 
         /// <summary>
         /// Allows the creator of this stage to make custom messages that get shown to the user at the 
@@ -59,13 +67,13 @@ namespace MotoTrakBase
         /// <param name="trial_signal">The trial's signal</param>
         /// <param name="stage">The motor stage</param>
         /// <returns>A message as a string</returns>
-        string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<double> trial_signal, MotorStage stage);
+        string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<List<double>> trial_signal, MotorStage stage);
 
         /// <summary>
         /// Allows the creator of the stage to adjust the hit threshold at the end of each trial.
         /// </summary>
         /// <param name="all_trials">All trials from the session up until the current point in time</param>
         /// <param name="stage">The stage that is currently being run</param>
-        void AdjustDynamicHitThreshold(List<MotorTrial> all_trials, List<double> trial_signal, MotorStage stage);
+        void AdjustDynamicStageParameters(List<MotorTrial> all_trials, List<List<double>> trial_signal, MotorStage stage);
     }
 }
