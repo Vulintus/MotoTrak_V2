@@ -34,7 +34,8 @@ namespace MotoTrakBase
             }
             catch
             {
-                throw new MotoTrakException(MotoTrakExceptionType.CouldNotLoadSessionData, string.Empty);
+                //Inform the user that messaging data could not be loaded
+                MotoTrakMessaging.GetInstance().AddMessage("Could not load session data!");
             }
         }
 

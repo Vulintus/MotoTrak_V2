@@ -20,7 +20,6 @@ namespace MotoTrakBase
         private DateTime _end_time = DateTime.MinValue;
 
         private MotorTrialResult _result = MotorTrialResult.Unknown;
-        private ObservableCollection<DateTime> _output_trigger_times = new ObservableCollection<DateTime>();
         
         private double _hit_window_duration_in_seconds = 0;
         private double _pre_trial_sampling_period_in_seconds = 0;
@@ -33,6 +32,7 @@ namespace MotoTrakBase
 
         private List<int> _hit_indices = new List<int>();
         private List<DateTime> _hit_times = new List<DateTime>();
+        private List<DateTime> _output_trigger_times = new List<DateTime>();
 
         private List<double> _variable_parameters = new List<double>();
         
@@ -45,16 +45,7 @@ namespace MotoTrakBase
         /// </summary>
         public MotorTrial()
         {
-            OutputTriggers.CollectionChanged += OutputTriggers_CollectionChanged;
-        }
-
-        #endregion
-
-        #region Method that listens for changes to the "vns times" collection, and sends notifications up to whoever is listening
-
-        private void OutputTriggers_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            NotifyPropertyChanged("OutputTriggers");
+            //empty
         }
 
         #endregion
@@ -62,9 +53,10 @@ namespace MotoTrakBase
         #region Properties
         
         /// <summary>
-        /// The data for this trial.
-        /// Each nested list contains data from a set of datastreams for a single time-point.
-        /// The collection of nested lists spans all time-points.
+        /// The data for this trial.  The order of the list follows.
+        /// Where we have N = 3 streams, called "a", "b", and "c", the List should be:
+        /// [ [a1, a2, a3, ..., a_n], [b1 ... b_n], [c1 ... c_n] ]
+        /// Therefore, each sub-list is a "stream" of data.
         /// </summary>
         public List<List<int>> TrialData
         {
@@ -114,7 +106,7 @@ namespace MotoTrakBase
         /// <summary>
         /// The time(s) at which stimulation occurred in this trial
         /// </summary>
-        public ObservableCollection<DateTime> OutputTriggers
+        public List<DateTime> OutputTriggers
         {
             get
             {

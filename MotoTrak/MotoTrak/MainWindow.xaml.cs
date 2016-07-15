@@ -36,17 +36,17 @@ namespace MotoTrak
             if (portSelectorResult.AvailablePortCount > 0)
             {
                 string portName = portSelectorResult.AvailablePorts[portSelectorResult.SelectedPortIndex];
-                SessionViewModel viewModel = DataContext as SessionViewModel;
+                MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
                 if (viewModel != null)
                 {
-                    viewModel.InitializeSession(portName);
+                    viewModel.InitializeMotoTrak(portName);
                 }
             }
         }
 
         private void StartButtonClick(object sender, RoutedEventArgs e)
         {
-            SessionViewModel viewModel = DataContext as SessionViewModel;
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
             if (viewModel != null)
             {
                 if (viewModel.IsSessionRunning)
@@ -62,7 +62,7 @@ namespace MotoTrak
 
         private void PauseButtonClick(object sender, RoutedEventArgs e)
         {
-            SessionViewModel viewModel = DataContext as SessionViewModel;
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
             if (viewModel != null)
             {
                 viewModel.TogglePause();
@@ -71,7 +71,7 @@ namespace MotoTrak
         
         private void FeedButtonClick(object sender, RoutedEventArgs e)
         {
-            SessionViewModel viewModel = DataContext as SessionViewModel;
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
             if (viewModel != null)
             {
                 viewModel.TriggerManualFeed();
@@ -80,10 +80,10 @@ namespace MotoTrak
 
         private void Window_Closed(object sender, EventArgs e)
         {
-            SessionViewModel viewModel = DataContext as SessionViewModel;
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
             if (viewModel != null)
             {
-                viewModel.CancelStreaming();
+                viewModel.ShutdownMotoTrak();
                 MotorBoard.GetInstance().DisconnectFromArduino();
             }
         }
@@ -95,7 +95,7 @@ namespace MotoTrak
 
         private void ResetBaselineButtonClick(object sender, RoutedEventArgs e)
         {
-            SessionViewModel viewModel = DataContext as SessionViewModel;
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
             if (viewModel != null)
             {
                 viewModel.ResetBaseline();

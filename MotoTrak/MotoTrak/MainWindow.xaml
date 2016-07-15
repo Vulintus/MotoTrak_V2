@@ -9,7 +9,7 @@
         Title="MotoTrak" MinHeight="490" Height="490" MinWidth="600" Width="600"
         Closed="Window_Closed">
     <Window.DataContext>
-        <local:SessionViewModel />
+        <local:MotoTrakViewModel />
     </Window.DataContext>
     <Grid>
         <Grid.RowDefinitions>
@@ -43,15 +43,15 @@
                 
                 <!-- Input and output fields -->
                 <TextBox HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" Grid.Row="0" Grid.Column="1"
-                         Text="{Binding Path=RatName, FallbackValue=Unknown}" IsEnabled="{Binding Path=IsStageSelectionEnabled, FallbackValue=True}" />
+                         Text="{Binding Path=CurrentSession.RatName, FallbackValue=Unknown}" IsEnabled="{Binding Path=IsStageSelectionEnabled, FallbackValue=True}" />
                 <TextBox HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" Grid.Row="1" Grid.Column="1"
-                         Text="{Binding Path=BoothNumber, FallbackValue=Unknown, Mode=OneWay}" IsEnabled="False" IsReadOnly="True" />
+                         Text="{Binding Path=CurrentSession.BoothLabel, FallbackValue=Unknown, Mode=OneWay}" IsEnabled="False" IsReadOnly="True" />
 
                 <ComboBox HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Row="0" Grid.Column="3"
                           ItemsSource="{Binding Path=StageList}" SelectedIndex="{Binding Path=StageSelectedIndex, Mode=TwoWay}"
                           IsEnabled="{Binding Path=IsStageSelectionEnabled}" />
                 <TextBox HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Row="1" Grid.Column="3"
-                         Text="{Binding Path=DeviceName, FallbackValue=Unknown, Mode=OneWay}" IsEnabled="False" IsReadOnly="True" />
+                         Text="{Binding Path=CurrentSession.DeviceName, FallbackValue=Unknown, Mode=OneWay}" IsEnabled="False" IsReadOnly="True" />
                 
                 <!-- Fields for changing the plot view -->
                 <TextBlock Text="View:" Foreground="Black" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"
@@ -61,8 +61,10 @@
 
             </Grid>
 
+        <!--
         <oxy:PlotView Grid.Row="1" MinHeight="250" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Model="{Binding MotoTrakPlot}" />
-
+        -->
+        
         <!-- The following UI elements are for debuggin purposes only!!!! -->
         <Grid Name="DebuggingPanel" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,50"
               Visibility="{Binding Path=DebuggingVisibility}">

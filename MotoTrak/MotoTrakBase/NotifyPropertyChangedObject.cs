@@ -28,7 +28,7 @@ namespace MotoTrakBase
         /// </summary>
         public System.Type ObjectType { get; set; }
 
-        protected void ExecuteReactionsToModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        protected virtual void ExecuteReactionsToModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             //Get the name of the property that was changed on the child object
             string model_property_changed = e.PropertyName;

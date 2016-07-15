@@ -72,12 +72,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="MotoTrak.cs" />
+    <Compile Include="CurrentSessionViewModel.cs" />
+    <Compile Include="MotoTrakModel.cs" />
+    <Compile Include="MotoTrakPlotViewModel.cs" />
     <Compile Include="PortSelectionUI.xaml.cs">
       <DependentUpon>PortSelectionUI.xaml</DependentUpon>
     </Compile>
     <Compile Include="PortSelectorViewModel.cs" />
-    <Compile Include="SessionViewModel.cs" />
+    <Compile Include="MotoTrakViewModel.cs" />
     <Compile Include="ViewHelperMethods.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

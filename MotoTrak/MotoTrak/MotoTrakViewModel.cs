@@ -13,12 +13,13 @@ namespace MotoTrak
     /// <summary>
     /// View-model class that handles interactions between the MotoTrak session model and the GUI.
     /// </summary>
-    public class SessionViewModel : NotifyPropertyChangedObject
+    public class MotoTrakViewModel : NotifyPropertyChangedObject
     {
         #region Private data members
 
-        MotoTrakSession _session = new MotoTrakSession();
-        private List<string> _viewList = new List<string>() { "Realtime device signal", "Session overview", "Recent performance" };
+        MotoTrakModel _model = MotoTrakModel.GetInstance();
+        CurrentSessionViewModel _current_session_view_model = null;
+        
         private int _viewSelectedIndex = 0;
         private bool _stageChangeRequired = false;
 
@@ -26,27 +27,19 @@ namespace MotoTrak
 
         #region Constructors
 
-        public SessionViewModel()
+        public MotoTrakViewModel()
         {
-            SessionModel.PropertyChanged += SessionModel_PropertyChanged;
-            SessionModel.Messages.CollectionChanged += Messages_CollectionChanged;
-            MotoTrakPlot = new PlotModel() { Title = string.Empty };
+            //Subscribe to notifications from the MotoTrak model
+            Model.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
+
+            //Create a "current session"
+            Model.CurrentSession = new MotoTrakSession();
+
+            //Subscribe to notifications from MotoTrak's current session that is running
+            Model.CurrentSession.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
             
-            LinearAxis y_axis = new LinearAxis();
-            y_axis.Minimum = -10;
-            //y_axis.Maximum = 300;
-            y_axis.Position = AxisPosition.Left;
-
-            LinearAxis x_axis = new LinearAxis();
-            x_axis.Minimum = 0;
-            x_axis.Maximum = 500;
-            x_axis.Position = AxisPosition.Bottom;
-
-            MotoTrakPlot.Axes.Add(y_axis);
-            MotoTrakPlot.Axes.Add(x_axis);
-
-            AreaSeries k = new AreaSeries();
-            MotoTrakPlot.Series.Add(k);
+            //Create a view-model object for the current session
+            CurrentSession = new CurrentSessionViewModel(Model.CurrentSession);
         }
         
         #endregion
@@ -56,15 +49,30 @@ namespace MotoTrak
         /// <summary>
         /// The session model object
         /// </summary>
-        MotoTrakSession SessionModel
+        MotoTrakModel Model
         {
             get
             {
-                return _session;
+                return _model;
             }
             set
             {
-                _session = value;
+                _model = value;
+            }
+        }
+
+        /// <summary>
+        /// View-model for the current session being run
+        /// </summary>
+        public CurrentSessionViewModel CurrentSession
+        {
+            get
+            {
+                return _current_session_view_model;
+            }
+            set
+            {
+                _current_session_view_model = value;
             }
         }
 
@@ -96,13 +104,23 @@ namespace MotoTrak
         {
             get
             {
-                return _viewList;
+                List<string> result = new List<string>();
+                foreach (var sp in Model.CurrentSession.SelectedStage.StreamParameters)
+                {
+                    result.Add(sp.StreamType.ToString());
+                }
+
+                result.Add("Recent performance");
+                result.Add("Session overview");
+
+                return result;
             }
         }
 
         /// <summary>
         /// The index into possible plots that can be displayed, indicating which is currently selected.
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "SelectedStage" })]
         public int ViewSelectedIndex
         {
             get
@@ -130,36 +148,7 @@ namespace MotoTrak
         #endregion
 
         #region Properties
-
-        /// <summary>
-        /// The rat's name, as shown in the GUI.
-        /// </summary>
-        [ReactToModelPropertyChanged(new string[] { "RatName" })]
-        public string RatName
-        {
-            get
-            {
-                return SessionModel.RatName;
-            }
-            set
-            {
-                string rat_name = value;
-                SessionModel.RatName = ViewHelperMethods.CleanInput(rat_name.Trim()).ToUpper();
-            }
-        }
-
-        /// <summary>
-        /// The booth number for this MotoTrak session.
-        /// </summary>
-        [ReactToModelPropertyChanged(new string[] { "BoothNumber" })]
-        public string BoothNumber
-        {
-            get
-            {
-                return SessionModel.BoothNumber.ToString();
-            }
-        }
-
+        
         /// <summary>
         /// The list of all available stages that the user can choose from, given the current device that is connected
         /// to the MotoTrak controller.
@@ -170,9 +159,9 @@ namespace MotoTrak
             get
             {
                 List<string> stages = new List<string>();
-                foreach (MotorStage s in SessionModel.AvailableStages)
+                foreach (MotorStage s in Model.AvailableStages)
                 {
-                    stages.Add(s.StageNumber + " - " + s.Description);
+                    stages.Add(s.StageName + " - " + s.Description);
                 }
 
                 return stages;
@@ -187,9 +176,9 @@ namespace MotoTrak
         {
             get
             {
-                if (SessionModel.SelectedStage != null)
+                if (Model.CurrentSession.SelectedStage != null)
                 {
-                    return SessionModel.AvailableStages.IndexOf(SessionModel.SelectedStage);
+                    return Model.AvailableStages.IndexOf(Model.CurrentSession.SelectedStage);
                 }
 
                 return 0;
@@ -202,7 +191,22 @@ namespace MotoTrak
                 //the "StageChangeRequired" boolean value.  So the boolean value needs to be
                 //set before the notification occurs.
                 StageChangeRequired = false;
-                SessionModel.SelectedStage = SessionModel.AvailableStages[value];
+
+                //Now let's change the default view being displayed to the user
+                var new_stage = Model.AvailableStages[value];
+                try
+                {
+                    //Set the selected plot view to be the index of the device stream by default
+                    ViewSelectedIndex = new_stage.StreamParameters.Select(x => x.StreamType).ToList().IndexOf(MotorBoardDataStreamType.DeviceValue);
+                }
+                catch
+                {
+                    //If there was an error for any reason, set the default plot view to be the 0th stream index
+                    ViewSelectedIndex = 0;
+                }
+                
+                //Finally, let's change the selected stage itself
+                Model.CurrentSession.SelectedStage = new_stage;
             }
         }
 
@@ -214,19 +218,7 @@ namespace MotoTrak
         {
             get
             {
-                return !SessionModel.IsSessionRunning;
-            }
-        }
-
-        /// <summary>
-        /// The name of the device that is currently connected to the MotoTrak board, as displayed to the user.
-        /// </summary>
-        [ReactToModelPropertyChanged(new string[] { "Device" })]
-        public string DeviceName
-        {
-            get
-            {
-                return SessionModel.Device.DeviceName;
+                return !Model.IsSessionRunning;
             }
         }
 
@@ -238,7 +230,7 @@ namespace MotoTrak
         {
             get
             {
-                if (SessionModel.IsSessionRunning)
+                if (Model.IsSessionRunning)
                 {
                     return "Stop";
                 }
@@ -255,9 +247,9 @@ namespace MotoTrak
         {
             get
             {
-                if (SessionModel.Device != null && SessionModel.SelectedStage != null)
+                if (Model.CurrentSession.Device != null && Model.CurrentSession.SelectedStage != null)
                 {
-                    return (SessionModel.RatName != string.Empty && !StageChangeRequired);
+                    return (Model.CurrentSession.RatName != string.Empty && !StageChangeRequired);
                 }
 
                 return false;
@@ -274,7 +266,7 @@ namespace MotoTrak
             {
                 if (StartButtonEnabled)
                 {
-                    if (SessionModel.IsSessionRunning)
+                    if (Model.IsSessionRunning)
                     {
                         return new SolidColorBrush(Colors.Red);
                     }
@@ -298,7 +290,7 @@ namespace MotoTrak
         {
             get
             {
-                if (SessionModel.IsSessionRunning && SessionModel.IsSessionPaused)
+                if (Model.IsSessionRunning && Model.IsSessionPaused)
                 {
                     return "Unpause";
                 }
@@ -315,7 +307,7 @@ namespace MotoTrak
         {
             get
             {
-                return SessionModel.IsSessionRunning;
+                return Model.IsSessionRunning;
             }
         }
 
@@ -327,7 +319,7 @@ namespace MotoTrak
         {
             get
             {
-                return SessionModel.IsSessionRunning && !SessionModel.IsSessionPaused;
+                return Model.IsSessionRunning && !Model.IsSessionPaused;
             }
         }
 
@@ -339,7 +331,7 @@ namespace MotoTrak
         {
             get
             {
-                return SessionModel.IsSessionRunning;
+                return Model.IsSessionRunning;
             }
         }
 
@@ -351,25 +343,26 @@ namespace MotoTrak
         {
             get
             {
-                return !SessionModel.IsSessionRunning;
+                return !Model.IsSessionRunning;
             }
         }
 
         /// <summary>
         /// A collection of strings that acts as the messages to be displayed to the user.
         /// </summary>
-        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning", "Messages" })]
         public List<string> MessageItems
         {
             get
             {
-                return SessionModel.Messages.Select(t => t.Item2).ToList();
+                return MotoTrakMessaging.GetInstance().RetrieveAllMessages();
             }
         }
 
         /// <summary>
         /// Returns the selected index of the messages items to insure that the last message is always on screen.
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning", "Messages" })]
         public int MessagesSelectedIndex
         {
             get
@@ -459,7 +452,7 @@ namespace MotoTrak
         {
             get
             {
-                return (SessionModel.FramesPerSecond.ToString());
+                return (Model.FramesPerSecond.ToString());
             }
         }
 
@@ -471,7 +464,7 @@ namespace MotoTrak
         {
             get
             {
-                return (SessionModel.Device.Baseline.ToString());
+                return (Model.CurrentSession.Device.Baseline.ToString());
             }
         }
 
@@ -483,7 +476,7 @@ namespace MotoTrak
         {
             get
             {
-                return (SessionModel.DeviceAnalogValue.ToString());
+                return (Model.DeviceAnalogValue.ToString());
             }
         }
 
@@ -495,7 +488,7 @@ namespace MotoTrak
         {
             get
             {
-                return (SessionModel.DeviceCalibratedValue.ToString());
+                return (Model.DeviceCalibratedValue.ToString());
             }
         }
 
@@ -515,7 +508,7 @@ namespace MotoTrak
         /// </summary>
         public void TogglePause ()
         {
-            SessionModel.PauseSession(!SessionModel.IsSessionPaused);
+            Model.PauseSession(!Model.IsSessionPaused);
         }
 
         /// <summary>
@@ -524,7 +517,7 @@ namespace MotoTrak
         public void StopSession ()
         {
             StageChangeRequired = true;
-            SessionModel.StopSession();
+            Model.StopSession();
         }
 
         /// <summary>
@@ -532,7 +525,7 @@ namespace MotoTrak
         /// </summary>
         public void StartSession ()
         {
-            SessionModel.StartSession();
+            Model.StartSession();
         }
 
         /// <summary>
@@ -540,23 +533,23 @@ namespace MotoTrak
         /// </summary>
         public void TriggerManualFeed ()
         {
-            SessionModel.TriggerManualFeed();
+            Model.TriggerManualFeed();
         }
 
         /// <summary>
         /// Connects to the motor board and initializes streaming
         /// </summary>
-        public void InitializeSession (string comPort)
+        public void InitializeMotoTrak (string comPort)
         {
-            SessionModel.InitializeSession(comPort);
+            Model.InitializeMotoTrak(comPort);
         }
 
         /// <summary>
         /// This function is called whenever the user closes MotoTrak.
         /// </summary>
-        public void CancelStreaming ()
+        public void ShutdownMotoTrak ()
         {
-            SessionModel.CancelBackgroundLoop();
+            Model.ShutdownMotoTrak();
         }
 
         /// <summary>
@@ -564,14 +557,14 @@ namespace MotoTrak
         /// </summary>
         public void ResetBaseline ()
         {
-            SessionModel.ResetBaseline();
+            Model.ResetBaseline();
         }
 
         #endregion
 
         #region Method that listens for property change events on the model
 
-        private void SessionModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        protected override void ExecuteReactionsToModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             //This function listens to notifications based on changes that are happening within the current session, and
             //then it does things in the user interface based on those changes (meaning, basically, that is sends up notifications
@@ -584,40 +577,9 @@ namespace MotoTrak
             UpdatePlotBasedOnModelPropertyChanged(prop_name);
 
             //Update other user interface components
-            ExecuteReactionsToModelPropertyChanged(prop_name);
+            base.ExecuteReactionsToModelPropertyChanged(sender, e);
         }
-
-        private void ExecuteReactionsToModelPropertyChanged(string model_property_changed)
-        {
-            //Get a System.Type object representing the current view-model object
-            System.Type t = typeof(SessionViewModel);
-
-            //Retrieve all property info for the view-model
-            var property_info = t.GetProperties();
-
-            //Iterate through each property
-            foreach (var property in property_info)
-            {
-                //Get the custom attributes defined for this property
-                var attributes = property.GetCustomAttributes(false);
-                foreach (var attribute in attributes)
-                {
-                    //If the property is listening for changes on the model
-                    var a = attribute as ReactToModelPropertyChanged;
-                    if (a != null)
-                    {
-                        //If the property that was changed on the model matches the name
-                        //that this view-model property is listening for...
-                        if (a.ModelPropertyNames.Contains(model_property_changed))
-                        {
-                            //Notify the UI that the view-model property has been changed
-                            NotifyPropertyChanged(property.Name);
-                        }
-                    }
-                }
-            }
-        }
-
+        
         private void CurrentTrial_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             //This function listens to changes that occur from the current trial that is running, and then it 
@@ -630,35 +592,24 @@ namespace MotoTrak
             UpdatePlotBasedOnModelPropertyChanged(prop_name);
         }
 
-        /// <summary>
-        /// Listens to the model's "Messages" collection and reacts to changes in the collection.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Messages_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            NotifyPropertyChanged("MessageItems");
-            NotifyPropertyChanged("MessagesSelectedIndex");
-        }
-
         #endregion
 
         #region Methods that update the plot
 
         public void UpdatePlotBasedOnModelPropertyChanged ( string prop_name )
         {
-            if (prop_name.Equals("SelectedStage"))
+            /*if (prop_name.Equals("SelectedStage"))
             {
                 var y_axis = MotoTrakPlot.Axes.Where(a => a.Position == AxisPosition.Left).FirstOrDefault();
                 if (y_axis != null)
                 {
-                    y_axis.MinimumRange = SessionModel.SelectedStage.HitThresholdMaximum * 2;
+                    //y_axis.MinimumRange = MotoTrakModel.CurrentSession.SelectedStage.HitThresholdMaximum * 2;
                     MotoTrakPlot.InvalidatePlot(true);
                 }
             }
             else if (prop_name.Equals("MonitoredSignal"))
             {
-                var datapoints = SessionModel.MonitoredSignal.Select((y_val, x_val) => new DataPoint(x_val, y_val)).ToList();
+                //var datapoints = MotoTrakModel.MonitoredSignal.Select((y_val, x_val) => new DataPoint(x_val, y_val)).ToList();
 
                 var s = MotoTrakPlot.Series[0] as AreaSeries;
                 if (s != null)
@@ -672,10 +623,10 @@ namespace MotoTrak
             else if (prop_name.Equals("CurrentTrial"))
             {
                 //If the "current trial" has been set, make sure we are listening to events from the new object.
-                if (SessionModel.CurrentTrial != null)
+                if (MotoTrakModel.CurrentTrial != null)
                 {
                     //Listen to events from the current trial
-                    SessionModel.CurrentTrial.PropertyChanged += CurrentTrial_PropertyChanged;
+                    MotoTrakModel.CurrentTrial.PropertyChanged += CurrentTrial_PropertyChanged;
 
                     //Set up lines annotations around the hit window
                     LineAnnotation start_line = new LineAnnotation();
@@ -683,23 +634,23 @@ namespace MotoTrak
                     start_line.LineStyle = LineStyle.Solid;
                     start_line.StrokeThickness = 2;
                     start_line.Color = OxyColor.FromRgb(0, 0, 0);
-                    start_line.X = SessionModel.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
+                    start_line.X = MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
 
                     LineAnnotation end_line = new LineAnnotation();
                     end_line.Type = LineAnnotationType.Vertical;
                     end_line.LineStyle = LineStyle.Solid;
                     end_line.StrokeThickness = 2;
                     end_line.Color = OxyColor.FromRgb(0, 0, 0);
-                    end_line.X = SessionModel.SelectedStage.TotalRecordedSamplesBeforeHitWindow + SessionModel.SelectedStage.TotalRecordedSamplesDuringHitWindow;
+                    end_line.X = MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow + MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesDuringHitWindow;
 
                     LineAnnotation hit_threshold_line = new LineAnnotation();
                     hit_threshold_line.Type = LineAnnotationType.Horizontal;
                     hit_threshold_line.LineStyle = LineStyle.Dash;
                     hit_threshold_line.StrokeThickness = 2;
                     hit_threshold_line.Color = OxyColor.FromRgb(0, 0, 0);
-                    hit_threshold_line.Y = SessionModel.SelectedStage.HitThreshold;
-                    hit_threshold_line.MinimumX = SessionModel.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
-                    hit_threshold_line.MaximumX = SessionModel.SelectedStage.TotalRecordedSamplesBeforeHitWindow + SessionModel.SelectedStage.TotalRecordedSamplesDuringHitWindow;
+                    hit_threshold_line.Y = MotoTrakModel.CurrentSession.SelectedStage.HitThreshold;
+                    hit_threshold_line.MinimumX = MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
+                    hit_threshold_line.MaximumX = MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow + MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesDuringHitWindow;
 
                     var y_axis = MotoTrakPlot.Axes.Where(a => a.Position == AxisPosition.Left).FirstOrDefault();
                     if (y_axis != null)
@@ -734,7 +685,7 @@ namespace MotoTrak
                 hit_line.StrokeThickness = 2;
                 hit_line.Color = OxyColor.FromRgb(255, 0, 0);
 
-                hit_line.X = SessionModel.CurrentTrial.HitIndex;
+                hit_line.X = MotoTrakModel.CurrentTrial.HitIndex;
 
                 var y_axis = MotoTrakPlot.Axes.Where(a => a.Position == AxisPosition.Left).FirstOrDefault();
                 if (y_axis != null)
@@ -745,7 +696,7 @@ namespace MotoTrak
 
                 MotoTrakPlot.Annotations.Add(hit_line);
                 MotoTrakPlot.InvalidatePlot(true);
-            }
+            }*/
         }
 
         #endregion

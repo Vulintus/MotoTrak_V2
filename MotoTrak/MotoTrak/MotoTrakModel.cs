@@ -15,13 +15,13 @@ namespace MotoTrak
     /// <summary>
     /// This class is the core class that runs MotoTrak.  It is a singleton class.
     /// </summary>
-    public class MotoTrak : NotifyPropertyChangedObject
+    public class MotoTrakModel : NotifyPropertyChangedObject
     {
         #region Singleton
 
-        private static MotoTrak _instance = null;
+        private static MotoTrakModel _instance = null;
 
-        private MotoTrak()
+        private MotoTrakModel()
         {
             //empty
         }
@@ -30,11 +30,11 @@ namespace MotoTrak
         /// Get the MotoTrak class instance
         /// </summary>
         /// <returns>Returns the MotoTrak instance</returns>
-        public static MotoTrak GetInstance()
+        public static MotoTrakModel GetInstance()
         {
             if (_instance == null)
             {
-                _instance = new MotoTrak();
+                _instance = new MotoTrakModel();
             }
 
             return _instance;
@@ -314,23 +314,6 @@ namespace MotoTrak
         }
 
         /// <summary>
-        /// This observable collection contains a set of tuples that define messages for the user.
-        /// These messages have a message "type" associated with each one (the first item of the tuple), and a string that contains
-        /// the actual message text (the second item of the tuple).
-        /// </summary>
-        public ObservableCollection<Tuple<MotoTrakMessageType, string>> Messages
-        {
-            get
-            {
-                return _messages;
-            }
-            set
-            {
-                _messages = value;
-            }
-        }
-
-        /// <summary>
         /// This is meant more as a debugging property.  It allows us to see how fast our program can loop and process data.
         /// This property is set by the HandleStreaming method.
         /// </summary>
@@ -403,26 +386,26 @@ namespace MotoTrak
              */
 
             //Connect to the motortrak board
-            ControllerBoard.ConnectToArduino(comPort);
-            if (!ControllerBoard.IsSerialConnectionValid)
+            bool success = ControllerBoard.ConnectToArduino(comPort);
+            if (!success || !ControllerBoard.IsSerialConnectionValid)
             {
-                throw new MotoTrakException(MotoTrakExceptionType.UnableToConnectToControllerBoard, string.Empty);
+                MotoTrakMessaging.GetInstance().AddMessage("Unable to connect to MotoTrak controller board!");
             }
 
             //Check the board version
             if (!ControllerBoard.DoesSketchMeetMinimumRequirements())
             {
-                throw new MotoTrakException(MotoTrakExceptionType.ControllerBoardNotCompatible, string.Empty);
+                MotoTrakMessaging.GetInstance().AddMessage("The controller board that is connected is not compatible with this version of MotoTrak.");
             }
 
             //Gather information about the booth and what devices are connected to it
-            BoothLabel = ControllerBoard.GetBoothNumber().ToString();
+            BoothLabel = ControllerBoard.GetBoothLabel();
             CurrentDevice = ControllerBoard.GetMotorDevice();
             
             //If no device was found, or if the device is unknown, throw an error.
             if (CurrentSession.Device == null || CurrentSession.Device.DeviceType == MotorDeviceType.Unknown)
             {
-                throw new MotoTrakException(MotoTrakExceptionType.UnrecognizedDevice, string.Empty);
+                MotoTrakMessaging.GetInstance().AddMessage("We are unable to recognize the device that is attached to the MotoTrak controller board.");
             }
 
             //At this point, we need to read the MotoTrak configuration file to determine how to load in stages
@@ -598,8 +581,12 @@ namespace MotoTrak
             if (device_signal_index == -1)
             {
                 //If no stream position was defined for the device signal for this stage
-                Messages.Add(new Tuple<MotoTrakMessageType, string>(MotoTrakMessageType.Error,
-                    "The device signal is undefined!  Please select a stage that properly defines the device signal."));
+                MotoTrakMessaging.GetInstance().AddMessage(
+                    "No device signal was defined!  Please select a stage that properly defines the device signal.");
+
+                //Close the background thread and return
+                e.Cancel = true;
+                return;
             }
 
             //Define the buffer size for streaming data from the Arduino board
@@ -624,9 +611,9 @@ namespace MotoTrak
 
             //Initially fill the raw data stream with our fake empty samples.
             stream_data_raw = Enumerable.Repeat<List<int>>(fake_empty_sample, buffer_size).ToList();
-            
+
             //Welcome the user to MotoTrak
-            Messages.Add(new Tuple<MotoTrakMessageType, string>(MotoTrakMessageType.Normal, "Welcome to MotoTrak!"));
+            MotoTrakMessaging.GetInstance().AddMessage("Welcome to MotoTrak!");
 
             //Set up a stopwatch timer to track frame rate
             Stopwatch stop_watch = new Stopwatch();
@@ -702,7 +689,7 @@ namespace MotoTrak
                         CurrentSession.Trials = Enumerable.Empty<MotorTrial>().ToList();
 
                         //Clear all messages for the new session to begin.
-                        Messages.Clear();
+                        MotoTrakMessaging.GetInstance().ClearMessages();
 
                         //Set the session state to be running
                         SessionState = SessionRunState.SessionRunning;
@@ -888,7 +875,7 @@ namespace MotoTrak
                         //Create an end of trial message
                         string msg = CurrentSession.SelectedStage.StageImplementation.CreateEndOfTrialMessage(CurrentTrial.Result == MotorTrialResult.Hit,
                             CurrentSession.Trials.Count + 1, current_trial_data_transformed, CurrentSession.SelectedStage);
-                        Messages.Add(new Tuple<MotoTrakMessageType, string>(MotoTrakMessageType.Normal, msg));
+                        MotoTrakMessaging.GetInstance().AddMessage(msg);
 
                         //First, add the trial to our collection of total trials for the currently running session.
                         CurrentSession.Trials.Add(CurrentTrial);

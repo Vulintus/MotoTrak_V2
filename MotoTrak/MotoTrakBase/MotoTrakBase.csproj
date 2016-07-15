@@ -72,11 +72,10 @@
     <Compile Include="MotorTrialResult.cs" />
     <Compile Include="MotoTrakAutopositioner.cs" />
     <Compile Include="MotoTrakConfiguration.cs" />
-    <Compile Include="MotoTrakException.cs" />
     <Compile Include="MotoTrakExceptionType.cs" />
-    <Compile Include="MotoTrakExceptionTypeConverter.cs" />
     <Compile Include="MotoTrakFileRead.cs" />
     <Compile Include="MotoTrakMessageType.cs" />
+    <Compile Include="MotoTrakMessaging.cs" />
     <Compile Include="MotoTrakSession.cs" />
     <Compile Include="NotifyPropertyChangedObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

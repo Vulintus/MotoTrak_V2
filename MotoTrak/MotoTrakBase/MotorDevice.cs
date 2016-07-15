@@ -31,7 +31,7 @@ namespace MotoTrakBase
         #region Private variables
 
         private MotorDeviceType _device_type = MotorDeviceType.Unknown;
-        private List<double> _coefficients = new List<double>();
+        private Dictionary<int, double> _coefficients = new Dictionary<int, double>();
         private int _device_index = 0;
         
         #endregion
@@ -70,7 +70,7 @@ namespace MotoTrakBase
         /// <param name="type">The device type</param>
         /// <param name="index">The index of the device on the motor board</param>
         /// <param name="coeffs">The coefficients for the device calibration</param>
-        public MotorDevice(MotorDeviceType type, int index, List<double> coeffs)
+        public MotorDevice(MotorDeviceType type, int index, Dictionary<int, double> coeffs)
         {
             DeviceType = type;
             DeviceIndex = index;
@@ -100,7 +100,7 @@ namespace MotoTrakBase
         /// Index 0 = y-intercept (baseline)
         /// Index 1 = slope
         /// </summary>
-        public List<double> Coefficients
+        public Dictionary<int, double> Coefficients
         {
             get
             {
@@ -260,6 +260,7 @@ namespace MotoTrakBase
                     
                     break;
                 case MotorDeviceType.Pull:
+
                     //Set the baseline of the pull apparatus
                     Baseline = motorBoard.GetBaseline();
 
