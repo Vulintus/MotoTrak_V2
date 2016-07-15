@@ -22,19 +22,14 @@ namespace MotoTrakBase
         #endregion
 
         #region Methods to react to property changes on objects we are listening to
-
-        /// <summary>
-        /// The type of the object that is listening for events on child objects
-        /// </summary>
-        public System.Type ObjectType { get; set; }
-
+        
         protected virtual void ExecuteReactionsToModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             //Get the name of the property that was changed on the child object
             string model_property_changed = e.PropertyName;
 
             //Get a System.Type object representing the current object that is reacting to changes on another object
-            System.Type t = ObjectType;
+            System.Type t = this.GetType();
 
             //Retrieve all property info for the view-model
             var property_info = t.GetProperties();

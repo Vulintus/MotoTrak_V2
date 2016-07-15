@@ -26,6 +26,7 @@ namespace MotoTrakBase
         private static Object _instance_lock = new object();
 
         /// <summary>
+        /// Constructor
         /// </summary>
         private MotorBoard()
         {
