@@ -34,7 +34,7 @@ namespace MotoTrakBase
         {
             //Create a 2d list for our result that we will return
             List<List<double>> result = new List<List<double>>();
-
+            
             //Iterate over each stream
             for (int i = 0; i < new_data_from_controller.Count; i++)
             {

@@ -591,18 +591,20 @@ namespace MotoTrak
             //Define the buffer size for streaming data from the Arduino board
             int buffer_size = CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial;
 
-            //Define some variables that will be needed throughout our endless loop.
+            /*
+             * The following section of code will simply create some variables that we will need throughout 
+             * our endless loop.
+             */
+
+            /*
+             * First, we need to handle the raw data stream. We will populate it with default values for each stream.
+             */
+            
             //First, we want to define an array that holds the raw stream of data
             List<List<int>> stream_data_raw = new List<List<int>>();
 
             //Create an example fake empty sample from the MotoTrak controller that we will use to initially fill the buffers with
             List<int> fake_empty_sample = Enumerable.Repeat<int>(0, CurrentSession.SelectedStage.TotalDataStreams).ToList();
-
-            //Create an empty array to hold our transformed stream data
-            List<List<double>> stream_data_transformed = new List<List<double>>();
-
-            //Create an array to hold transformed trial data
-            List<List<double>> current_trial_data_transformed = new List<List<double>>();
 
             //Find the index of the data stream that holds the data coming in from the device (within our fake empty sample), and set its
             //value to be the baseline device value rather than the default value of 0.
@@ -610,6 +612,31 @@ namespace MotoTrak
 
             //Initially fill the raw data stream with our fake empty samples.
             stream_data_raw = Enumerable.Repeat<List<int>>(fake_empty_sample, buffer_size).ToList();
+
+            /*
+             * Now, let's create a variable in which we will store a version of the stream data 
+             * that has been transformed from its raw format to something more useful.
+             */
+
+            //Create an empty array to hold our transformed stream data
+            List<List<double>> stream_data_transformed = new List<List<double>>();
+            for (int i = 0; i < CurrentSession.SelectedStage.TotalDataStreams; i++)
+            {
+                //Add a list of floating-point values for each stream we will be handling
+                stream_data_transformed.Add(new List<double>());
+            }
+
+            /*
+             * Finally, let's create another variable to hold data from the current trial.
+             * This is separate from the CurrentTrial object.
+             */
+
+            //Create an array to hold transformed trial data
+            List<List<double>> current_trial_data_transformed = new List<List<double>>();
+            
+            /*
+             * Now we will move on from declaring variables...
+             */
 
             //Welcome the user to MotoTrak
             MotoTrakMessaging.GetInstance().AddMessage("Welcome to MotoTrak!");
@@ -646,18 +673,34 @@ namespace MotoTrak
                 var new_data_points = ReadNewDataFromArduino();
                 int number_of_new_data_points = new_data_points.Count;
 
-                //Make a transposed copy of the new data
-                var transposed_data_copy = MotorMath.Transpose(new_data_points);
-                
-                //Perform transformations on the new data
-                var transformed_new_data = CurrentSession.SelectedStage.StageImplementation.TransformSignals(transposed_data_copy,
-                    CurrentSession.SelectedStage, CurrentSession.Device);
-
                 //Add the raw data to the stream_data_raw variable
                 stream_data_raw.AddRange(new_data_points);
 
-                //Add the transformed data to the stream_data_transformed variable
-                stream_data_transformed.AddRange(transformed_new_data);
+                //Make a transposed copy of the new data
+                var transposed_data_copy = MotorMath.Transpose(new_data_points);
+                
+                try
+                {
+                    //Perform transformations on the new data
+                    var transformed_new_data = CurrentSession.SelectedStage.StageImplementation.TransformSignals(transposed_data_copy,
+                        CurrentSession.SelectedStage, CurrentSession.Device);
+
+                    //Add the transformed data to the stream_data_transformed variable
+                    for (int stream_index = 0; stream_index < transformed_new_data.Count; stream_index++)
+                    {
+                        stream_data_transformed[stream_index].AddRange(transformed_new_data[stream_index]);
+                    }
+                }
+                catch
+                {
+                    MotoTrakMessaging.GetInstance().AddMessage("Unable to transform signal data!");
+                }
+                
+                /*
+                 * At this point, we have read in new data and transformed it.
+                 * Now we need to reduce the size of both the RAW buffer and the TRANSFORMED buffer to make sure they 
+                 * stay within the limits of the defined buffer size. 
+                 */
 
                 //Now reduce the size of raw stream data if the size has exceeded our max buffer size.
                 stream_data_raw = stream_data_raw.Skip(Math.Max(0, stream_data_raw.Count - buffer_size)).Take(buffer_size).ToList();
@@ -670,7 +713,16 @@ namespace MotoTrak
                 
                 //Set these properties for debugging purposes
                 DeviceAnalogValue = stream_data_raw[stream_data_raw.Count - 1][device_signal_index];
-                DeviceCalibratedValue = Convert.ToInt32(stream_data_transformed[device_signal_index][stream_data_transformed[device_signal_index].Count - 1]);
+
+                try
+                {
+                    DeviceCalibratedValue = Convert.ToInt32(stream_data_transformed[device_signal_index][stream_data_transformed[device_signal_index].Count - 1]);
+                }
+                catch (Exception local_exception)
+                {
+                    DeviceCalibratedValue = 0;
+                }
+                
 
                 //Check to see if a manual feed needs to be triggered
                 if (IsTriggerManualFeed)
