@@ -518,7 +518,6 @@ namespace MotoTrak
         #region Private properties edited by the background worker thread
 
         private SynchronizedCollection<SynchronizedCollection<double>> _monitoredSignal = new SynchronizedCollection<SynchronizedCollection<double>>();
-        private ObservableCollection<Tuple<MotoTrakMessageType, string>> _messages = new ObservableCollection<Tuple<MotoTrakMessageType, string>>();
         private int fps = 0;
         private int _device_analog_value = 0;
         private int _device_calibrated_value = 0;
@@ -576,7 +575,7 @@ namespace MotoTrak
             CurrentTrial = null;
 
             //Get the index of the device signal within the data streams
-            var stream_types = CurrentSession.SelectedStage.StreamParameters.Select(x => x.StreamType).ToList();
+            var stream_types = CurrentSession.SelectedStage.DataStreamTypes;
             int device_signal_index = stream_types.IndexOf(MotorBoardDataStreamType.DeviceValue);
             if (device_signal_index == -1)
             {

@@ -59,8 +59,8 @@
     <Compile Include="MotorStage.cs" />
     <Compile Include="MotorStageAdaptiveThresholdType.cs" />
     <Compile Include="MotorStageAdaptiveThresholdTypeConverter.cs" />
-    <Compile Include="MotorStageHitThresholdType.cs" />
-    <Compile Include="MotorStageHitThresholdTypeConverter.cs" />
+    <Compile Include="MotorTaskTypeV1.cs" />
+    <Compile Include="MotorTaskTypeV1Converter.cs" />
     <Compile Include="MotorStageParameter.cs" />
     <Compile Include="MotorStageStimulationType.cs" />
     <Compile Include="MotorStageStimulationTypeConverter.cs" />

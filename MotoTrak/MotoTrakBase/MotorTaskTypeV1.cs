@@ -5,7 +5,7 @@ namespace MotoTrakBase
     /// <summary>
     /// This enumeration defines the different types of hit thresholds that exist in MotoTrak.
     /// </summary>
-    public enum MotorStageHitThresholdType
+    public enum MotorTaskTypeV1
     {
         [Description("Undefined")]
         Undefined,

@@ -27,27 +27,34 @@ namespace MotoTrakBase
         {
             string msg = string.Empty;
 
-            //int hit_win_pk_force = Convert.ToInt32(trial_signal.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max());
+            //Get the device stream
+            var device_stream = trial_signal[1];
 
-            //msg += "Trial " + trial_number.ToString() + " ";
-
-            if (successful_trial)
+            //Get the peak force within the hit window
+            try
             {
-                msg += "HIT, ";
+                double peak_force = device_stream.GetRange(stage.TotalRecordedSamplesBeforeHitWindow,
+                stage.TotalRecordedSamplesDuringHitWindow).Max();
+
+                msg += "Trial " + trial_number.ToString() + " ";
+                
+                msg += "maximal force = " + peak_force.ToString() + " grams.";
+
+                if (stage.StageParameters.ContainsKey("Hit Threshold"))
+                {
+                    if (stage.StageParameters["Hit Threshold"].AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Median)
+                    {
+                        double current_hit_threshold = stage.StageParameters["Hit Threshold"].CurrentValue;
+                        msg += "(Hit threshold = " + Math.Floor(current_hit_threshold).ToString() + " grams)";
+                    }
+                }
+                
+                return msg;
             }
-            else
+            catch
             {
-                msg += "MISS, ";
-            }
-
-            //msg += "maximal force = " + hit_win_pk_force.ToString() + " grams.";
-
-            //if (stage.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Median)
-            //{
-                //msg += "(Hit threshold = " + Math.Floor(stage.HitThreshold).ToString() + " grams)";
-            //}
-
-            return msg;
+                return base.CreateEndOfTrialMessage(successful_trial, trial_number, trial_signal, stage);
+            } 
         }
 
         #endregion

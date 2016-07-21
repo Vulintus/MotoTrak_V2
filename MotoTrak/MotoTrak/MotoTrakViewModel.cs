@@ -105,10 +105,10 @@ namespace MotoTrak
             get
             {
                 List<string> result = new List<string>();
-                foreach (var sp in Model.CurrentSession.SelectedStage.StreamParameters)
-                {
-                    result.Add(sp.StreamType.ToString());
-                }
+                //foreach (var sp in Model.CurrentSession.SelectedStage.StreamParameters)
+                //{
+                    //result.Add(sp.StreamType.ToString());
+                //}
 
                 result.Add("Recent performance");
                 result.Add("Session overview");
@@ -197,7 +197,7 @@ namespace MotoTrak
                 try
                 {
                     //Set the selected plot view to be the index of the device stream by default
-                    ViewSelectedIndex = new_stage.StreamParameters.Select(x => x.StreamType).ToList().IndexOf(MotorBoardDataStreamType.DeviceValue);
+                    ViewSelectedIndex = new_stage.DataStreamTypes.IndexOf(MotorBoardDataStreamType.DeviceValue);
                 }
                 catch
                 {

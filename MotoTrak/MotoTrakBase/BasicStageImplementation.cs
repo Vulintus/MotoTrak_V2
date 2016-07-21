@@ -34,31 +34,27 @@ namespace MotoTrakBase
         {
             //Create a 2d list for our result that we will return
             List<List<double>> result = new List<List<double>>();
-            
-            //Iterate over each set of streaming parameters that have been defined
-            foreach (var sp in stage.StreamParameters)
-            {
-                if (sp.StreamIndex >= 0)
-                {
-                    //Grab the associated stream
-                    var stream_data = new_data_from_controller[sp.StreamIndex];
-                    List<double> fp_stream_data = new List<double>();
 
-                    switch (sp.StreamType)
-                    {
-                        case MotorBoardDataStreamType.DeviceValue:
-                            //Transform the device data if this is the device stream
-                            fp_stream_data = stream_data.Select(x => (double)(device.Slope * (x - device.Baseline))).ToList();
-                            break;
-                        default:
-                            //Convert all values to floating point values
-                            fp_stream_data = stream_data.Select(x => (double)x).ToList();
-                            break;
-                    }
-                    
-                    //Add this stream to our result
-                    result.Add(fp_stream_data);
+            //Iterate over each stream
+            for (int i = 0; i < new_data_from_controller.Count; i++)
+            {
+                var stream_data = new_data_from_controller[i];
+                List<double> fp_stream_data = new List<double>();
+
+                //Transform the data from each stream into the necessary format
+                if (i == 1)
+                {
+                    //If this is the device stream
+                    fp_stream_data = stream_data.Select(x => (double)(device.Slope * (x - device.Baseline))).ToList();
                 }
+                else
+                {
+                    //If this is not the device stream, just convert the data to a floating-point type.
+                    fp_stream_data = stream_data.Select(x => (double)x).ToList();
+                }
+
+                //Add the transformed stream data to the result to be returned to the caller
+                result.Add(fp_stream_data);
             }
             
             //Return the result
@@ -70,37 +66,36 @@ namespace MotoTrakBase
             //Create a value that will be our return value
             int return_value = -1;
 
-            //Iterate over each set of streaming parameters that have been defined
-            foreach (var sp in stage.StreamParameters)
+            //Only proceed if an initiation threshold has been defined for this stage
+            if (stage.StageParameters.ContainsKey("Initiation Threshold"))
             {
-                //If initiation threshold parameters have been set for this stream of data
-                if (sp.InitiationThreshold != null && sp.StreamIndex >= 0)
+                //Get the stage's initiation threshold
+                double init_thresh = stage.StageParameters["Initiation Threshold"].CurrentValue;
+
+                //Get the stream data from the device
+                var stream_data = signal[1];
+
+                //Check to make sure we actually have new data to work with before going on
+                if (new_datapoint_count > 0 && new_datapoint_count <= stream_data.Count)
                 {
-                    //Get the stream we will be working with
-                    var stream_data = signal[sp.StreamIndex];
-                    
-                    //Check to make sure we actually have new data to consider before going on
-                    if (new_datapoint_count > 0 && new_datapoint_count <= stream_data.Count)
+                    //Look only at the most recent data from the signal
+                    var stream_data_to_use = stream_data.Skip(signal.Count - new_datapoint_count).ToList();
+
+                    //Calculate how many OLD elements there are
+                    var difference_in_size = stream_data.Count - stream_data_to_use.Count;
+
+                    //Retrieve the maximal value for the signal
+                    double maximal_value = stream_data_to_use.Max();
+
+                    //Check to see if the maximal value exceeds the initiation threshold
+                    if (maximal_value >= init_thresh)
                     {
-                        //Look only at the most recent data from the signal
-                        var stream_data_to_use = stream_data.Skip(signal.Count - new_datapoint_count).ToList();
-
-                        //Calculate how many OLD elements there are
-                        var difference_in_size = stream_data.Count - stream_data_to_use.Count;
-
-                        //Retrieve the maximal value for the signal
-                        double maximal_value = stream_data_to_use.Max();
-                        
-                        //Check to see if the maximal value exceeds the initiation threshold
-                        if (maximal_value >= sp.InitiationThreshold.CurrentValue)
-                        {
-                            //Set the return value equal to the index at which we found the value that exceeds the initiation threshold
-                            return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size;
-                        }
+                        //Set the return value equal to the index at which we found the value that exceeds the initiation threshold
+                        return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size;
                     }
                 }
             }
-
+            
             return return_value;
         }
 
@@ -109,27 +104,31 @@ namespace MotoTrakBase
             //Instantiate a list of tuples that will hold any events that capture as a result of this function.
             List<Tuple<MotorTrialEventType, int>> result = new List<Tuple<MotorTrialEventType, int>>();
             
-            //Iterate over all streaming parameters for this stage
-            foreach (var sp in stage.StreamParameters)
+            //Only proceed if a hit threshold has been defined for this stage
+            if (stage.StageParameters.ContainsKey("Hit Threshold"))
             {
-                //If there is a hit threshold defined for this stream
-                if (sp.HitThreshold != null && sp.HitThresholdType != MotorStageHitThresholdType.Undefined && sp.StreamIndex >= 0)
+                //Get the stream data from the device
+                var stream_data = trial_signal[1];
+
+                //Check to see if the hit threshold has been exceeded
+                var current_hit_thresh = stage.StageParameters["Hit Threshold"].CurrentValue;
+
+                //Check to see if the stream data has exceeded the current hit threshold
+                try
                 {
-                    //Get the associated stream
-                    var stream_data = trial_signal[sp.StreamIndex];
+                    var indices_of_hits = Enumerable.Range(0, stream_data.Count)
+                    .Where(index => stream_data[index] >= current_hit_thresh &&
+                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) &&
+                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).ToList();
 
-                    //Get the current value of the hit threshold for this stream
-                    var current_hit_threshold = sp.HitThreshold.CurrentValue;
-
-                    //Check to see if the stream data has exceeded the current hit threshold
-                    var l = Enumerable.Range(0, trial_signal.Count)
-                        .Where(index => stream_data[index] >= current_hit_threshold &&
-                        (index >= stage.TotalRecordedSamplesBeforeHitWindow) &&
-                        (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).ToList();
-                    if (l != null && l.Count > 0)
+                    if (indices_of_hits != null && indices_of_hits.Count > 0)
                     {
-                        result.Add(new Tuple<MotorTrialEventType, int>(MotorTrialEventType.SuccessfulTrial, l[0]));
+                        result.Add(new Tuple<MotorTrialEventType, int>(MotorTrialEventType.SuccessfulTrial, indices_of_hits[0]));
                     }
+                }
+                catch
+                {
+                    //nothing here
                 }
             }
             
@@ -195,28 +194,21 @@ namespace MotoTrakBase
 
         public virtual void AdjustDynamicStageParameters(List<MotorTrial> all_trials, List<List<double>> trial_signal, MotorStage stage)
         {
-            //We must now adjust adaptive thresholds for each stream we are monitoring
-            foreach (var sp in stage.StreamParameters)
+            //Adjust the hit threshold if necessary
+            if (stage.StageParameters.ContainsKey("Hit Threshold"))
             {
-                if (sp.StreamIndex >= 0)
-                {
-                    //Grab the signal data for this stream
-                    var stream_data = trial_signal[sp.StreamIndex];
+                //Grab the device signal for this trial
+                var stream_data = trial_signal[1];
 
-                    //If this stream has a hit threshold
-                    if (sp.HitThreshold != null)
-                    {
-                        //Find the maximal force of the current trial
-                        double max_force = stream_data.Where((val, index) =>
-                            (index >= stage.TotalRecordedSamplesBeforeHitWindow) &&
-                            (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max();
+                //Find the maximal force of the current trial
+                double max_force = stream_data.Where((val, index) =>
+                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) &&
+                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max();
 
-                        //Retain the maximal force of the most recent 10 trials
-                        sp.HitThreshold.History.Enqueue(max_force);
-                        sp.HitThreshold.CalculateAndSetBoundedCurrentValue();
-                    }
-                }
-            }
+                //Retain the maximal force of the most recent 10 trials
+                stage.StageParameters["Hit Threshold"].History.Enqueue(max_force);
+                stage.StageParameters["Hit Threshold"].CalculateAndSetBoundedCurrentValue();
+            }            
         }
 
         #endregion

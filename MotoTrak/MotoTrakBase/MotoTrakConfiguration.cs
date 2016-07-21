@@ -116,7 +116,7 @@ namespace MotoTrakBase
                     ConfigurationVersion = 1;
                 }
             }
-            catch (Exception e)
+            catch
             {
                 MotoTrakMessaging m = MotoTrakMessaging.GetInstance();
                 m.AddMessage("Unable to read MotoTrak configuration file!");

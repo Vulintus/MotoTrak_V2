@@ -68,12 +68,19 @@ namespace MotoTrakBase
             InitialValue = 0,
             CurrentValue = 0
         };
-        
-        private List<MotorStreamParameters> _stream_parameters = new List<MotorStreamParameters>();
 
+        private Dictionary<string, MotorStageParameter> _stage_parameters = new Dictionary<string, MotorStageParameter>();
+        
         private MotorStageStimulationType _output_trigger_type = MotorStageStimulationType.Off;
 
         private int _trial_count_lookback_for_adaptive_adjustments = 10;
+
+        private List<MotorBoardDataStreamType> _data_streams = new List<MotorBoardDataStreamType>()
+        {
+            MotorBoardDataStreamType.Timestamp,
+            MotorBoardDataStreamType.DeviceValue,
+            MotorBoardDataStreamType.IRSensorValue
+        };
         
         #endregion
 
@@ -162,24 +169,37 @@ namespace MotoTrakBase
         {
             get
             {
-                return _stream_parameters.Count;
+                return _data_streams.Count;
             }
         }
 
         /// <summary>
-        /// An ordered list that contains parameters indicating how to operate on each incoming stream of data
-        /// for this stage.
-        /// The 3 default streams (in order) for V1 are: { timestamp, device value, IR sensor value }
+        /// An ordered list of the data stream types for this stage
         /// </summary>
-        public List<MotorStreamParameters> StreamParameters
+        public List<MotorBoardDataStreamType> DataStreamTypes
         {
             get
             {
-                return _stream_parameters;
+                return _data_streams;
             }
             set
             {
-                _stream_parameters = value;
+                _data_streams = value;
+            }
+        }
+
+        /// <summary>
+        /// A dictionary of all pertinent parameters for this stage (hit threshold, initiation threshold, etc)
+        /// </summary>
+        public Dictionary<string, MotorStageParameter> StageParameters
+        {
+            get
+            {
+                return _stage_parameters;
+            }
+            set
+            {
+                _stage_parameters = value;
             }
         }
 
@@ -296,22 +316,22 @@ namespace MotoTrakBase
         /// <summary>
         /// The possible hit threshold types that may be available based on the kind of device this stage uses.
         /// </summary>
-        public List<MotorStageHitThresholdType> PossibleHitThresholdTypes
+        public List<MotorTaskTypeV1> PossibleHitThresholdTypes
         {
             get
             {
-                List<MotorStageHitThresholdType> possibleTypes = new List<MotorStageHitThresholdType>();
+                List<MotorTaskTypeV1> possibleTypes = new List<MotorTaskTypeV1>();
                 switch (DeviceType)
                 {
                     case MotorDeviceType.Pull:
-                        possibleTypes.Add(MotorStageHitThresholdType.PeakForce);
-                        possibleTypes.Add(MotorStageHitThresholdType.SustainedForce);
+                        possibleTypes.Add(MotorTaskTypeV1.PeakForce);
+                        possibleTypes.Add(MotorTaskTypeV1.SustainedForce);
                         break;
                     case MotorDeviceType.Knob:
-                        possibleTypes.Add(MotorStageHitThresholdType.TotalDegrees);
+                        possibleTypes.Add(MotorTaskTypeV1.TotalDegrees);
                         break;
                     default:
-                        possibleTypes.Add(MotorStageHitThresholdType.Undefined);
+                        possibleTypes.Add(MotorTaskTypeV1.Undefined);
                         break;
                 }
 
@@ -453,28 +473,7 @@ namespace MotoTrakBase
                 {
                     //Otherwise, set the variables for the new stage appropriately.
                     MotorStage stage = new MotorStage();
-
-                    //Define stream parameters for the new stage.  This will be the same for all "V1" stages.
-                    MotorStreamParameters timestamp_stream = new MotorStreamParameters()
-                    {
-                        StreamIndex = 0,
-                        StreamType = MotorBoardDataStreamType.Timestamp
-                    };
-
-                    MotorStreamParameters device_stream = new MotorStreamParameters()
-                    {
-                        HitThreshold = new MotorStageParameter(),
-                        InitiationThreshold = new MotorStageParameter(),
-                        StreamIndex = 1,
-                        StreamType = MotorBoardDataStreamType.DeviceValue
-                    };
-
-                    MotorStreamParameters ir_sensor_stream = new MotorStreamParameters()
-                    {
-                        StreamIndex = 2,
-                        StreamType = MotorBoardDataStreamType.IRSensorValue
-                    };
-
+                    
                     try
                     {
                         stage.StageName = stageLine[0];
@@ -519,10 +518,10 @@ namespace MotoTrakBase
                         init_thresh.InitialValue = trial_init;
                         init_thresh.CurrentValue = init_thresh.InitialValue;
                         init_thresh.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Static;
-                        device_stream.InitiationThreshold = init_thresh;
+                        
                         
                         //Read in the hit threshold type
-                        device_stream.HitThresholdType = MotorStageHitThresholdTypeConverter.ConvertToMotorStageHitThresholdType(stageLine[10]);
+                        var hit_thresh_type = MotorTaskTypeV1Converter.ConvertToMotorStageHitThresholdType(stageLine[10]);
 
                         //Read in the duration of the hit window
                         MotorStageParameter hit_win = new MotorStageParameter();
@@ -548,21 +547,19 @@ namespace MotoTrakBase
                         {
                             hit_thresh.CurrentValue = hit_thresh.MinimumValue;
                         }
+
                         
-                        //Set the implementation of this stage
-                        if (device_stream.HitThresholdType == MotorStageHitThresholdType.PeakForce)
+                        if (hit_thresh_type == MotorTaskTypeV1.PeakForce)
                         {
-                            //string stage_file = @"C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakPythonCode\PythonBasicStageImplementation.py";
-                            //stage.StageImplementation = new PythonStageImplementation(stage_file);
-                            //stage.StageImplementation = new PythonStageImplementation("PythonBasicStageImplementation.py");
+                            //Set the implementation of this stage
                             stage.StageImplementation = new PullStageImplementation();
+
+                            //Set the parameters of this stage
+                            stage.StageParameters.Clear();
+                            stage.StageParameters["Hit Threshold"] = hit_thresh;
+                            stage.StageParameters["Initiation Threshold"] = init_thresh;
                         }
-
-                        //Finalize adding the streaming parameters to the new stage
-                        stage.StreamParameters.Add(timestamp_stream);
-                        stage.StreamParameters.Add(device_stream);
-                        stage.StreamParameters.Add(ir_sensor_stream);
-
+                        
                         //Add the stage to our list of stages
                         stages.Add(stage);
                     }

@@ -28,7 +28,7 @@ namespace MotoTrakBase
         public MotorStageParameter InitiationThreshold = null;
         public MotorStageParameter HitThreshold = null;
 
-        public MotorStageHitThresholdType HitThresholdType = MotorStageHitThresholdType.Undefined;
+        public MotorTaskTypeV1 HitThresholdType = MotorTaskTypeV1.Undefined;
         public MotorBoardDataStreamType StreamType = MotorBoardDataStreamType.Unknown;
 
         public int StreamIndex = -1;

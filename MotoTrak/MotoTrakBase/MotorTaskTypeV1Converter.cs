@@ -7,16 +7,16 @@ namespace MotoTrakBase
     /// <summary>
     /// This static class exists for converting string descriptions of hit thresholds to values of an enumerated type and vice versa.
     /// </summary>
-    public static class MotorStageHitThresholdTypeConverter
+    public static class MotorTaskTypeV1Converter
     {
         /// <summary>
         /// Converts a string to a hit threshold type.
         /// </summary>
         /// <param name="description">String description of a hit threshold type</param>
         /// <returns>Hit threshold type</returns>
-        public static MotorStageHitThresholdType ConvertToMotorStageHitThresholdType(string description)
+        public static MotorTaskTypeV1 ConvertToMotorStageHitThresholdType(string description)
         {
-            var type = typeof(MotorStageHitThresholdType);
+            var type = typeof(MotorTaskTypeV1);
 
             foreach (var field in type.GetFields())
             {
@@ -25,16 +25,16 @@ namespace MotoTrakBase
                 if (attribute != null)
                 {
                     if (attribute.Description == description)
-                        return (MotorStageHitThresholdType)field.GetValue(null);
+                        return (MotorTaskTypeV1)field.GetValue(null);
                 }
                 else
                 {
                     if (field.Name == description)
-                        return (MotorStageHitThresholdType)field.GetValue(null);
+                        return (MotorTaskTypeV1)field.GetValue(null);
                 }
             }
 
-            return MotorStageHitThresholdType.Undefined;
+            return MotorTaskTypeV1.Undefined;
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace MotoTrakBase
         /// </summary>
         /// <param name="thresholdType">Hit threshold type</param>
         /// <returns>String description of the hit threshold type.</returns>
-        public static string ConvertToDescription(MotorStageHitThresholdType thresholdType)
+        public static string ConvertToDescription(MotorTaskTypeV1 thresholdType)
         {
             FieldInfo fi = thresholdType.GetType().GetField(thresholdType.ToString());
 
