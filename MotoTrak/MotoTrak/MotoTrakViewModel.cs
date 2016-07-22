@@ -18,7 +18,6 @@ namespace MotoTrak
         #region Private data members
 
         MotoTrakModel _model = MotoTrakModel.GetInstance();
-        CurrentSessionViewModel _current_session_view_model = null;
         
         private int _viewSelectedIndex = 0;
         private bool _stageChangeRequired = false;
@@ -31,15 +30,6 @@ namespace MotoTrak
         {
             //Subscribe to notifications from the MotoTrak model
             Model.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
-
-            //Create a "current session"
-            Model.CurrentSession = new MotoTrakSession();
-
-            //Subscribe to notifications from MotoTrak's current session that is running
-            Model.CurrentSession.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
-            
-            //Create a view-model object for the current session
-            CurrentSession = new CurrentSessionViewModel(Model.CurrentSession);
         }
         
         #endregion
@@ -60,22 +50,7 @@ namespace MotoTrak
                 _model = value;
             }
         }
-
-        /// <summary>
-        /// View-model for the current session being run
-        /// </summary>
-        public CurrentSessionViewModel CurrentSession
-        {
-            get
-            {
-                return _current_session_view_model;
-            }
-            set
-            {
-                _current_session_view_model = value;
-            }
-        }
-
+        
         /// <summary>
         /// Whether or not it is required for the user to select a new stage before being allowed
         /// to initiate a new session.
@@ -171,12 +146,12 @@ namespace MotoTrak
         /// <summary>
         /// An index into the list of available stages that indicates the currently selected stage.
         /// </summary>
-        [ReactToModelPropertyChanged(new string[] { "SelectedStage", "AvailableStages" })]
+        [ReactToModelPropertyChanged(new string[] { "SelectedStage", "AvailableStages", "CurrentSession" })]
         public int StageSelectedIndex
         {
             get
             {
-                if (Model.CurrentSession.SelectedStage != null)
+                if (Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
                 {
                     return Model.AvailableStages.IndexOf(Model.CurrentSession.SelectedStage);
                 }
@@ -185,28 +160,31 @@ namespace MotoTrak
             }
             set
             {
-                //This line of code needs to come before the next one.
-                //The reason is that there are properties that listen for "SelectedStage"
-                //to change on the model, but there verification of that change is by checking
-                //the "StageChangeRequired" boolean value.  So the boolean value needs to be
-                //set before the notification occurs.
-                StageChangeRequired = false;
+                if (Model.CurrentSession != null)
+                {
+                    //This line of code needs to come before the next one.
+                    //The reason is that there are properties that listen for "SelectedStage"
+                    //to change on the model, but there verification of that change is by checking
+                    //the "StageChangeRequired" boolean value.  So the boolean value needs to be
+                    //set before the notification occurs.
+                    StageChangeRequired = false;
 
-                //Now let's change the default view being displayed to the user
-                var new_stage = Model.AvailableStages[value];
-                try
-                {
-                    //Set the selected plot view to be the index of the device stream by default
-                    ViewSelectedIndex = new_stage.DataStreamTypes.IndexOf(MotorBoardDataStreamType.DeviceValue);
+                    //Now let's change the default view being displayed to the user
+                    var new_stage = Model.AvailableStages[value];
+                    try
+                    {
+                        //Set the selected plot view to be the index of the device stream by default
+                        ViewSelectedIndex = new_stage.DataStreamTypes.IndexOf(MotorBoardDataStreamType.DeviceValue);
+                    }
+                    catch
+                    {
+                        //If there was an error for any reason, set the default plot view to be the 0th stream index
+                        ViewSelectedIndex = 0;
+                    }
+
+                    //Finally, let's change the selected stage itself
+                    Model.CurrentSession.SelectedStage = new_stage;
                 }
-                catch
-                {
-                    //If there was an error for any reason, set the default plot view to be the 0th stream index
-                    ViewSelectedIndex = 0;
-                }
-                
-                //Finally, let's change the selected stage itself
-                Model.CurrentSession.SelectedStage = new_stage;
             }
         }
 
@@ -242,12 +220,12 @@ namespace MotoTrak
         /// <summary>
         /// Whether or not the start button should be enabled
         /// </summary>
-        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning", "RatName", "SelectedStage", "Device" })]
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning", "RatName", "SelectedStage", "CurrentDevice", "CurrentSession" })]
         public bool StartButtonEnabled
         {
             get
             {
-                if (Model.CurrentSession.Device != null && Model.CurrentSession.SelectedStage != null)
+                if (Model.CurrentSession != null && Model.CurrentDevice != null && Model.CurrentSession.SelectedStage != null)
                 {
                     return (Model.CurrentSession.RatName != string.Empty && !StageChangeRequired);
                 }
@@ -439,6 +417,63 @@ namespace MotoTrak
             }
         }
 
+        /// <summary>
+        /// The booth label
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "BoothLabel" })]
+        public string BoothLabel
+        {
+            get
+            {
+                return Model.BoothLabel;
+            }
+        }
+
+        /// <summary>
+        /// The name of the device for this session
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "CurrentDevice" })]
+        public string DeviceName
+        {
+            get
+            {
+                string device_name = string.Empty;
+                if (Model.CurrentDevice != null)
+                {
+                    device_name = Model.CurrentDevice.DeviceName;
+                }
+
+                return device_name;
+            }
+        }
+
+        /// <summary>
+        /// The name of the rat being used for this session
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "RatName", "CurrentSession" })]
+        public string RatName
+        {
+            get
+            {
+                if (Model.CurrentSession != null)
+                {
+                    return Model.CurrentSession.RatName;
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+            set
+            {
+                if (Model.CurrentSession != null)
+                {
+                    string rat_name = value;
+                    Model.CurrentSession.RatName = ViewHelperMethods.CleanInput(rat_name.Trim()).ToUpper();
+                }
+            }
+        }
+
         #endregion
 
         #region Debugging properties
@@ -459,12 +494,18 @@ namespace MotoTrak
         /// <summary>
         /// The baseline value of the device
         /// </summary>
-        [ReactToModelPropertyChanged(new string[] { "Device" })]
+        [ReactToModelPropertyChanged(new string[] { "CurrentDevice" })]
         public string DeviceBaseline
         {
             get
             {
-                return (Model.CurrentSession.Device.Baseline.ToString());
+                string baseline = string.Empty;
+                if (Model.CurrentDevice != null)
+                {
+                    baseline = Model.CurrentDevice.Baseline.ToString();
+                }
+                
+                return baseline;
             }
         }
 
@@ -575,6 +616,15 @@ namespace MotoTrak
 
             //Update the plot if necessary
             UpdatePlotBasedOnModelPropertyChanged(prop_name);
+
+            //Subscribe to events from the new current session if the current session has been changed
+            if (prop_name.Equals("CurrentSession"))
+            {
+                if (Model.CurrentSession != null)
+                {
+                    Model.CurrentSession.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
+                }
+            }
 
             //Update other user interface components
             base.ExecuteReactionsToModelPropertyChanged(sender, e);

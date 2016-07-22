@@ -72,7 +72,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="CurrentSessionViewModel.cs" />
     <Compile Include="MotoTrakModel.cs" />
     <Compile Include="MotoTrakPlotViewModel.cs" />
     <Compile Include="PortSelectionUI.xaml.cs">

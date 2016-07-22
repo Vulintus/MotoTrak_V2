@@ -79,7 +79,7 @@ namespace MotoTrakBase
                 if (new_datapoint_count > 0 && new_datapoint_count <= stream_data.Count)
                 {
                     //Look only at the most recent data from the signal
-                    var stream_data_to_use = stream_data.Skip(signal.Count - new_datapoint_count).ToList();
+                    var stream_data_to_use = stream_data.Skip(stream_data.Count - new_datapoint_count).ToList();
 
                     //Calculate how many OLD elements there are
                     var difference_in_size = stream_data.Count - stream_data_to_use.Count;

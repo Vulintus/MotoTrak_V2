@@ -43,15 +43,15 @@
                 
                 <!-- Input and output fields -->
                 <TextBox HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" Grid.Row="0" Grid.Column="1"
-                         Text="{Binding Path=CurrentSession.RatName, FallbackValue=Unknown}" IsEnabled="{Binding Path=IsStageSelectionEnabled, FallbackValue=True}" />
+                         Text="{Binding Path=RatName, FallbackValue=Unknown}" IsEnabled="{Binding Path=IsStageSelectionEnabled, FallbackValue=True}" />
                 <TextBox HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" Grid.Row="1" Grid.Column="1"
-                         Text="{Binding Path=CurrentSession.BoothLabel, FallbackValue=Unknown, Mode=OneWay}" IsEnabled="False" IsReadOnly="True" />
+                         Text="{Binding Path=BoothLabel, FallbackValue=Unknown, Mode=OneWay}" IsEnabled="False" IsReadOnly="True" />
 
                 <ComboBox HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Row="0" Grid.Column="3"
                           ItemsSource="{Binding Path=StageList}" SelectedIndex="{Binding Path=StageSelectedIndex, Mode=TwoWay}"
                           IsEnabled="{Binding Path=IsStageSelectionEnabled}" />
                 <TextBox HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Row="1" Grid.Column="3"
-                         Text="{Binding Path=CurrentSession.DeviceName, FallbackValue=Unknown, Mode=OneWay}" IsEnabled="False" IsReadOnly="True" />
+                         Text="{Binding Path=DeviceName, FallbackValue=Unknown, Mode=OneWay}" IsEnabled="False" IsReadOnly="True" />
                 
                 <!-- Fields for changing the plot view -->
                 <TextBlock Text="View:" Foreground="Black" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"

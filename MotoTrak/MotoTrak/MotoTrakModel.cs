@@ -137,6 +137,7 @@ namespace MotoTrak
             set
             {
                 _current_session = value;
+                NotifyPropertyChanged("CurrentSession");
             }
         }
 
@@ -152,6 +153,7 @@ namespace MotoTrak
             set
             {
                 _current_trial = value;
+                NotifyPropertyChanged("CurrentTrial");
             }
         }
 
@@ -167,6 +169,7 @@ namespace MotoTrak
             set
             {
                 _current_device = value;
+                NotifyPropertyChanged("CurrentDevice");
             }
         }
 
@@ -182,6 +185,7 @@ namespace MotoTrak
             set
             {
                 _current_booth_label = value;
+                NotifyPropertyChanged("BoothLabel");
             }
         }
 
@@ -267,7 +271,7 @@ namespace MotoTrak
             get
             {
                 //Filter the stages based on whether each stage's defined device type equals the type of device currently being used.
-                var filtered_stages = Stages.Where(stage => stage.DeviceType == CurrentSession.Device.DeviceType).ToList();
+                var filtered_stages = Stages.Where(stage => stage.DeviceType == CurrentDevice.DeviceType).ToList();
                 return filtered_stages;
             }
         }
@@ -403,11 +407,11 @@ namespace MotoTrak
             CurrentDevice = ControllerBoard.GetMotorDevice();
             
             //If no device was found, or if the device is unknown, throw an error.
-            if (CurrentSession.Device == null || CurrentSession.Device.DeviceType == MotorDeviceType.Unknown)
+            if (CurrentDevice == null || CurrentDevice.DeviceType == MotorDeviceType.Unknown)
             {
                 MotoTrakMessaging.GetInstance().AddMessage("We are unable to recognize the device that is attached to the MotoTrak controller board.");
             }
-
+            
             //At this point, we need to read the MotoTrak configuration file to determine how to load in stages
             MotoTrakConfiguration config = MotoTrakConfiguration.GetInstance();
             config.ReadConfigurationFile();
@@ -600,30 +604,33 @@ namespace MotoTrak
              * First, we need to handle the raw data stream. We will populate it with default values for each stream.
              */
             
-            //First, we want to define an array that holds the raw stream of data
+            //First, define a 2D array to hold each stream
             List<List<int>> stream_data_raw = new List<List<int>>();
+            for (int i = 0; i < CurrentSession.SelectedStage.TotalDataStreams; i++)
+            {
+                //Now iterate over all existing streams, and add a 1D array to our 2D array to hold each stream
+                int default_value = 0;
+                if (i == device_signal_index)
+                {
+                    default_value = Convert.ToInt32(Math.Floor(CurrentDevice.Baseline));
+                }
 
-            //Create an example fake empty sample from the MotoTrak controller that we will use to initially fill the buffers with
-            List<int> fake_empty_sample = Enumerable.Repeat<int>(0, CurrentSession.SelectedStage.TotalDataStreams).ToList();
-
-            //Find the index of the data stream that holds the data coming in from the device (within our fake empty sample), and set its
-            //value to be the baseline device value rather than the default value of 0.
-            fake_empty_sample[device_signal_index] = Convert.ToInt32(CurrentDevice.Baseline);
-
-            //Initially fill the raw data stream with our fake empty samples.
-            stream_data_raw = Enumerable.Repeat<List<int>>(fake_empty_sample, buffer_size).ToList();
-
+                var new_stream = Enumerable.Repeat<int>(default_value, buffer_size).ToList();
+                stream_data_raw.Add(new_stream);
+            }
+            
             /*
              * Now, let's create a variable in which we will store a version of the stream data 
              * that has been transformed from its raw format to something more useful.
              */
 
-            //Create an empty array to hold our transformed stream data
+            //Create a 2D array to hold transformed stream data
             List<List<double>> stream_data_transformed = new List<List<double>>();
             for (int i = 0; i < CurrentSession.SelectedStage.TotalDataStreams; i++)
             {
                 //Add a list of floating-point values for each stream we will be handling
-                stream_data_transformed.Add(new List<double>());
+                var new_stream = Enumerable.Repeat<double>(0, buffer_size).ToList();
+                stream_data_transformed.Add(new_stream);
             }
 
             /*
@@ -633,6 +640,11 @@ namespace MotoTrak
 
             //Create an array to hold transformed trial data
             List<List<double>> current_trial_data_transformed = new List<List<double>>();
+            for (int i = 0; i < CurrentSession.SelectedStage.TotalDataStreams; i++)
+            {
+                //Add empty arrays for each stream since no trial has actually happened yet
+                current_trial_data_transformed.Add(new List<double>());
+            }
             
             /*
              * Now we will move on from declaring variables...
@@ -671,18 +683,26 @@ namespace MotoTrak
 
                 //Read in new datapoints from the Arduino board
                 var new_data_points = ReadNewDataFromArduino();
+
+                //If the number of new data points exceeds the buffer size, reduce the number of new data points and only keep the most recent
+                if (new_data_points.Count > buffer_size)
+                {
+                    new_data_points = new_data_points.GetRange(new_data_points.Count - buffer_size, buffer_size).ToList();
+                }
+
+                //Set a local variable indicating the number of new data points we have
                 int number_of_new_data_points = new_data_points.Count;
 
-                //Add the raw data to the stream_data_raw variable
-                stream_data_raw.AddRange(new_data_points);
-
                 //Make a transposed copy of the new data
-                var transposed_data_copy = MotorMath.Transpose(new_data_points);
+                var transposed_new_data = MotorMath.Transpose(new_data_points);
+
+                //Add the raw data to the stream_data_raw variable
+                stream_data_raw.AddRange(transposed_new_data);
                 
                 try
                 {
                     //Perform transformations on the new data
-                    var transformed_new_data = CurrentSession.SelectedStage.StageImplementation.TransformSignals(transposed_data_copy,
+                    var transformed_new_data = CurrentSession.SelectedStage.StageImplementation.TransformSignals(transposed_new_data,
                         CurrentSession.SelectedStage, CurrentSession.Device);
 
                     //Add the transformed data to the stream_data_transformed variable
@@ -695,7 +715,7 @@ namespace MotoTrak
                 {
                     MotoTrakMessaging.GetInstance().AddMessage("Unable to transform signal data!");
                 }
-                
+
                 /*
                  * At this point, we have read in new data and transformed it.
                  * Now we need to reduce the size of both the RAW buffer and the TRANSFORMED buffer to make sure they 
@@ -703,27 +723,30 @@ namespace MotoTrak
                  */
 
                 //Now reduce the size of raw stream data if the size has exceeded our max buffer size.
-                stream_data_raw = stream_data_raw.Skip(Math.Max(0, stream_data_raw.Count - buffer_size)).Take(buffer_size).ToList();
+                stream_data_raw = stream_data_raw.Select((x, index) => x.Skip(Math.Max(0, x.Count - buffer_size)).Take(buffer_size).ToList()).ToList();
 
                 //Do the same for the transformed data (these are in transposed form, so it has to be done a bit differently)
-                foreach (var s in stream_data_transformed)
-                {
-                    s.Skip(Math.Max(0, stream_data_raw.Count - buffer_size)).Take(buffer_size).ToList();
-                }
+                stream_data_transformed = stream_data_transformed.Select((x, index) => x.Skip(Math.Max(0, x.Count - buffer_size)).Take(buffer_size).ToList()).ToList();
                 
                 //Set these properties for debugging purposes
-                DeviceAnalogValue = stream_data_raw[stream_data_raw.Count - 1][device_signal_index];
-
+                try
+                {
+                    DeviceAnalogValue = stream_data_raw[stream_data_raw.Count - 1][device_signal_index];
+                }
+                catch
+                {
+                    DeviceAnalogValue = 0;
+                }
+                
                 try
                 {
                     DeviceCalibratedValue = Convert.ToInt32(stream_data_transformed[device_signal_index][stream_data_transformed[device_signal_index].Count - 1]);
                 }
-                catch (Exception local_exception)
+                catch
                 {
                     DeviceCalibratedValue = 0;
                 }
                 
-
                 //Check to see if a manual feed needs to be triggered
                 if (IsTriggerManualFeed)
                 {
@@ -795,19 +818,30 @@ namespace MotoTrak
                         break;
                     case TrialRunState.ResetBaseline:
 
-                        //Grab the data that is currently in the buffer and take the mean of it.
-                        var device_signal_raw = stream_data_raw.Select(x => x[device_signal_index]).ToList();
-                        int mean_signal_value = Convert.ToInt32(Math.Round(device_signal_raw.Average()));
+                        try
+                        {
+                            //Grab the data that is currently in the buffer and take the mean of it.
+                            var device_signal_raw = stream_data_raw[device_signal_index];
+                            int mean_signal_value = Convert.ToInt32(Math.Round(device_signal_raw.Average()));
 
-                        //Set the baseline on the controller board.
-                        ControllerBoard.SetBaseline(mean_signal_value);
+                            //Set the baseline on the controller board.
+                            ControllerBoard.SetBaseline(mean_signal_value);
 
-                        //Set the local device baseline to the same value
-                        CurrentDevice.Baseline = mean_signal_value;
+                            //Set the local device baseline to the same value
+                            CurrentDevice.Baseline = mean_signal_value;
 
-                        //Note that the device baseline has changed in the background
-                        BackgroundPropertyChanged("Device");
+                            //Set the baseline of the device object being stored in the current session
+                            CurrentSession.Device.Baseline = mean_signal_value;
 
+                            //Note that the device baseline has changed in the background
+                            BackgroundPropertyChanged("CurrentDevice");
+                        }
+                        catch
+                        {
+                            //If an error occurs, log it
+                            MotoTrakMessaging.GetInstance().AddMessage("Error while resetting baseline!");
+                        }
+                        
                         //Reset the trial state to be idle after the baseline has been reset
                         TrialState = TrialRunState.Idle;
 
@@ -822,24 +856,43 @@ namespace MotoTrak
                         break;
                     case TrialRunState.TrialWait:
 
-                        //Run code specific to this stage to check for trial initiation
-                        int trial_initiation_index = CurrentSession.SelectedStage.StageImplementation.CheckSignalForTrialInitiation(stream_data_transformed, 
-                            number_of_new_data_points, CurrentSession.SelectedStage);
+                        //Set the trial initiation index to a default value
+                        int trial_initiation_index = -1;
+
+                        try
+                        {
+                            //Run code specific to this stage to check for trial initiation
+                            trial_initiation_index = CurrentSession.SelectedStage.StageImplementation.CheckSignalForTrialInitiation(stream_data_transformed,
+                                number_of_new_data_points, CurrentSession.SelectedStage);
+                        }
+                        catch
+                        {
+                            //If an error occurred within the stage implementation's code, log it:
+                            MotoTrakMessaging.GetInstance().AddMessage("Error encountered while attempting to check for trial initiation");
+                        }
 
                         //Handle the case in which a trial was initiated
                         if (trial_initiation_index > -1)
                         {
-                            //Create a new motor trial
-                            CurrentTrial = new MotorTrial();
+                            try
+                            {
+                                //Create a new motor trial
+                                CurrentTrial = new MotorTrial();
 
-                            //Initiate a new trial.
-                            //The following method basically just fills the "trial_device_signal" object with the data that occured up until the device value
-                            //broke the trial initiation threshold.  It also fills the same data into the "trial" object, but in raw form.
-                            HandleTrialInitiation(buffer_size, trial_initiation_index, stream_data_raw, 
-                                stream_data_transformed, CurrentTrial, out current_trial_data_transformed);
-                            
-                            //Change the session state
-                            TrialState = TrialRunState.TrialRun;
+                                //Initiate a new trial.
+                                //The following method basically just fills the "trial_device_signal" object with the data that occured up until the device value
+                                //broke the trial initiation threshold.  It also fills the same data into the "trial" object, but in raw form.
+                                HandleTrialInitiation(buffer_size, trial_initiation_index, stream_data_raw,
+                                    stream_data_transformed, CurrentTrial, out current_trial_data_transformed);
+
+                                //Change the session state
+                                TrialState = TrialRunState.TrialRun;
+                            }
+                            catch
+                            {
+                                //In the event of an error while handling a trial initation...
+                                MotoTrakMessaging.GetInstance().AddMessage("Error encountered while initiating a new trial");
+                            }
                         }
 
                         //Make a "hard" copy of the signal data and assign it to the MonitoredSignal variable, which is what the user sees
@@ -858,20 +911,38 @@ namespace MotoTrak
                         //Trial success does NOT immediately move us to the next state.  ONLY TIME.
 
                         //Add the new raw data to the trial object to be saved to disk later.
-                        CurrentTrial.TrialData.AddRange(stream_data_raw.GetRange(stream_data_raw.Count - number_of_new_data_points, number_of_new_data_points));
-
+                        for (int i = 0; i < CurrentTrial.TrialData.Count; i++)
+                        {
+                            var this_stream = stream_data_raw[i];
+                            var data_to_add = this_stream.GetRange(this_stream.Count - number_of_new_data_points, number_of_new_data_points);
+                            CurrentTrial.TrialData[i].AddRange(data_to_add);
+                        }
+                        
                         //First, we must grab any new stream data from the MotoTrak controller board.
-                        var new_data = stream_data_transformed.GetRange(stream_data_transformed.Count - number_of_new_data_points, number_of_new_data_points);
+                        var new_data = stream_data_transformed.Select(x => x.GetRange(x.Count - number_of_new_data_points, number_of_new_data_points).ToList()).ToList();
 
                         //Add the new data to the transformed trial signal, starting at the end of the current data that we already have.
-                        //trial_device_signal.ReplaceRange(new_data, CurrentTrial.TrialData.Count);
+                        current_trial_data_transformed = current_trial_data_transformed.Select((x, index) => x.ReplaceRange(new_data[index], CurrentTrial.TrialData.Count).ToList()).ToList();
 
                         //Check to see if the animal has succeeded up until this point in the trial, based on this stage's criterion for success.
                         if (CurrentTrial.Result == MotorTrialResult.Unknown)
                         {
                             //Check to see whether the trial was a success, based on the criterion defined by the stage definition.
-                            var events_found = CurrentSession.SelectedStage.StageImplementation.CheckForTrialEvent(current_trial_data_transformed, CurrentSession.SelectedStage);
+                            List<Tuple<MotorTrialEventType, int>> events_found = null;
 
+                            try
+                            {
+                                events_found = CurrentSession.SelectedStage.StageImplementation.CheckForTrialEvent(current_trial_data_transformed, CurrentSession.SelectedStage);
+                            }
+                            catch
+                            {
+                                //Make this an empty list in the event of an error in the stage implementation's code
+                                events_found = new List<Tuple<MotorTrialEventType, int>>();
+
+                                //Log the error
+                                MotoTrakMessaging.GetInstance().AddMessage("Error while checking for trial events within stage implementation");
+                            }
+                            
                             //Go through the events that were found
                             foreach (var cur_event in events_found)
                             {
@@ -885,7 +956,20 @@ namespace MotoTrak
                             }
 
                             //Check to see what actions we need to take based on the events that occurred
-                            var event_actions = CurrentSession.SelectedStage.StageImplementation.ReactToTrialEvents(events_found, current_trial_data_transformed, CurrentSession.SelectedStage);
+                            List<MotorTrialAction> event_actions = null;
+
+                            try
+                            {
+                                event_actions = CurrentSession.SelectedStage.StageImplementation.ReactToTrialEvents(events_found, current_trial_data_transformed, CurrentSession.SelectedStage);
+                            }
+                            catch
+                            {
+                                //In the event of an error within the stage implementation's code, make event_actions an empty list
+                                event_actions = new List<MotorTrialAction>();
+
+                                //Log the error
+                                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to react to trial events within stage implementation");
+                            }
                             
                             //Perform each action
                             foreach (var action in event_actions)
@@ -896,7 +980,21 @@ namespace MotoTrak
 
                         //Perform any necessary actions that need to be taken according to the stage parameters that are unrelated to
                         //actions that are taken given the success of a trial.
-                        var actions = CurrentSession.SelectedStage.StageImplementation.PerformActionDuringTrial(current_trial_data_transformed, CurrentSession.SelectedStage);
+                        List<MotorTrialAction> actions = null;
+
+                        try
+                        {
+                            actions = CurrentSession.SelectedStage.StageImplementation.PerformActionDuringTrial(current_trial_data_transformed, CurrentSession.SelectedStage);
+                        }
+                        catch
+                        {
+                            //Set actions to be an empty list
+                            actions = new List<MotorTrialAction>();
+
+                            //Log the error
+                            MotoTrakMessaging.GetInstance().AddMessage("Error in stage implementation: PerformActionDuringTrial function");
+                        }
+
                         foreach (var action in actions)
                         {
                             action.ExecuteAction();
@@ -924,10 +1022,18 @@ namespace MotoTrak
                         //In this state, we finalize a trial and save it to the disk.
 
                         //Create an end of trial message
-                        string msg = CurrentSession.SelectedStage.StageImplementation.CreateEndOfTrialMessage(CurrentTrial.Result == MotorTrialResult.Hit,
-                            CurrentSession.Trials.Count + 1, current_trial_data_transformed, CurrentSession.SelectedStage);
-                        MotoTrakMessaging.GetInstance().AddMessage(msg);
-
+                        try
+                        {
+                            string msg = CurrentSession.SelectedStage.StageImplementation.CreateEndOfTrialMessage(CurrentTrial.Result == MotorTrialResult.Hit,
+                                CurrentSession.Trials.Count + 1, current_trial_data_transformed, CurrentSession.SelectedStage);
+                            MotoTrakMessaging.GetInstance().AddMessage(msg);
+                        }
+                        catch
+                        {
+                            //If an error was encountered, log it
+                            MotoTrakMessaging.GetInstance().AddMessage("Error in stage implementation: CreateEndOfTrialMessage function");
+                        }
+                        
                         //First, add the trial to our collection of total trials for the currently running session.
                         CurrentSession.Trials.Add(CurrentTrial);
 
@@ -966,10 +1072,10 @@ namespace MotoTrak
         private void CopyDataToMonitoredSignal (List<List<double>> data)
         {
             MonitoredSignal.Clear();
-            foreach (var sample in data)
+            foreach (var stream in data)
             {
-                var new_sync_sample = new SynchronizedCollection<double>(new object(), sample);
-                MonitoredSignal.Add(new_sync_sample);
+                var new_sync_stream = new SynchronizedCollection<double>(new object(), stream);
+                MonitoredSignal.Add(new_sync_stream);
             }
         }
 
@@ -980,52 +1086,81 @@ namespace MotoTrak
             return new_data_points;
         }
 
-        private void HandleTrialInitiation(int buffer_size, int trial_initiation_index, List<List<int>> stream_data_raw, List<List<double>> stream_data_transformed,
+        /// <summary>
+        /// This function does some simple manipulation of the stream data upon a recognized trial initiation.
+        /// If this function is called, it means a trial has been initiated.  
+        /// 
+        /// The function receives a parameter
+        /// buffer_size which is how much data we retain in both the raw and transformed buffers.
+        /// 
+        /// trial_initiation_index is the index into the buffer at which the trial initiation occurred.
+        /// 
+        /// stream_data_raw is the raw streaming data, in the format: [ [a1 ... a_n] [b1 ... b_n] [c1 ... c_n] ]
+        /// 
+        /// stream_data_transformed is the transformed streaming data, in the format: [ [a1 ... a_n] [b1 ... b_n] [c1 ... c_n] ]
+        /// 
+        /// trial is the MotorTrial object that has been created to store the brand new trial
+        /// 
+        /// trial_data_transformed is the data for the trial so far (only up through the trial initiation).  This is calculated
+        /// by this function and returned as a reference parameter.
+        /// </summary>
+        private void HandleTrialInitiation(int buffer_size, int trial_initiation_index, 
+            List<List<int>> stream_data_raw, List<List<double>> stream_data_transformed,
             MotorTrial trial, out List<List<double>> trial_data_transformed)
         {
-            List<int> empty_sample = Enumerable.Repeat<int>(0, CurrentSession.SelectedStage.TotalDataStreams).ToList();
-            List<double> empty_transformed_sample = Enumerable.Repeat<double>(0, CurrentSession.SelectedStage.TotalDataStreams).ToList();
+            //Do some bounds checking of the trial initiation index
+            trial_initiation_index = Math.Max(0, Math.Min(stream_data_raw.Count, trial_initiation_index));
 
             //From the point where threshold was broken, we want to go back and grab X seconds of data from before the initiation
             //event, depending on how much data this stage asks for.
             int point_to_start_keeping_data = trial_initiation_index - CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
-            if (point_to_start_keeping_data < 0)
-            {
-                point_to_start_keeping_data = 0;
-            }
+
+            //Do some bounds checking
+            point_to_start_keeping_data = Math.Max(0, Math.Min(stream_data_raw.Count, point_to_start_keeping_data));
 
             //Now that we know when threshold was broken, transfer all the data that pertains to the actual trial over to the trial variables
-            trial.TrialData = stream_data_raw.GetRange(point_to_start_keeping_data, trial_initiation_index - point_to_start_keeping_data + 1);
-            if (trial.TrialData.Count < CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow)
+            trial.TrialData = stream_data_raw.Select((x, index) =>
+                x.GetRange(point_to_start_keeping_data, trial_initiation_index - point_to_start_keeping_data + 1).ToList()).ToList();
+            for (int i = 0; i < trial.TrialData.Count; i++)
             {
-                //If not enough samples were in the buffer to fill out the necessary number of samples needed, we will simply zero-pad the 
-                //beginning of the signal.
-                int number_of_samples_needed = CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow - trial.TrialData.Count;
+                var data_from_stream = trial.TrialData[i];
 
-                //Reset the raw stream data buffer for the next trial
-                List<List<int>> samples_to_prepend = Enumerable.Repeat<List<int>>(empty_sample, number_of_samples_needed).ToList();
+                int default_value = 0;
+                if (CurrentSession.SelectedStage.DataStreamTypes[i] == MotorBoardDataStreamType.DeviceValue)
+                {
+                    default_value = Convert.ToInt32(Math.Floor(CurrentDevice.Baseline));
+                }
 
-                samples_to_prepend.AddRange(trial.TrialData);
-                trial.TrialData = samples_to_prepend;
+                if (data_from_stream.Count < CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow)
+                {
+                    //Zero-pad if needed.
+                    int number_of_samples_needed = CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow - data_from_stream.Count;
+                    List<int> samples_to_prepend = Enumerable.Repeat<int>(default_value, number_of_samples_needed).ToList();
+                    samples_to_prepend.AddRange(data_from_stream);
+                    data_from_stream = samples_to_prepend;
+                    trial.TrialData[i] = data_from_stream;
+                }    
             }
-
+            
             //Do the same for the transformed device signal
-            var pre_trial_device_signal = stream_data_transformed.GetRange(point_to_start_keeping_data,
-                trial_initiation_index - point_to_start_keeping_data + 1);
-            if (pre_trial_device_signal.Count < CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow)
+            List<List<double>> pre_trial_device_signal = new List<List<double>>();
+            foreach (var stream in stream_data_transformed)
             {
-                //Zero-pad if needed.  Same as above.
-                int number_of_samples_needed = CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow - pre_trial_device_signal.Count;
+                var data_from_stream = stream.GetRange(point_to_start_keeping_data, trial_initiation_index - point_to_start_keeping_data + 1);
                 
-                List<List<double>> samples_to_prepend = Enumerable.Repeat<List<double>>(empty_transformed_sample, number_of_samples_needed).ToList();
+                if (data_from_stream.Count < CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow)
+                {
+                    //Zero-pad if needed.  Same as above.
+                    int number_of_samples_needed = CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow - data_from_stream.Count;
+                    List<double> samples_to_prepend = Enumerable.Repeat<double>(0, number_of_samples_needed).ToList();
+                    samples_to_prepend.AddRange(data_from_stream);
+                    data_from_stream = samples_to_prepend;
+                }
 
-                samples_to_prepend.AddRange(pre_trial_device_signal);
-                pre_trial_device_signal = samples_to_prepend;
+                pre_trial_device_signal.Add(data_from_stream);
             }
 
-            //Now add the device signal from the X seconds before the hit window to our buffer in which we keep the whole trial device signal
-            trial_data_transformed = Enumerable.Repeat<List<double>>(empty_transformed_sample, buffer_size).ToList();
-            trial_data_transformed.ReplaceRange(pre_trial_device_signal, 0);
+            trial_data_transformed = pre_trial_device_signal;
         }
 
         #endregion
