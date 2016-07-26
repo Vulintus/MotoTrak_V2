@@ -18,6 +18,7 @@ namespace MotoTrak
         #region Private data members
 
         MotoTrakModel _model = MotoTrakModel.GetInstance();
+        MotoTrakPlotViewModel _plot_view_model = null;
         
         private int _viewSelectedIndex = 0;
         private bool _stageChangeRequired = false;
@@ -30,6 +31,9 @@ namespace MotoTrak
         {
             //Subscribe to notifications from the MotoTrak model
             Model.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
+
+            //Initialize the plot view-model
+            PlotViewModel = new MotoTrakPlotViewModel(Model, 1);
         }
         
         #endregion
@@ -124,6 +128,22 @@ namespace MotoTrak
 
         #region Properties
         
+        /// <summary>
+        /// This is a separate view-model object for the MotoTrak plot
+        /// </summary>
+        public MotoTrakPlotViewModel PlotViewModel
+        {
+            get
+            {
+                return _plot_view_model;
+            }
+            set
+            {
+                _plot_view_model = value;
+                NotifyPropertyChanged("PlotViewModel");
+            }
+        }
+
         /// <summary>
         /// The list of all available stages that the user can choose from, given the current device that is connected
         /// to the MotoTrak controller.

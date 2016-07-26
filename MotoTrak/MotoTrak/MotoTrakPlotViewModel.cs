@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace MotoTrak
 {
@@ -33,8 +34,16 @@ namespace MotoTrak
             //Set the MotoTrak model
             Model = model;
 
+            //Subscribe to events from the model
+            Model.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
+
             //Set which stream we will be reading from for this plot
             StreamIndex = stream_index;
+        }
+
+        private void Model_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion
@@ -76,23 +85,56 @@ namespace MotoTrak
 
         #region Private methods
 
+        protected override void ExecuteReactionsToModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName.Equals("MonitoredSignal"))
+            {
+                //Update the plot signal
+                UpdatePlotSignal();
+            }
+            
+            //Call the base function to handle anything else
+            base.ExecuteReactionsToModelPropertyChanged(sender, e);
+        }
+
+        private void UpdatePlotSignal ()
+        {
+            //Copy over the data from the stream that is currently being displayed
+            var datapoints = Model.MonitoredSignal[StreamIndex].Select((y_val, x_val) =>
+                new DataPoint(x_val, y_val)).ToList();
+
+            //Grab the first AreaSeries that is on the plot
+            var s = Plot.Series[0] as AreaSeries;
+            if (s != null)
+            {
+                //Clear the points in the dataset
+                s.Points.Clear();
+                
+                //Add the new set of datapoints
+                s.Points.AddRange(datapoints);
+            }
+
+            //Invalidate the plot so it is updated on screen
+            Plot.InvalidatePlot(true);
+        }
+
         private void UpdatePlotProperties ()
         {
             //Grab the stream description from the model
             //This will be a tuple.
             //Item1 = description of stream
             //Item2 = units of stream
-            var stream_description = Model.CurrentSession.StreamDescriptions[this.StreamIndex];
+            //var stream_description = Model.CurrentSession.StreamDescriptions[this.StreamIndex];
 
             //Set the title on the plot model
-            Plot.Title = stream_description.Item1;
+            //Plot.Title = stream_description.Item1;
 
             //Create a y-axis for this plot
             LinearAxis y_axis = new LinearAxis();
             y_axis.Position = AxisPosition.Left;
 
             //Set the y-axis title to be the units for the stream
-            y_axis.Title = stream_description.Item2;
+            //y_axis.Title = stream_description.Item2;
 
             //Create an x-axis for this plot
             LinearAxis x_axis = new LinearAxis();

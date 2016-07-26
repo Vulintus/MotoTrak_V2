@@ -1,0 +1,14 @@
+NEW ERROR DETECTED
+2016-07-26:14:19:02
+Stack trace:    at System.ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument argument, ExceptionResource resource)
+   at System.Collections.Generic.List`1.get_Item(Int32 index)
+   at MotoTrak.MotoTrakModel.HandleStreaming(Object sender, DoWorkEventArgs e) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 709
+   at System.ComponentModel.BackgroundWorker.OnDoWork(DoWorkEventArgs e)
+   at System.ComponentModel.BackgroundWorker.WorkerThreadStart(Object argument)
+Outermost exception message: Index was out of range. Must be non-negative and less than the size of the collection.
+Parameter name: index
+Innermost exception message: Index was out of range. Must be non-negative and less than the size of the collection.
+Parameter name: index
+Function name: ThrowArgumentOutOfRangeException
+END OF NEW ERROR
+

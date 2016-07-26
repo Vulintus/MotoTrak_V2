@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BasicStageImplementation.cs" />
+    <Compile Include="ErrorLoggingService.cs" />
     <Compile Include="IMotorStageImplementation.cs" />
     <Compile Include="MotorBoard.cs" />
     <Compile Include="MotorBoardDataStreamType.cs" />

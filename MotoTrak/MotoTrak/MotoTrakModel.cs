@@ -538,7 +538,11 @@ namespace MotoTrak
         /// <param name="e"></param>
         private void CloseBackgroundThread(object sender, RunWorkerCompletedEventArgs e)
         {
-            //empty function
+            if (e.Error != null)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("The MotoTrak background thread shut down unexpectedly. This is a fatal error, and you must restart MotoTrak. Details of the error have been saved the error data file.");
+                ErrorLoggingService.GetInstance().LogExceptionError(e.Error);
+            }
         }
 
         /// <summary>
@@ -577,6 +581,9 @@ namespace MotoTrak
 
             //Create a null trial object as a placeholder for new trials that will be created
             CurrentTrial = null;
+
+            //Subscribe to changes from the MotoTrakMessaging system that we can pass up to the UI
+            MotoTrakMessaging.GetInstance().PropertyChanged += BackgroundThread_ReactToMessagingSystemUpdate;
 
             //Get the index of the device signal within the data streams
             var stream_types = CurrentSession.SelectedStage.DataStreamTypes;
@@ -695,9 +702,15 @@ namespace MotoTrak
 
                 //Make a transposed copy of the new data
                 var transposed_new_data = MotorMath.Transpose(new_data_points);
-
-                //Add the raw data to the stream_data_raw variable
-                stream_data_raw.AddRange(transposed_new_data);
+                
+                if (transposed_new_data != null && transposed_new_data.Count > 0)
+                {
+                    //Add the raw data to the stream_data_raw variable
+                    for (int i = 0; i < stream_data_raw.Count; i++)
+                    {
+                        stream_data_raw[i].AddRange(transposed_new_data[i]);
+                    }
+                }
                 
                 try
                 {
@@ -723,15 +736,17 @@ namespace MotoTrak
                  */
 
                 //Now reduce the size of raw stream data if the size has exceeded our max buffer size.
-                stream_data_raw = stream_data_raw.Select((x, index) => x.Skip(Math.Max(0, x.Count - buffer_size)).Take(buffer_size).ToList()).ToList();
+                stream_data_raw = stream_data_raw.Select((x, index) => 
+                    x.Skip(Math.Max(0, x.Count - buffer_size)).Take(buffer_size).ToList()).ToList();
 
                 //Do the same for the transformed data (these are in transposed form, so it has to be done a bit differently)
-                stream_data_transformed = stream_data_transformed.Select((x, index) => x.Skip(Math.Max(0, x.Count - buffer_size)).Take(buffer_size).ToList()).ToList();
+                stream_data_transformed = stream_data_transformed.Select((x, index) => 
+                    x.Skip(Math.Max(0, x.Count - buffer_size)).Take(buffer_size).ToList()).ToList();
                 
                 //Set these properties for debugging purposes
                 try
                 {
-                    DeviceAnalogValue = stream_data_raw[stream_data_raw.Count - 1][device_signal_index];
+                    DeviceAnalogValue = stream_data_raw[device_signal_index][stream_data_raw[device_signal_index].Count - 1];
                 }
                 catch
                 {
@@ -1069,6 +1084,12 @@ namespace MotoTrak
             e.Cancel = true;
         }
 
+        private void BackgroundThread_ReactToMessagingSystemUpdate(object sender, PropertyChangedEventArgs e)
+        {
+            //Call BackgroundPropertyChanged for the property name that has been passed in.
+            BackgroundPropertyChanged(e.PropertyName);
+        }
+
         private void CopyDataToMonitoredSignal (List<List<double>> data)
         {
             MonitoredSignal.Clear();
@@ -1077,6 +1098,8 @@ namespace MotoTrak
                 var new_sync_stream = new SynchronizedCollection<double>(new object(), stream);
                 MonitoredSignal.Add(new_sync_stream);
             }
+
+            BackgroundPropertyChanged("MonitoredSignal");
         }
 
         private List<List<int>> ReadNewDataFromArduino()
