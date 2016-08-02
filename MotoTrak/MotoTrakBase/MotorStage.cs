@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using MotoTrakUtilities;
+using System.Collections.Concurrent;
 
 namespace MotoTrakBase
 {
@@ -69,7 +70,7 @@ namespace MotoTrakBase
             CurrentValue = 0
         };
 
-        private Dictionary<string, MotorStageParameter> _stage_parameters = new Dictionary<string, MotorStageParameter>();
+        private ConcurrentDictionary<string, MotorStageParameter> _stage_parameters = new ConcurrentDictionary<string, MotorStageParameter>();
         
         private MotorStageStimulationType _output_trigger_type = MotorStageStimulationType.Off;
 
@@ -191,7 +192,7 @@ namespace MotoTrakBase
         /// <summary>
         /// A dictionary of all pertinent parameters for this stage (hit threshold, initiation threshold, etc)
         /// </summary>
-        public Dictionary<string, MotorStageParameter> StageParameters
+        public ConcurrentDictionary<string, MotorStageParameter> StageParameters
         {
             get
             {
@@ -450,8 +451,22 @@ namespace MotoTrakBase
         private static List<MotorStage> RetrieveAllStages_V1 (Uri address)
         {
             //Read in all the stages from Google Docs
-            List<List<string>> stageDocument = ReadGoogleSpreadsheet.Read(address);
+            List<List<string>> stageDocument = null; 
 
+            try
+            {
+                //Read the list of stages
+                stageDocument = ReadGoogleSpreadsheet.Read(address);
+            }
+            catch
+            {
+                //If an error occurred, notify the user using the MotoTrak messaging system
+                MotoTrakMessaging.GetInstance().AddMessage("Unable to read Stage spreadsheet!");
+
+                //Return an empty list of stages
+                return new List<MotorStage>();
+            }
+            
             //Remove the first line of the file because it is just column headers
             stageDocument.RemoveAt(0);
 

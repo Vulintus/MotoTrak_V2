@@ -63,7 +63,8 @@
 
         
         <oxy:PlotView Grid.Row="1" MinHeight="250" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" 
-                      Model="{Binding Path=PlotViewModel.Plot}" />
+                      Model="{Binding Path=PlotViewModel.Plot}" MouseEnter="PlotView_MouseEnter"
+                      MouseLeave="PlotView_MouseLeave" />
         
         <!-- The following UI elements are for debuggin purposes only!!!! -->
         <Grid Name="DebuggingPanel" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,50"

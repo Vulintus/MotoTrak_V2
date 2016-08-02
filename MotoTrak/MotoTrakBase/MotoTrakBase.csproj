@@ -70,6 +70,7 @@
     <Compile Include="MotorTrialAction.cs" />
     <Compile Include="MotorTrialActionType.cs" />
     <Compile Include="MotorTrialEventType.cs" />
+    <Compile Include="MotorTrialEventTypeConverter.cs" />
     <Compile Include="MotorTrialResult.cs" />
     <Compile Include="MotoTrakAutopositioner.cs" />
     <Compile Include="MotoTrakConfiguration.cs" />

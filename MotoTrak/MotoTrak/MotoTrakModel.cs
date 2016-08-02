@@ -1,6 +1,7 @@
 ﻿using MotoTrakBase;
 using MotoTrakUtilities;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -153,7 +154,10 @@ namespace MotoTrak
             set
             {
                 _current_trial = value;
-                NotifyPropertyChanged("CurrentTrial");
+
+                //Current trial will only be modified by the background thread, so it needs
+                //to call the BackgroundPropertyChanged method
+                BackgroundPropertyChanged("CurrentTrial");
             }
         }
 
@@ -314,6 +318,30 @@ namespace MotoTrak
             {
                 _monitoredSignal = value;
                 BackgroundPropertyChanged("MonitoredSignal");
+            }
+        }
+
+        /// <summary>
+        /// This is a concurrent queue of tuples containing events that occur during trials
+        /// as well as the position within the trial that they have occurred.  Maintaining a concurrent
+        /// queue allows both the background thread and the main thread to safely access this property.
+        /// 
+        /// What this is for: the main thread will typically dequeue tuples from this collection, and then
+        /// use the objects it dequeues to create annotations within the current trial plot.
+        /// 
+        /// The background thread will enqueue a trial event whenever it occurs so that the mean thread can
+        /// digest it.
+        /// </summary>
+        public ConcurrentQueue<Tuple<MotorTrialEventType, int>> TrialEventsQueue
+        {
+            get
+            {
+                return _trial_events;
+            }
+            private set
+            {
+                _trial_events = value;
+                BackgroundPropertyChanged("TrialEventsQueue");
             }
         }
 
@@ -522,6 +550,7 @@ namespace MotoTrak
         #region Private properties edited by the background worker thread
 
         private SynchronizedCollection<SynchronizedCollection<double>> _monitoredSignal = new SynchronizedCollection<SynchronizedCollection<double>>();
+        private ConcurrentQueue<Tuple<MotorTrialEventType, int>> _trial_events = new ConcurrentQueue<Tuple<MotorTrialEventType, int>>();
         private int fps = 0;
         private int _device_analog_value = 0;
         private int _device_calibrated_value = 0;
@@ -711,11 +740,12 @@ namespace MotoTrak
                         stream_data_raw[i].AddRange(transposed_new_data[i]);
                     }
                 }
-                
+
+                List<List<double>> transformed_new_data = null;
                 try
                 {
                     //Perform transformations on the new data
-                    var transformed_new_data = CurrentSession.SelectedStage.StageImplementation.TransformSignals(transposed_new_data,
+                    transformed_new_data = CurrentSession.SelectedStage.StageImplementation.TransformSignals(transposed_new_data,
                         CurrentSession.SelectedStage, CurrentSession.Device);
 
                     //Add the transformed data to the stream_data_transformed variable
@@ -928,16 +958,14 @@ namespace MotoTrak
                         //Add the new raw data to the trial object to be saved to disk later.
                         for (int i = 0; i < CurrentTrial.TrialData.Count; i++)
                         {
-                            var this_stream = stream_data_raw[i];
-                            var data_to_add = this_stream.GetRange(this_stream.Count - number_of_new_data_points, number_of_new_data_points);
-                            CurrentTrial.TrialData[i].AddRange(data_to_add);
+                            CurrentTrial.TrialData[i].AddRange(transposed_new_data[i]);
                         }
-                        
-                        //First, we must grab any new stream data from the MotoTrak controller board.
-                        var new_data = stream_data_transformed.Select(x => x.GetRange(x.Count - number_of_new_data_points, number_of_new_data_points).ToList()).ToList();
 
-                        //Add the new data to the transformed trial signal, starting at the end of the current data that we already have.
-                        current_trial_data_transformed = current_trial_data_transformed.Select((x, index) => x.ReplaceRange(new_data[index], CurrentTrial.TrialData.Count).ToList()).ToList();
+                        //Add the new transformed data to the transformed trial signal
+                        for (int i = 0; i < current_trial_data_transformed.Count; i++)
+                        {
+                            current_trial_data_transformed[i].AddRange(transformed_new_data[i]);
+                        }
 
                         //Check to see if the animal has succeeded up until this point in the trial, based on this stage's criterion for success.
                         if (CurrentTrial.Result == MotorTrialResult.Unknown)
@@ -968,6 +996,10 @@ namespace MotoTrak
                                     CurrentTrial.HitTimes.Add(DateTime.Now);
                                     CurrentTrial.HitIndices.Add(cur_event.Item2);
                                 }
+
+                                //Enqueue the trial event tuple so the main thread can digest it
+                                TrialEventsQueue.Enqueue(cur_event);
+                                BackgroundPropertyChanged("TrialEventsQueue");
                             }
 
                             //Check to see what actions we need to take based on the events that occurred
@@ -1016,7 +1048,8 @@ namespace MotoTrak
                         }
 
                         //Check to see if this trial has finished
-                        if (CurrentTrial.TrialData.Count >= CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial)
+                        int samples_collected = CurrentTrial.TrialData[0].Count;
+                        if (samples_collected >= CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial)
                         {
                             //Set the trial result if it hasn't yet been set
                             if (CurrentTrial.Result == MotorTrialResult.Unknown)
@@ -1132,14 +1165,14 @@ namespace MotoTrak
             MotorTrial trial, out List<List<double>> trial_data_transformed)
         {
             //Do some bounds checking of the trial initiation index
-            trial_initiation_index = Math.Max(0, Math.Min(stream_data_raw.Count, trial_initiation_index));
+            trial_initiation_index = Math.Max(0, Math.Min(stream_data_raw[0].Count, trial_initiation_index));
 
             //From the point where threshold was broken, we want to go back and grab X seconds of data from before the initiation
             //event, depending on how much data this stage asks for.
             int point_to_start_keeping_data = trial_initiation_index - CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
 
             //Do some bounds checking
-            point_to_start_keeping_data = Math.Max(0, Math.Min(stream_data_raw.Count, point_to_start_keeping_data));
+            point_to_start_keeping_data = Math.Max(0, Math.Min(stream_data_raw[0].Count, point_to_start_keeping_data));
 
             //Now that we know when threshold was broken, transfer all the data that pertains to the actual trial over to the trial variables
             trial.TrialData = stream_data_raw.Select((x, index) =>

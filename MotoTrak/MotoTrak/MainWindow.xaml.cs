@@ -101,5 +101,29 @@ namespace MotoTrak
                 viewModel.ResetBaseline();
             }
         }
+
+        private void PlotView_MouseEnter(object sender, MouseEventArgs e)
+        {
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
+            if (viewModel != null)
+            {
+                if (viewModel.PlotViewModel != null)
+                {
+                    viewModel.PlotViewModel.HandleMouseHover(true);
+                }
+            }
+        }
+
+        private void PlotView_MouseLeave(object sender, MouseEventArgs e)
+        {
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
+            if (viewModel != null)
+            {
+                if (viewModel.PlotViewModel != null)
+                {
+                    viewModel.PlotViewModel.HandleMouseHover(false);
+                }
+            }
+        }
     }
 }

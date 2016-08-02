@@ -37,8 +37,17 @@ namespace MotoTrakBase
                 stage.TotalRecordedSamplesDuringHitWindow).Max();
 
                 msg += "Trial " + trial_number.ToString() + " ";
-                
-                msg += "maximal force = " + peak_force.ToString() + " grams.";
+
+                if (successful_trial)
+                {
+                    msg += "HIT, ";
+                }
+                else
+                {
+                    msg += "MISS, ";
+                }
+
+                msg += "maximal force = " + Convert.ToInt32(Math.Floor(peak_force)).ToString() + " grams.";
 
                 if (stage.StageParameters.ContainsKey("Hit Threshold"))
                 {

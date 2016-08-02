@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using OxyPlot.Annotations;
 
 namespace MotoTrak
 {
@@ -40,12 +41,7 @@ namespace MotoTrak
             //Set which stream we will be reading from for this plot
             StreamIndex = stream_index;
         }
-
-        private void Model_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
+        
         #endregion
 
         #region Private properties
@@ -87,7 +83,143 @@ namespace MotoTrak
 
         protected override void ExecuteReactionsToModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName.Equals("MonitoredSignal"))
+            if (e.PropertyName.Equals("CurrentTrial"))
+            {
+                //If the "CurrentTrial" property has changed, then the property has either been set or unset.
+                //If it gets set to a new object, that means a new trial has begun.  If, on the other hand,
+                //the object is null, that means a trial is not currently taking place.
+
+                if (Model.CurrentTrial != null)
+                {
+                    //In this case, a trial has been initiated
+
+                    //If there are previous annotations still being displayed, let's clear them
+                    if (Plot.Annotations.Count > 0)
+                    {
+                        Plot.Annotations.Clear();
+                    }
+
+                    //Next, we need to create vertical line annotations for the point of the trial
+                    //initiation and the end of the hit window
+                    int x_pos_of_trial_initiation = Model.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
+                    int x_pos_of_hit_window_end = Model.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow +
+                        Model.CurrentSession.SelectedStage.TotalRecordedSamplesDuringHitWindow;
+
+                    //Set up lines annotations around the hit window
+                    LineAnnotation start_line = new LineAnnotation();
+                    start_line.Type = LineAnnotationType.Vertical;
+                    start_line.LineStyle = LineStyle.Solid;
+                    start_line.StrokeThickness = 2;
+                    start_line.Color = OxyColor.FromRgb(0, 0, 0);
+                    start_line.X = x_pos_of_trial_initiation;
+
+                    LineAnnotation end_line = new LineAnnotation();
+                    end_line.Type = LineAnnotationType.Vertical;
+                    end_line.LineStyle = LineStyle.Solid;
+                    end_line.StrokeThickness = 2;
+                    end_line.Color = OxyColor.FromRgb(0, 0, 0);
+                    end_line.X = x_pos_of_hit_window_end;
+
+                    Plot.Annotations.Add(start_line);
+                    Plot.Annotations.Add(end_line);
+
+                    //Now, let's iterate over each stage parameter and create horizontal line annotations
+                    foreach (var sp_key in Model.CurrentSession.SelectedStage.StageParameters.Keys)
+                    {
+                        //Get the stage parameter itself
+                        var sp = Model.CurrentSession.SelectedStage.StageParameters[sp_key];
+
+                        //Create a horizontal line annotation for the value of this parameter.
+                        LineAnnotation parameter_annotation = new LineAnnotation();
+                        parameter_annotation.Type = LineAnnotationType.Horizontal;
+                        parameter_annotation.LineStyle = LineStyle.Dash;
+                        parameter_annotation.StrokeThickness = 2;
+                        parameter_annotation.Color = OxyColor.FromRgb(0, 0, 0);
+                        parameter_annotation.Y = sp.CurrentValue;
+                        parameter_annotation.MinimumX = x_pos_of_trial_initiation;
+                        parameter_annotation.MaximumX = x_pos_of_hit_window_end;
+                        
+                        Plot.Annotations.Add(parameter_annotation);
+
+                        //We create a text annotation that is positioned very close to the line annotation
+                        //This text annotation is invisible by default, but because visible when the user hovers the mouse over
+                        //the plot.  The text of the annotation is the name of the parameter, and allows the user to see how
+                        //each parameter is plotted as a line annotation.
+                        TextAnnotation parameter_name_annotation = new TextAnnotation();
+                        parameter_name_annotation.Text = sp_key;
+                        parameter_name_annotation.TextPosition = new DataPoint(x_pos_of_trial_initiation+5, sp.CurrentValue);
+                        parameter_name_annotation.TextColor = OxyColor.FromArgb(0, 0, 0, 0);
+                        parameter_name_annotation.FontSize = 10;
+                        parameter_name_annotation.StrokeThickness = 0;
+                        parameter_name_annotation.TextHorizontalAlignment = HorizontalAlignment.Left;
+
+                        Plot.Annotations.Add(parameter_name_annotation);
+                    }
+                }
+                else
+                {
+                    //In this case, no trial is currently happening.
+                    //If no trial is happening, we need to delete all annotations from the plot.
+                    Plot.Annotations.Clear();
+
+                    //Invalidate the plot so that it gets updated in the GUI
+                    Plot.InvalidatePlot(true);
+                }
+            }
+            else if (e.PropertyName.Equals("TrialEventsQueue"))
+            {
+                //If we enter this portion of the if-statement, it indicates that some kind of event has occurred within
+                //the trial that is currently executing.
+
+                //We need to process any new events that have occurred and create line annotations of them on the graph.
+                //This is very similar to the process of creating line annotations for stage parameters, except that
+                //these will be vertical line annotations instead of horizontal line annotations.
+                //We will also create text annotations for these, just like we did for stage parameters.
+
+                while (!Model.TrialEventsQueue.IsEmpty)
+                {
+                    //Process each event found in the queue
+                    Tuple<MotorTrialEventType, int> trial_event = null;
+                    bool success = Model.TrialEventsQueue.TryDequeue(out trial_event);
+                    if (success)
+                    {
+                        //First, let's create the vertical line annotation
+                        LineAnnotation trial_event_line = new LineAnnotation();
+                        trial_event_line.Type = LineAnnotationType.Vertical;
+                        trial_event_line.LineStyle = LineStyle.Solid;
+                        trial_event_line.StrokeThickness = 2;
+                        trial_event_line.Color = OxyColor.FromRgb(255, 0, 0);
+                        trial_event_line.X = trial_event.Item2;
+                        
+                        var y_axis = Plot.Axes.Where(a => a.Position == AxisPosition.Left).FirstOrDefault();
+                        if (y_axis != null)
+                        {
+                            trial_event_line.MinimumY = y_axis.AbsoluteMinimum;
+                            trial_event_line.MaximumY = y_axis.AbsoluteMaximum;
+                        }
+
+                        //Add the line annotation to the set of annotations
+                        Plot.Annotations.Add(trial_event_line);
+
+                        //Now create the text annotation for this event
+                        TextAnnotation trial_event_text_annotation = new TextAnnotation();
+                        trial_event_text_annotation.Text = MotorTrialEventTypeConverter.ConvertToDescription(trial_event.Item1);
+                        trial_event_text_annotation.TextPosition = new DataPoint(trial_event.Item2 - 2, 0);
+                        trial_event_text_annotation.TextColor = OxyColor.FromArgb(0, 0, 0, 0);
+                        trial_event_text_annotation.FontSize = 10;
+                        trial_event_text_annotation.StrokeThickness = 0;
+                        trial_event_text_annotation.TextHorizontalAlignment = HorizontalAlignment.Left;
+                        trial_event_text_annotation.TextRotation = -90;
+
+                        //Add the text annotation to the plot
+                        Plot.Annotations.Add(trial_event_text_annotation);
+
+                        //Invalidate the current plot so it gets updated in the GUI
+                        Plot.InvalidatePlot(true);
+                    }
+                }
+            }
+            else if (e.PropertyName.Equals("MonitoredSignal"))
             {
                 //Update the plot signal
                 UpdatePlotSignal();
@@ -138,7 +270,9 @@ namespace MotoTrak
 
             //Create an x-axis for this plot
             LinearAxis x_axis = new LinearAxis();
-            x_axis.Position = AxisPosition.Right;
+            x_axis.Position = AxisPosition.Bottom;
+            x_axis.Minimum = 0;
+            x_axis.MinimumRange = 500;
 
             //Add the axes to the plot model
             Plot.Axes.Clear();
@@ -152,6 +286,36 @@ namespace MotoTrak
 
             //Invalidate the plot
             Plot.InvalidatePlot(true);
+        }
+
+        #endregion
+
+        #region Public methods
+
+        public void HandleMouseHover (bool inside)
+        {
+            if (inside)
+            {
+                foreach(var a in Plot.Annotations)
+                {
+                    TextAnnotation text_a = a as TextAnnotation;
+                    if (text_a != null)
+                    {
+                        text_a.TextColor = OxyColor.FromArgb(255, 0, 0, 0);
+                    }
+                }
+            }
+            else
+            {
+                foreach (var a in Plot.Annotations)
+                {
+                    TextAnnotation text_a = a as TextAnnotation;
+                    if (text_a != null)
+                    {
+                        text_a.TextColor = OxyColor.FromArgb(0, 0, 0, 0);
+                    }
+                }
+            }
         }
 
         #endregion

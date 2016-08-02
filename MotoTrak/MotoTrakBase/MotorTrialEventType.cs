@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,7 +12,10 @@ namespace MotoTrakBase
     /// </summary>
     public enum MotorTrialEventType
     {
+        [Description("Undefined event")]
         UndefinedEvent,
+
+        [Description("Successful trial")]
         SuccessfulTrial
     }
 }
