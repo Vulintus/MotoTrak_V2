@@ -322,6 +322,28 @@ namespace MotoTrak
         }
 
         /// <summary>
+        /// This collection contains a set of values that represent some quantitative aspect of each trial
+        /// that has been performed during the current session.  This is used to plot onto the session overview
+        /// plot.  The session will add a new value to this collection at the end of every trial.
+        /// - The first value of the tuple is the TIME within the session (units are in minutes) that the trial
+        /// occurred.  
+        /// - The second value of the tuple is the y-value calculated by the stage implementation.
+        /// - The third value of the tuple is a boolean value indicating whether the trial was successful or not.
+        /// </summary>
+        public SynchronizedCollection<Tuple<double, double, bool>> SessionOverviewValues
+        {
+            get
+            {
+                return _sessionOverviewValues;
+            }
+            private set
+            {
+                _sessionOverviewValues = value;
+                BackgroundPropertyChanged("SessionOverviewValues");
+            }
+        }
+
+        /// <summary>
         /// This is a concurrent queue of tuples containing events that occur during trials
         /// as well as the position within the trial that they have occurred.  Maintaining a concurrent
         /// queue allows both the background thread and the main thread to safely access this property.
@@ -551,6 +573,7 @@ namespace MotoTrak
 
         private SynchronizedCollection<SynchronizedCollection<double>> _monitoredSignal = new SynchronizedCollection<SynchronizedCollection<double>>();
         private ConcurrentQueue<Tuple<MotorTrialEventType, int>> _trial_events = new ConcurrentQueue<Tuple<MotorTrialEventType, int>>();
+        private SynchronizedCollection<Tuple<double, double, bool>> _sessionOverviewValues = new SynchronizedCollection<Tuple<double, double, bool>>();
         private int fps = 0;
         private int _device_analog_value = 0;
         private int _device_calibrated_value = 0;
@@ -807,19 +830,29 @@ namespace MotoTrak
                         //Create an empty list of trials for the new session.
                         CurrentSession.Trials = Enumerable.Empty<MotorTrial>().ToList();
 
+                        //Set that start time of the new session
+                        CurrentSession.StartTime = DateTime.Now;
+
                         //Clear all messages for the new session to begin.
                         MotoTrakMessaging.GetInstance().ClearMessages();
+
+                        //Clear the session overview values
+                        SessionOverviewValues.Clear();
+                        BackgroundPropertyChanged("SessionOverviewValues");
 
                         //Set the session state to be running
                         SessionState = SessionRunState.SessionRunning;
 
                         //Set the trial state
                         TrialState = TrialRunState.TrialSetup;
-
+                        
                         break;
                     case SessionRunState.SessionEnd:
 
                         //Do any work to finish up a session here.
+
+                        //Set the end time of the current session
+                        CurrentSession.EndTime = DateTime.Now;
 
                         //Set the trial state to idle
                         TrialState = TrialRunState.Idle;
@@ -923,6 +956,9 @@ namespace MotoTrak
                             {
                                 //Create a new motor trial
                                 CurrentTrial = new MotorTrial();
+
+                                //Set the start time of the trial
+                                CurrentTrial.StartTime = DateTime.Now;
 
                                 //Initiate a new trial.
                                 //The following method basically just fills the "trial_device_signal" object with the data that occured up until the device value
@@ -1068,6 +1104,24 @@ namespace MotoTrak
                     case TrialRunState.TrialEnd:
 
                         //In this state, we finalize a trial and save it to the disk.
+
+                        //Get the number of minutes into the session that this trial occurred at
+                        double minutes_passed = CurrentTrial.StartTime.Subtract(CurrentSession.StartTime).TotalMinutes;
+
+                        //Get a value that can be used for the session overview plot for this trial
+                        try
+                        {
+                            double plot_val = CurrentSession.SelectedStage.StageImplementation.CalculateYValueForSessionOverviewPlot(
+                                current_trial_data_transformed, CurrentSession.SelectedStage);
+                            bool trial_success = CurrentTrial.Result == MotorTrialResult.Hit;
+                            
+                            SessionOverviewValues.Add(new Tuple<double, double, bool>(minutes_passed, plot_val, trial_success));
+                            BackgroundPropertyChanged("SessionOverviewValues");
+                        }
+                        catch
+                        {
+                            //Don't save anything to be plotted under this scenario
+                        }
 
                         //Create an end of trial message
                         try

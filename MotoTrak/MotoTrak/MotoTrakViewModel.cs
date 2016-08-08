@@ -79,18 +79,50 @@ namespace MotoTrak
         /// <summary>
         /// The list of possible views that can be plotted
         /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "SelectedStage" })]
         public List<string> ViewList
         {
             get
             {
                 List<string> result = new List<string>();
-                //foreach (var sp in Model.CurrentSession.SelectedStage.StreamParameters)
-                //{
-                    //result.Add(sp.StreamType.ToString());
-                //}
 
-                result.Add("Recent performance");
-                result.Add("Session overview");
+                //Only populate the view-list if there is a current session object with a selected stage
+                if (Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
+                {
+                    foreach (var sp in Model.CurrentSession.SelectedStage.DataStreamTypes)
+                    {
+                        string stream_type_description = MotorBoardDataStreamTypeConverter.ConvertToDescription(sp);
+                        result.Add(stream_type_description);
+                    }
+
+                    result.Add("Session overview");
+                    result.Add("Recent performance");
+                }
+                
+                return result;
+            }
+        }
+        
+        /// <summary>
+        /// List with enumerated type of what is in each view selection
+        /// </summary>
+        public List<MotoTrakPlotViewType> ViewTypeList
+        {
+            get
+            {
+                List<MotoTrakPlotViewType> result = new List<MotoTrakPlotViewType>();
+
+                //Only populate the view-list if there is a current session object with a selected stage
+                if (Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
+                {
+                    foreach (var sp in Model.CurrentSession.SelectedStage.DataStreamTypes)
+                    {
+                        result.Add(MotoTrakPlotViewType.DataStream);
+                    }
+
+                    result.Add(MotoTrakPlotViewType.SessionOverview);
+                    result.Add(MotoTrakPlotViewType.RecentPerformance);
+                }
 
                 return result;
             }
@@ -99,7 +131,6 @@ namespace MotoTrak
         /// <summary>
         /// The index into possible plots that can be displayed, indicating which is currently selected.
         /// </summary>
-        [ReactToModelPropertyChanged(new string[] { "SelectedStage" })]
         public int ViewSelectedIndex
         {
             get
@@ -109,6 +140,8 @@ namespace MotoTrak
             set
             {
                 _viewSelectedIndex = value;
+                PlotViewModel.StreamIndex = value;
+                
                 NotifyPropertyChanged("ViewSelectedIndex");
             }
         }
@@ -603,6 +636,10 @@ namespace MotoTrak
         public void InitializeMotoTrak (string comPort)
         {
             Model.InitializeMotoTrak(comPort);
+
+            //This line of code is necessary to initiate the default stage selection.
+            //When this happens, it selects a default "view" to be plotted from the view-list.
+            StageSelectedIndex = StageSelectedIndex;
         }
 
         /// <summary>
@@ -633,10 +670,7 @@ namespace MotoTrak
 
             //Grab the name of the property that changed on the model
             string prop_name = e.PropertyName;
-
-            //Update the plot if necessary
-            UpdatePlotBasedOnModelPropertyChanged(prop_name);
-
+            
             //Subscribe to events from the new current session if the current session has been changed
             if (prop_name.Equals("CurrentSession"))
             {
@@ -658,115 +692,7 @@ namespace MotoTrak
             //Get the property from the current trial that changed
             string prop_name = e.PropertyName;
 
-            //Udate the plot
-            UpdatePlotBasedOnModelPropertyChanged(prop_name);
-        }
-
-        #endregion
-
-        #region Methods that update the plot
-
-        public void UpdatePlotBasedOnModelPropertyChanged ( string prop_name )
-        {
-            /*if (prop_name.Equals("SelectedStage"))
-            {
-                var y_axis = MotoTrakPlot.Axes.Where(a => a.Position == AxisPosition.Left).FirstOrDefault();
-                if (y_axis != null)
-                {
-                    //y_axis.MinimumRange = MotoTrakModel.CurrentSession.SelectedStage.HitThresholdMaximum * 2;
-                    MotoTrakPlot.InvalidatePlot(true);
-                }
-            }
-            else if (prop_name.Equals("MonitoredSignal"))
-            {
-                //var datapoints = MotoTrakModel.MonitoredSignal.Select((y_val, x_val) => new DataPoint(x_val, y_val)).ToList();
-
-                var s = MotoTrakPlot.Series[0] as AreaSeries;
-                if (s != null)
-                {
-                    s.Points.Clear();
-                    s.Points.AddRange(datapoints);
-                }
-
-                MotoTrakPlot.InvalidatePlot(true);
-            }
-            else if (prop_name.Equals("CurrentTrial"))
-            {
-                //If the "current trial" has been set, make sure we are listening to events from the new object.
-                if (MotoTrakModel.CurrentTrial != null)
-                {
-                    //Listen to events from the current trial
-                    MotoTrakModel.CurrentTrial.PropertyChanged += CurrentTrial_PropertyChanged;
-
-                    //Set up lines annotations around the hit window
-                    LineAnnotation start_line = new LineAnnotation();
-                    start_line.Type = LineAnnotationType.Vertical;
-                    start_line.LineStyle = LineStyle.Solid;
-                    start_line.StrokeThickness = 2;
-                    start_line.Color = OxyColor.FromRgb(0, 0, 0);
-                    start_line.X = MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
-
-                    LineAnnotation end_line = new LineAnnotation();
-                    end_line.Type = LineAnnotationType.Vertical;
-                    end_line.LineStyle = LineStyle.Solid;
-                    end_line.StrokeThickness = 2;
-                    end_line.Color = OxyColor.FromRgb(0, 0, 0);
-                    end_line.X = MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow + MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesDuringHitWindow;
-
-                    LineAnnotation hit_threshold_line = new LineAnnotation();
-                    hit_threshold_line.Type = LineAnnotationType.Horizontal;
-                    hit_threshold_line.LineStyle = LineStyle.Dash;
-                    hit_threshold_line.StrokeThickness = 2;
-                    hit_threshold_line.Color = OxyColor.FromRgb(0, 0, 0);
-                    hit_threshold_line.Y = MotoTrakModel.CurrentSession.SelectedStage.HitThreshold;
-                    hit_threshold_line.MinimumX = MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
-                    hit_threshold_line.MaximumX = MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow + MotoTrakModel.CurrentSession.SelectedStage.TotalRecordedSamplesDuringHitWindow;
-
-                    var y_axis = MotoTrakPlot.Axes.Where(a => a.Position == AxisPosition.Left).FirstOrDefault();
-                    if (y_axis != null)
-                    {
-                        start_line.MinimumY = y_axis.AbsoluteMinimum;
-                        start_line.MaximumY = y_axis.AbsoluteMaximum;
-
-                        end_line.MinimumX = y_axis.AbsoluteMinimum;
-                        end_line.MaximumY = y_axis.AbsoluteMaximum;
-                    }
-
-                    MotoTrakPlot.Annotations.Add(start_line);
-                    MotoTrakPlot.Annotations.Add(end_line);
-                    MotoTrakPlot.Annotations.Add(hit_threshold_line);
-                    MotoTrakPlot.InvalidatePlot(true);
-                }
-                else
-                {
-                    //If the current trial has been set to null, it means there is not a trial that is currently happening.
-                    //This means we need to make sure that any lines that are being plotted that pertain to the current
-                    //trial are removed.
-
-                    MotoTrakPlot.Annotations.Clear();
-                    MotoTrakPlot.InvalidatePlot(true);
-                }
-            }
-            else if (prop_name.Equals("HitIndex"))
-            {
-                LineAnnotation hit_line = new LineAnnotation();
-                hit_line.Type = LineAnnotationType.Vertical;
-                hit_line.LineStyle = LineStyle.Solid;
-                hit_line.StrokeThickness = 2;
-                hit_line.Color = OxyColor.FromRgb(255, 0, 0);
-
-                hit_line.X = MotoTrakModel.CurrentTrial.HitIndex;
-
-                var y_axis = MotoTrakPlot.Axes.Where(a => a.Position == AxisPosition.Left).FirstOrDefault();
-                if (y_axis != null)
-                {
-                    hit_line.MinimumY = y_axis.AbsoluteMinimum;
-                    hit_line.MaximumY = y_axis.AbsoluteMaximum;
-                }
-
-                MotoTrakPlot.Annotations.Add(hit_line);
-                MotoTrakPlot.InvalidatePlot(true);
-            }*/
+            //Code here if needed
         }
 
         #endregion

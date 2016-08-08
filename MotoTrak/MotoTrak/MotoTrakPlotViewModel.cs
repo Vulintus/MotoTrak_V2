@@ -19,6 +19,12 @@ namespace MotoTrak
     {
         #region Private members
 
+        private enum SeriesType
+        {
+            ScatterSeries,
+            AreaSeries
+        }
+
         private PlotModel _plot_model = null;
         private MotoTrakModel _model = null;
         private int _stream_index = -1;
@@ -64,7 +70,7 @@ namespace MotoTrak
         /// <summary>
         /// The index into the streams
         /// </summary>
-        private int StreamIndex
+        public int StreamIndex
         {
             get
             {
@@ -231,25 +237,75 @@ namespace MotoTrak
 
         private void UpdatePlotSignal ()
         {
-            //Copy over the data from the stream that is currently being displayed
-            var datapoints = Model.MonitoredSignal[StreamIndex].Select((y_val, x_val) =>
-                new DataPoint(x_val, y_val)).ToList();
-
-            //Grab the first AreaSeries that is on the plot
-            var s = Plot.Series[0] as AreaSeries;
-            if (s != null)
+            if (StreamIndex >= 0)
             {
-                //Clear the points in the dataset
-                s.Points.Clear();
-                
-                //Add the new set of datapoints
-                s.Points.AddRange(datapoints);
+                if (StreamIndex < Model.MonitoredSignal.Count)
+                {
+                    //Copy over the data from the stream that is currently being displayed
+                    var datapoints = Model.MonitoredSignal[StreamIndex].Select((y_val, x_val) =>
+                        new DataPoint(x_val+1, y_val)).ToList();
+
+                    //Set the x-axis limit
+                    LinearAxis x_axis = Plot.Axes.FirstOrDefault(x => x.Position == AxisPosition.Bottom) as LinearAxis;
+                    if (x_axis != null)
+                    {
+                        x_axis.MinimumRange = 500;
+                    }
+
+                    //Grab the first AreaSeries that is on the plot
+                    var s = GetPlotSeries(SeriesType.AreaSeries) as AreaSeries;
+                    if (s != null)
+                    {
+                        //Clear the points in the dataset
+                        s.Points.Clear();
+
+                        //Add the new set of datapoints
+                        s.Points.AddRange(datapoints);
+                    }
+                }
+                else if (StreamIndex == Model.MonitoredSignal.Count)
+                {
+                    //Get the points that need to be plotted
+                    var datapoints = Model.SessionOverviewValues.Select(x => new ScatterPoint(x.Item1, x.Item2)).ToList();
+
+                    var successful_trials = Model.SessionOverviewValues.Where(t => t.Item3 == true).ToList();
+                    var successful_datapoints = successful_trials.Select(x => new ScatterPoint(x.Item1, x.Item2)).ToList();
+
+                    var failed_trials = Model.SessionOverviewValues.Where(t => t.Item3 == false).ToList();
+                    var failed_datapoints = failed_trials.Select(x => new ScatterPoint(x.Item1, x.Item2)).ToList();
+
+                    //Set the x-axis limit
+                    LinearAxis x_axis = Plot.Axes.FirstOrDefault(x => x.Position == AxisPosition.Bottom) as LinearAxis;
+                    if (x_axis != null)
+                    {
+                        x_axis.MinimumRange = 10;
+                    }
+
+                    List<ScatterSeries> s = SetupSessionOverviewPlot();
+                    s[0].Points.AddRange(successful_datapoints);
+                    s[1].Points.AddRange(failed_datapoints);
+
+                    //Get the first ScatterSeries that is on the plot
+                    //var s = GetPlotSeries(SeriesType.ScatterSeries) as ScatterSeries;
+                    //if (s != null)
+                    //{
+                        //Clear the points in the dataset
+                        //s.Points.Clear();
+
+                        //Add the new set of datapoints
+                        //s.Points.AddRange(datapoints);
+                    //}
+                }
+                else if (StreamIndex > Model.MonitoredSignal.Count)
+                {
+
+                }
+
+                //Invalidate the plot so it is updated on screen
+                Plot.InvalidatePlot(true);
             }
-
-            //Invalidate the plot so it is updated on screen
-            Plot.InvalidatePlot(true);
         }
-
+        
         private void UpdatePlotProperties ()
         {
             //Grab the stream description from the model
@@ -286,6 +342,93 @@ namespace MotoTrak
 
             //Invalidate the plot
             Plot.InvalidatePlot(true);
+        }
+
+        private List<ScatterSeries> SetupSessionOverviewPlot ()
+        {
+            bool create_series = false;
+
+            if (Plot.Series.Count >= 2)
+            {
+                if (!(Plot.Series[0] is ScatterSeries) || !(Plot.Series[1] is ScatterSeries))
+                {
+                    create_series = true;
+                }
+            }
+            else
+            {
+                create_series = true;
+            }
+
+            if (create_series)
+            {
+                Plot.Series.Clear();
+
+                var scatter1 = new ScatterSeries()
+                {
+                    MarkerType = MarkerType.Triangle,
+                    MarkerStroke = OxyColor.FromRgb(0, 255, 0),
+                    MarkerFill = OxyColor.FromRgb(128, 255, 128)
+                };
+
+                var scatter2 = new ScatterSeries()
+                {
+                    MarkerType = MarkerType.Triangle,
+                    MarkerStroke = OxyColor.FromRgb(255, 0, 0),
+                    MarkerFill = OxyColor.FromRgb(255, 128, 128)
+                };
+
+                Plot.Series.Add(scatter1);
+                Plot.Series.Add(scatter2);
+            }
+
+            return new List<ScatterSeries>() { Plot.Series[0] as ScatterSeries, Plot.Series[1] as ScatterSeries };
+        }
+
+        private Series GetPlotSeries ( SeriesType series_type )
+        {
+            var first_series = Plot.Series.FirstOrDefault();
+
+            switch (series_type)
+            {
+                case SeriesType.AreaSeries:
+
+                    if (first_series is AreaSeries)
+                    {
+                        return first_series;
+                    }
+                    else
+                    {
+                        Plot.Series.Clear();
+                        Plot.Series.Add(new AreaSeries());
+                        return Plot.Series.FirstOrDefault();
+                    }
+
+                    break;
+                case SeriesType.ScatterSeries:
+                    
+                    if (first_series is ScatterSeries)
+                    {
+                        return first_series;
+                    }
+                    else
+                    {
+                        var scatter = new ScatterSeries()
+                        {
+                            MarkerType = MarkerType.Triangle,
+                            MarkerStroke = OxyColor.FromRgb(255, 0, 0),
+                            MarkerFill = OxyColor.FromRgb(255, 128, 128)
+                        };
+                        
+                        Plot.Series.Clear();
+                        Plot.Series.Add(scatter);
+                        return Plot.Series.FirstOrDefault();
+                    }
+
+                    break;
+            }
+
+            return first_series;
         }
 
         #endregion

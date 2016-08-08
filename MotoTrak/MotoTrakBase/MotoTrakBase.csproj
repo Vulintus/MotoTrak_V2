@@ -54,6 +54,7 @@
     <Compile Include="IMotorStageImplementation.cs" />
     <Compile Include="MotorBoard.cs" />
     <Compile Include="MotorBoardDataStreamType.cs" />
+    <Compile Include="MotorBoardDateStreamTypeConverter.cs" />
     <Compile Include="MotorDevice.cs" />
     <Compile Include="MotorDeviceType.cs" />
     <Compile Include="MotorDeviceTypeConverter.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="MotoTrakFileRead.cs" />
     <Compile Include="MotoTrakMessageType.cs" />
     <Compile Include="MotoTrakMessaging.cs" />
+    <Compile Include="MotoTrakPlotViewType.cs" />
     <Compile Include="MotoTrakSession.cs" />
     <Compile Include="NotifyPropertyChangedObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

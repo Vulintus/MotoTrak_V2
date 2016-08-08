@@ -192,6 +192,25 @@ namespace MotoTrakBase
             return msg;
         }
 
+        public virtual double CalculateYValueForSessionOverviewPlot(List<List<double>> trial_signal, MotorStage stage)
+        {
+            //Adjust the hit threshold if necessary
+            if (stage.StageParameters.ContainsKey("Hit Threshold"))
+            {
+                //Grab the device signal for this trial
+                var stream_data = trial_signal[1];
+
+                //Find the maximal force of the current trial
+                double max_force = stream_data.Where((val, index) =>
+                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) &&
+                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max();
+
+                return max_force;
+            }
+
+            return double.NaN;
+        }
+
         public virtual void AdjustDynamicStageParameters(List<MotorTrial> all_trials, List<List<double>> trial_signal, MotorStage stage)
         {
             //Adjust the hit threshold if necessary

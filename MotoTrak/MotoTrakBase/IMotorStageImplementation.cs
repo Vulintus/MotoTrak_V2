@@ -70,6 +70,17 @@ namespace MotoTrakBase
         string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<List<double>> trial_signal, MotorStage stage);
 
         /// <summary>
+        /// Allows the creator of this stage to calculate a y-value for the current trial that will be plotted onto the
+        /// "Session overview" plot.  For example, for a standard pull stage, this is typically the maximal force of 
+        /// the trial within the hit window.  So this function would look at the trial signal, calculate the maximal force
+        /// within the hit window, and simply return that value.
+        /// </summary>
+        /// <param name="trial_signal">The transformed trial signal</param>
+        /// <param name="stage">The current motor stage</param>
+        /// <returns>A y-value to be plotted onto the session overview plot</returns>
+        double CalculateYValueForSessionOverviewPlot(List<List<double>> trial_signal, MotorStage stage);
+
+        /// <summary>
         /// Allows the creator of the stage to adjust the hit threshold at the end of each trial.
         /// </summary>
         /// <param name="all_trials">All trials from the session up until the current point in time</param>
