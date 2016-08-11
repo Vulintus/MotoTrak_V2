@@ -74,12 +74,14 @@
                 <ColumnDefinition Width="50" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Orientation="Vertical">
+                <TextBlock Text="Millis/Frame: " FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" />
                 <TextBlock Text="FPS: " FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" />
                 <TextBlock Text="Baseline: " FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" />
                 <TextBlock Text="Analog: " FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" />
                 <TextBlock Text="Calibrated: " FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Vertical">
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=MillisecondsPerFrame, FallbackValue=0}" FontWeight="Bold" FontSize="14" />
                 <TextBlock HorizontalAlignment="Right" Text="{Binding Path=FrameRate, FallbackValue=60}" FontWeight="Bold" FontSize="14" />
                 <TextBlock HorizontalAlignment="Right" Text="{Binding Path=DeviceBaseline, FallbackValue=1}" FontWeight="Bold" FontSize="14" />
                 <TextBlock HorizontalAlignment="Right" Text="{Binding Path=DeviceAnalogValue, FallbackValue=1}" FontWeight="Bold" FontSize="14" />

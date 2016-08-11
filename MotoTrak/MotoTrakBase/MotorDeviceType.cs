@@ -14,6 +14,9 @@ namespace MotoTrakBase
         Knob,
 
         [Description("Pull")]
-        Pull
+        Pull,
+
+        [Description("Lever")]
+        Lever
     }
 }

@@ -24,12 +24,12 @@ namespace MotoTrakBase
                     typeof(DescriptionAttribute)) as DescriptionAttribute;
                 if (attribute != null)
                 {
-                    if (attribute.Description == description)
+                    if (attribute.Description.Equals(description, StringComparison.InvariantCultureIgnoreCase))
                         return (MotorDeviceType)field.GetValue(null);
                 }
                 else
                 {
-                    if (field.Name == description)
+                    if (field.Name.Equals(description, StringComparison.InvariantCultureIgnoreCase))
                         return (MotorDeviceType)field.GetValue(null);
                 }
             }

@@ -10,6 +10,20 @@ namespace MotoTrakUtilities
     public static class MotorMath
     {
         /// <summary>
+        /// Calculates the iterative mean of a set of numbers
+        /// </summary>
+        /// <param name="previous_mean">The previous mean of all the numbers consumed so far</param>
+        /// <param name="new_sample">A new number to add to the set of numbers</param>
+        /// <param name="new_count">The new count of the total numbers in the set</param>
+        /// <returns>The iterative mean</returns>
+        public static double IterativeMean (double previous_mean, double new_sample, int new_count)
+        {
+            double count = Convert.ToDouble(new_count);
+            double result = (((count - 1) / count) * previous_mean) + ((1 / count) * new_sample);
+            return result;
+        }
+
+        /// <summary>
         /// Establishes the first element in the signal as "zero", and then offsets all other elements from that value.
         /// </summary>
         /// <param name="a">The signal to be offset.</param>

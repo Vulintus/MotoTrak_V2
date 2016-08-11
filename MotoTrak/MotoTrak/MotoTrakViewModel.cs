@@ -534,6 +534,7 @@ namespace MotoTrak
         /// <summary>
         /// The frame rate of the program for debugging purposes.
         /// This is essentially how fast we are able to loop and process incoming data from the MotoTrak controller board.
+        /// This value is throttled, however, by how long we choose to wait inbetween loop iterations using the Thread.Sleep() function.
         /// </summary>
         [ReactToModelPropertyChanged(new string[] { "FramesPerSecond" })]
         public string FrameRate
@@ -541,6 +542,20 @@ namespace MotoTrak
             get
             {
                 return (Model.FramesPerSecond.ToString());
+            }
+        }
+
+        /// <summary>
+        /// The number of milliseconds it takes to run a single MotoTrak frame.
+        /// This is the average of the last 1000 frames.
+        /// This value is NOT throttled and can be used to calculate a true frame rate not dependent on Thread.Sleep() if necessary.
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "MillisecondsPerFrame" } )]
+        public string MillisecondsPerFrame
+        {
+            get
+            {
+                return (Model.MillisecondsPerFrame.ToString("#.####"));
             }
         }
 

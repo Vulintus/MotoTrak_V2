@@ -384,6 +384,19 @@ namespace MotoTrak
             }
         }
 
+        public double MillisecondsPerFrame
+        {
+            get
+            {
+                return _milliseconds_per_frame;
+            }
+            set
+            {
+                _milliseconds_per_frame = value;
+                BackgroundPropertyChanged("MillisecondsPerFrame");
+            }
+        }
+
         /// <summary>
         /// The most recent analog value on the device
         /// </summary>
@@ -575,6 +588,7 @@ namespace MotoTrak
         private ConcurrentQueue<Tuple<MotorTrialEventType, int>> _trial_events = new ConcurrentQueue<Tuple<MotorTrialEventType, int>>();
         private SynchronizedCollection<Tuple<double, double, bool>> _sessionOverviewValues = new SynchronizedCollection<Tuple<double, double, bool>>();
         private int fps = 0;
+        private double _milliseconds_per_frame = 0;
         private int _device_analog_value = 0;
         private int _device_calibrated_value = 0;
 
@@ -717,17 +731,31 @@ namespace MotoTrak
             stop_watch.Start();
             int frames = 0;
 
+            //Record how many milliseconds a single loop iteration takes
+            Stopwatch stop_watch_single_iteration = new Stopwatch();
+            List<double> stop_watch_single_iteration_samples = new List<double>();
+
             //This loop is endless, for all intents and purposes.
             //It will exit when the user closes the MotoTrak window.
             while (!_background_thread.CancellationPending)
             {
+                //Start the single-iteration stop-watch
+                stop_watch_single_iteration.Start();
+
                 //Report progress at the beginning of each loop iteration
                 _background_thread.ReportProgress(0, null);
 
                 //Handle the "frames-per-second" measurement for debugging purposes.
                 if (stop_watch.ElapsedMilliseconds >= 1000)
                 {
+                    //Once per second, calculate the average number of milliseconds taken by the last 1000 frames
+                    //This value is not throttled.
+                    MillisecondsPerFrame = stop_watch_single_iteration_samples.Average();
+
+                    //Set the total frames over the last second as the "frames per second".  This value is THROTTLED by Thread.Sleep()
                     FramesPerSecond = frames;
+
+                    //Reset the frames to 0 and reset the stop-watch
                     frames = 0;
                     stop_watch.Reset();
                     stop_watch.Start();
@@ -736,7 +764,7 @@ namespace MotoTrak
                 {
                     frames++;
                 }
-
+                
                 //Run the autopositioner
                 MotoTrakAutopositioner.GetInstance().RunAutopositioner();
 
@@ -822,346 +850,23 @@ namespace MotoTrak
                     IsTriggerManualFeed = false;
                 }
 
-                //Act on any changes to the session state
-                switch (SessionState)
+                //Handle the current session state
+                HandleSessionState();
+
+                //Handle the current trial state
+                current_trial_data_transformed = HandleTrialState(device_signal_index, number_of_new_data_points, 
+                    buffer_size, stream_data_raw, stream_data_transformed, 
+                    current_trial_data_transformed, transposed_new_data, transformed_new_data);
+                
+                //Finish the single-iteration stopwatch (for debugging)
+                TimeSpan single_iteration_timespan = stop_watch_single_iteration.Elapsed;
+                stop_watch_single_iteration.Reset();
+                stop_watch_single_iteration_samples.Add(single_iteration_timespan.TotalMilliseconds);
+                if (stop_watch_single_iteration_samples.Count > 1000)
                 {
-                    case SessionRunState.SessionBegin:
-
-                        //Create an empty list of trials for the new session.
-                        CurrentSession.Trials = Enumerable.Empty<MotorTrial>().ToList();
-
-                        //Set that start time of the new session
-                        CurrentSession.StartTime = DateTime.Now;
-
-                        //Clear all messages for the new session to begin.
-                        MotoTrakMessaging.GetInstance().ClearMessages();
-
-                        //Clear the session overview values
-                        SessionOverviewValues.Clear();
-                        BackgroundPropertyChanged("SessionOverviewValues");
-
-                        //Set the session state to be running
-                        SessionState = SessionRunState.SessionRunning;
-
-                        //Set the trial state
-                        TrialState = TrialRunState.TrialSetup;
-                        
-                        break;
-                    case SessionRunState.SessionEnd:
-
-                        //Do any work to finish up a session here.
-
-                        //Set the end time of the current session
-                        CurrentSession.EndTime = DateTime.Now;
-
-                        //Set the trial state to idle
-                        TrialState = TrialRunState.Idle;
-
-                        //Set the session state to "not running"
-                        SessionState = SessionRunState.SessionNotRunning;
-
-                        break;
-                    case SessionRunState.SessionPaused:
-
-                        //In the case that the session is paused, the trial state will be set to "Idle".
-                        //This is the ONLY time in which the trial state is "Idle" while a session is running.
-                        //This will allow the pull handle output to still be viewed on the window, but trials
-                        //cannot be initiated.
-                        TrialState = TrialRunState.Idle;
-
-                        break;
-                    case SessionRunState.SessionUnpaused:
-
-                        //In the case that the user has unpaused the session, we simply set the trial state to allow
-                        //trials to begin again
-                        TrialState = TrialRunState.TrialSetup;
-
-                        //Now set the session state to be running
-                        SessionState = SessionRunState.SessionRunning;
-
-                        break;
+                    stop_watch_single_iteration_samples.RemoveAt(0);
                 }
-
-                //Perform actions based on which trial state we are in
-                switch (TrialState)
-                {
-                    case TrialRunState.Idle:
-
-                        //This is essentially the "idle" state of the program, when no animal is actually running.
-
-                        //Make a "hard" copy of the signal data and assign it to the MonitoredSignal variable, which is what the user sees
-                        //on the plot.  The "ToList" function makes a copy of the data, rather than copying a pointer.  This is important!
-                        CopyDataToMonitoredSignal(stream_data_transformed);
-                        
-                        break;
-                    case TrialRunState.ResetBaseline:
-
-                        try
-                        {
-                            //Grab the data that is currently in the buffer and take the mean of it.
-                            var device_signal_raw = stream_data_raw[device_signal_index];
-                            int mean_signal_value = Convert.ToInt32(Math.Round(device_signal_raw.Average()));
-
-                            //Set the baseline on the controller board.
-                            ControllerBoard.SetBaseline(mean_signal_value);
-
-                            //Set the local device baseline to the same value
-                            CurrentDevice.Baseline = mean_signal_value;
-
-                            //Set the baseline of the device object being stored in the current session
-                            CurrentSession.Device.Baseline = mean_signal_value;
-
-                            //Note that the device baseline has changed in the background
-                            BackgroundPropertyChanged("CurrentDevice");
-                        }
-                        catch
-                        {
-                            //If an error occurs, log it
-                            MotoTrakMessaging.GetInstance().AddMessage("Error while resetting baseline!");
-                        }
-                        
-                        //Reset the trial state to be idle after the baseline has been reset
-                        TrialState = TrialRunState.Idle;
-
-                        break;
-                    case TrialRunState.TrialSetup:
-                        
-                        //Do any necessary work to set up a new trial here
-
-                        //Wait for a new trial to begin.
-                        TrialState = TrialRunState.TrialWait;
-
-                        break;
-                    case TrialRunState.TrialWait:
-
-                        //Set the trial initiation index to a default value
-                        int trial_initiation_index = -1;
-
-                        try
-                        {
-                            //Run code specific to this stage to check for trial initiation
-                            trial_initiation_index = CurrentSession.SelectedStage.StageImplementation.CheckSignalForTrialInitiation(stream_data_transformed,
-                                number_of_new_data_points, CurrentSession.SelectedStage);
-                        }
-                        catch
-                        {
-                            //If an error occurred within the stage implementation's code, log it:
-                            MotoTrakMessaging.GetInstance().AddMessage("Error encountered while attempting to check for trial initiation");
-                        }
-
-                        //Handle the case in which a trial was initiated
-                        if (trial_initiation_index > -1)
-                        {
-                            try
-                            {
-                                //Create a new motor trial
-                                CurrentTrial = new MotorTrial();
-
-                                //Set the start time of the trial
-                                CurrentTrial.StartTime = DateTime.Now;
-
-                                //Initiate a new trial.
-                                //The following method basically just fills the "trial_device_signal" object with the data that occured up until the device value
-                                //broke the trial initiation threshold.  It also fills the same data into the "trial" object, but in raw form.
-                                HandleTrialInitiation(buffer_size, trial_initiation_index, stream_data_raw,
-                                    stream_data_transformed, CurrentTrial, out current_trial_data_transformed);
-
-                                //Change the session state
-                                TrialState = TrialRunState.TrialRun;
-                            }
-                            catch
-                            {
-                                //In the event of an error while handling a trial initation...
-                                MotoTrakMessaging.GetInstance().AddMessage("Error encountered while initiating a new trial");
-                            }
-                        }
-
-                        //Make a "hard" copy of the signal data and assign it to the MonitoredSignal variable, which is what the user sees
-                        //on the plot.  The "ToList" function makes a copy of the data, rather than copying a pointer.  This is important!
-                        //MonitoredSignal = device_signal_transformed.ToList();
-                        CopyDataToMonitoredSignal(stream_data_transformed);
-                        
-                        break;
-                    case TrialRunState.TrialRun:
-
-                        //If we are in this state, it indicates that a new trial has already begun.  We are currently in the midst of running
-                        //that trial.  Therefore, in this state we should take any new data that is coming in, and process that data 
-                        //according to how the selected stage dictates that it should be processed.  If it is deemed a successful trial,
-                        //then we should follow the procedure for a successful trial based on the stage settings (typically a feed, and also
-                        //maybe a VNS stimulus or other output).  After the trial time has expired, we should move on to the next state.
-                        //Trial success does NOT immediately move us to the next state.  ONLY TIME.
-
-                        //Add the new raw data to the trial object to be saved to disk later.
-                        for (int i = 0; i < CurrentTrial.TrialData.Count; i++)
-                        {
-                            CurrentTrial.TrialData[i].AddRange(transposed_new_data[i]);
-                        }
-
-                        //Add the new transformed data to the transformed trial signal
-                        for (int i = 0; i < current_trial_data_transformed.Count; i++)
-                        {
-                            current_trial_data_transformed[i].AddRange(transformed_new_data[i]);
-                        }
-
-                        //Check to see if the animal has succeeded up until this point in the trial, based on this stage's criterion for success.
-                        if (CurrentTrial.Result == MotorTrialResult.Unknown)
-                        {
-                            //Check to see whether the trial was a success, based on the criterion defined by the stage definition.
-                            List<Tuple<MotorTrialEventType, int>> events_found = null;
-
-                            try
-                            {
-                                events_found = CurrentSession.SelectedStage.StageImplementation.CheckForTrialEvent(current_trial_data_transformed, CurrentSession.SelectedStage);
-                            }
-                            catch
-                            {
-                                //Make this an empty list in the event of an error in the stage implementation's code
-                                events_found = new List<Tuple<MotorTrialEventType, int>>();
-
-                                //Log the error
-                                MotoTrakMessaging.GetInstance().AddMessage("Error while checking for trial events within stage implementation");
-                            }
-                            
-                            //Go through the events that were found
-                            foreach (var cur_event in events_found)
-                            {
-                                //Record a successful trial
-                                if (cur_event.Item1 == MotorTrialEventType.SuccessfulTrial)
-                                {
-                                    CurrentTrial.Result = MotorTrialResult.Hit;
-                                    CurrentTrial.HitTimes.Add(DateTime.Now);
-                                    CurrentTrial.HitIndices.Add(cur_event.Item2);
-                                }
-
-                                //Enqueue the trial event tuple so the main thread can digest it
-                                TrialEventsQueue.Enqueue(cur_event);
-                                BackgroundPropertyChanged("TrialEventsQueue");
-                            }
-
-                            //Check to see what actions we need to take based on the events that occurred
-                            List<MotorTrialAction> event_actions = null;
-
-                            try
-                            {
-                                event_actions = CurrentSession.SelectedStage.StageImplementation.ReactToTrialEvents(events_found, current_trial_data_transformed, CurrentSession.SelectedStage);
-                            }
-                            catch
-                            {
-                                //In the event of an error within the stage implementation's code, make event_actions an empty list
-                                event_actions = new List<MotorTrialAction>();
-
-                                //Log the error
-                                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to react to trial events within stage implementation");
-                            }
-                            
-                            //Perform each action
-                            foreach (var action in event_actions)
-                            {
-                                action.ExecuteAction();
-                            }
-                        }
-
-                        //Perform any necessary actions that need to be taken according to the stage parameters that are unrelated to
-                        //actions that are taken given the success of a trial.
-                        List<MotorTrialAction> actions = null;
-
-                        try
-                        {
-                            actions = CurrentSession.SelectedStage.StageImplementation.PerformActionDuringTrial(current_trial_data_transformed, CurrentSession.SelectedStage);
-                        }
-                        catch
-                        {
-                            //Set actions to be an empty list
-                            actions = new List<MotorTrialAction>();
-
-                            //Log the error
-                            MotoTrakMessaging.GetInstance().AddMessage("Error in stage implementation: PerformActionDuringTrial function");
-                        }
-
-                        foreach (var action in actions)
-                        {
-                            action.ExecuteAction();
-                        }
-
-                        //Check to see if this trial has finished
-                        int samples_collected = CurrentTrial.TrialData[0].Count;
-                        if (samples_collected >= CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial)
-                        {
-                            //Set the trial result if it hasn't yet been set
-                            if (CurrentTrial.Result == MotorTrialResult.Unknown)
-                            {
-                                CurrentTrial.Result = MotorTrialResult.Miss;
-                            }
-                            
-                            //Change the session state to end this trial.
-                            TrialState = TrialRunState.TrialEnd;
-                        }
-
-                        //Report progress on this trial to the main UI thread
-                        CopyDataToMonitoredSignal(current_trial_data_transformed);
-
-                        break;
-                    case TrialRunState.TrialEnd:
-
-                        //In this state, we finalize a trial and save it to the disk.
-
-                        //Get the number of minutes into the session that this trial occurred at
-                        double minutes_passed = CurrentTrial.StartTime.Subtract(CurrentSession.StartTime).TotalMinutes;
-
-                        //Get a value that can be used for the session overview plot for this trial
-                        try
-                        {
-                            double plot_val = CurrentSession.SelectedStage.StageImplementation.CalculateYValueForSessionOverviewPlot(
-                                current_trial_data_transformed, CurrentSession.SelectedStage);
-                            bool trial_success = CurrentTrial.Result == MotorTrialResult.Hit;
-                            
-                            SessionOverviewValues.Add(new Tuple<double, double, bool>(minutes_passed, plot_val, trial_success));
-                            BackgroundPropertyChanged("SessionOverviewValues");
-                        }
-                        catch
-                        {
-                            //Don't save anything to be plotted under this scenario
-                        }
-
-                        //Create an end of trial message
-                        try
-                        {
-                            string msg = CurrentSession.SelectedStage.StageImplementation.CreateEndOfTrialMessage(CurrentTrial.Result == MotorTrialResult.Hit,
-                                CurrentSession.Trials.Count + 1, current_trial_data_transformed, CurrentSession.SelectedStage);
-                            MotoTrakMessaging.GetInstance().AddMessage(msg);
-                        }
-                        catch
-                        {
-                            //If an error was encountered, log it
-                            MotoTrakMessaging.GetInstance().AddMessage("Error in stage implementation: CreateEndOfTrialMessage function");
-                        }
-                        
-                        //First, add the trial to our collection of total trials for the currently running session.
-                        CurrentSession.Trials.Add(CurrentTrial);
-
-                        //Adjust the hit threshold for adaptive stages
-                        CurrentSession.SelectedStage.StageImplementation.AdjustDynamicStageParameters(CurrentSession.Trials, 
-                            current_trial_data_transformed, CurrentSession.SelectedStage);
-
-                        //Set the current trial to null.  This will subsequently send notifications up to the UI,
-                        //telling the UI that there is not currently a trial taking place.
-                        CurrentTrial = null;
-
-                        //Tell the program to wait for another trial to begin
-                        TrialState = TrialRunState.TrialSetup;
-
-                        break;
-                    case TrialRunState.TrialManualFeed:
-
-                        //Trigger a manual feed
-                        ControllerBoard.TriggerFeeder();
-
-                        //Set up a new trial
-                        TrialState = TrialRunState.TrialSetup;
-
-                        break;
-                }
-
+                    
                 //Sleep the thread for 30 milliseconds so we don't consume too much CPU time
                 Thread.Sleep(30);
             }
@@ -1169,6 +874,356 @@ namespace MotoTrak
             //If we reach this point in the code, it means that user has decided to close the MotoTrak window.  This next line of code
             //tells anyone who is listening that the background worker is being cancelled.
             e.Cancel = true;
+        }
+
+        private List<List<double>> HandleTrialState (int device_signal_index, int number_of_new_data_points, int buffer_size, 
+            List<List<int>> stream_data_raw, List<List<double>> stream_data_transformed, List<List<double>> current_trial_data_transformed,
+            List<List<int>> transposed_new_data, List<List<double>> transformed_new_data)
+        {
+            //Perform actions based on which trial state we are in
+            switch (TrialState)
+            {
+                case TrialRunState.Idle:
+
+                    //This is essentially the "idle" state of the program, when no animal is actually running.
+
+                    //Make a "hard" copy of the signal data and assign it to the MonitoredSignal variable, which is what the user sees
+                    //on the plot.  The "ToList" function makes a copy of the data, rather than copying a pointer.  This is important!
+                    CopyDataToMonitoredSignal(stream_data_transformed);
+
+                    break;
+                case TrialRunState.ResetBaseline:
+
+                    try
+                    {
+                        //Grab the data that is currently in the buffer and take the mean of it.
+                        var device_signal_raw = stream_data_raw[device_signal_index];
+                        int mean_signal_value = Convert.ToInt32(Math.Round(device_signal_raw.Average()));
+
+                        //Set the baseline on the controller board.
+                        ControllerBoard.SetBaseline(mean_signal_value);
+
+                        //Set the local device baseline to the same value
+                        CurrentDevice.Baseline = mean_signal_value;
+
+                        //Set the baseline of the device object being stored in the current session
+                        CurrentSession.Device.Baseline = mean_signal_value;
+
+                        //Note that the device baseline has changed in the background
+                        BackgroundPropertyChanged("CurrentDevice");
+                    }
+                    catch
+                    {
+                        //If an error occurs, log it
+                        MotoTrakMessaging.GetInstance().AddMessage("Error while resetting baseline!");
+                    }
+
+                    //Reset the trial state to be idle after the baseline has been reset
+                    TrialState = TrialRunState.Idle;
+
+                    break;
+                case TrialRunState.TrialSetup:
+
+                    //Do any necessary work to set up a new trial here
+
+                    //Wait for a new trial to begin.
+                    TrialState = TrialRunState.TrialWait;
+
+                    break;
+                case TrialRunState.TrialWait:
+
+                    //Set the trial initiation index to a default value
+                    int trial_initiation_index = -1;
+
+                    try
+                    {
+                        //Run code specific to this stage to check for trial initiation
+                        trial_initiation_index = CurrentSession.SelectedStage.StageImplementation.CheckSignalForTrialInitiation(stream_data_transformed,
+                            number_of_new_data_points, CurrentSession.SelectedStage);
+                    }
+                    catch
+                    {
+                        //If an error occurred within the stage implementation's code, log it:
+                        MotoTrakMessaging.GetInstance().AddMessage("Error encountered while attempting to check for trial initiation");
+                    }
+
+                    //Handle the case in which a trial was initiated
+                    if (trial_initiation_index > -1)
+                    {
+                        try
+                        {
+                            //Create a new motor trial
+                            CurrentTrial = new MotorTrial();
+
+                            //Set the start time of the trial
+                            CurrentTrial.StartTime = DateTime.Now;
+
+                            //Initiate a new trial.
+                            //The following method basically just fills the "trial_device_signal" object with the data that occured up until the device value
+                            //broke the trial initiation threshold.  It also fills the same data into the "trial" object, but in raw form.
+                            HandleTrialInitiation(buffer_size, trial_initiation_index, stream_data_raw,
+                                stream_data_transformed, CurrentTrial, out current_trial_data_transformed);
+
+                            //Change the session state
+                            TrialState = TrialRunState.TrialRun;
+                        }
+                        catch
+                        {
+                            //In the event of an error while handling a trial initation...
+                            MotoTrakMessaging.GetInstance().AddMessage("Error encountered while initiating a new trial");
+                        }
+                    }
+
+                    //Make a "hard" copy of the signal data and assign it to the MonitoredSignal variable, which is what the user sees
+                    //on the plot.  The "ToList" function makes a copy of the data, rather than copying a pointer.  This is important!
+                    //MonitoredSignal = device_signal_transformed.ToList();
+                    CopyDataToMonitoredSignal(stream_data_transformed);
+
+                    break;
+                case TrialRunState.TrialRun:
+
+                    //If we are in this state, it indicates that a new trial has already begun.  We are currently in the midst of running
+                    //that trial.  Therefore, in this state we should take any new data that is coming in, and process that data 
+                    //according to how the selected stage dictates that it should be processed.  If it is deemed a successful trial,
+                    //then we should follow the procedure for a successful trial based on the stage settings (typically a feed, and also
+                    //maybe a VNS stimulus or other output).  After the trial time has expired, we should move on to the next state.
+                    //Trial success does NOT immediately move us to the next state.  ONLY TIME.
+
+                    //Add the new raw data to the trial object to be saved to disk later.
+                    for (int i = 0; i < CurrentTrial.TrialData.Count; i++)
+                    {
+                        CurrentTrial.TrialData[i].AddRange(transposed_new_data[i]);
+                    }
+
+                    //Add the new transformed data to the transformed trial signal
+                    for (int i = 0; i < current_trial_data_transformed.Count; i++)
+                    {
+                        current_trial_data_transformed[i].AddRange(transformed_new_data[i]);
+                    }
+
+                    //Check to see if the animal has succeeded up until this point in the trial, based on this stage's criterion for success.
+                    if (CurrentTrial.Result == MotorTrialResult.Unknown)
+                    {
+                        //Check to see whether the trial was a success, based on the criterion defined by the stage definition.
+                        List<Tuple<MotorTrialEventType, int>> events_found = null;
+
+                        try
+                        {
+                            events_found = CurrentSession.SelectedStage.StageImplementation.CheckForTrialEvent(current_trial_data_transformed, CurrentSession.SelectedStage);
+                        }
+                        catch
+                        {
+                            //Make this an empty list in the event of an error in the stage implementation's code
+                            events_found = new List<Tuple<MotorTrialEventType, int>>();
+
+                            //Log the error
+                            MotoTrakMessaging.GetInstance().AddMessage("Error while checking for trial events within stage implementation");
+                        }
+
+                        //Go through the events that were found
+                        foreach (var cur_event in events_found)
+                        {
+                            //Record a successful trial
+                            if (cur_event.Item1 == MotorTrialEventType.SuccessfulTrial)
+                            {
+                                CurrentTrial.Result = MotorTrialResult.Hit;
+                                CurrentTrial.HitTimes.Add(DateTime.Now);
+                                CurrentTrial.HitIndices.Add(cur_event.Item2);
+                            }
+
+                            //Enqueue the trial event tuple so the main thread can digest it
+                            TrialEventsQueue.Enqueue(cur_event);
+                            BackgroundPropertyChanged("TrialEventsQueue");
+                        }
+
+                        //Check to see what actions we need to take based on the events that occurred
+                        List<MotorTrialAction> event_actions = null;
+
+                        try
+                        {
+                            event_actions = CurrentSession.SelectedStage.StageImplementation.ReactToTrialEvents(events_found, current_trial_data_transformed, CurrentSession.SelectedStage);
+                        }
+                        catch
+                        {
+                            //In the event of an error within the stage implementation's code, make event_actions an empty list
+                            event_actions = new List<MotorTrialAction>();
+
+                            //Log the error
+                            MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to react to trial events within stage implementation");
+                        }
+
+                        //Perform each action
+                        foreach (var action in event_actions)
+                        {
+                            action.ExecuteAction();
+                        }
+                    }
+
+                    //Perform any necessary actions that need to be taken according to the stage parameters that are unrelated to
+                    //actions that are taken given the success of a trial.
+                    List<MotorTrialAction> actions = null;
+
+                    try
+                    {
+                        actions = CurrentSession.SelectedStage.StageImplementation.PerformActionDuringTrial(current_trial_data_transformed, CurrentSession.SelectedStage);
+                    }
+                    catch
+                    {
+                        //Set actions to be an empty list
+                        actions = new List<MotorTrialAction>();
+
+                        //Log the error
+                        MotoTrakMessaging.GetInstance().AddMessage("Error in stage implementation: PerformActionDuringTrial function");
+                    }
+
+                    foreach (var action in actions)
+                    {
+                        action.ExecuteAction();
+                    }
+
+                    //Check to see if this trial has finished
+                    int samples_collected = CurrentTrial.TrialData[0].Count;
+                    if (samples_collected >= CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial)
+                    {
+                        //Set the trial result if it hasn't yet been set
+                        if (CurrentTrial.Result == MotorTrialResult.Unknown)
+                        {
+                            CurrentTrial.Result = MotorTrialResult.Miss;
+                        }
+
+                        //Change the session state to end this trial.
+                        TrialState = TrialRunState.TrialEnd;
+                    }
+
+                    //Report progress on this trial to the main UI thread
+                    CopyDataToMonitoredSignal(current_trial_data_transformed);
+
+                    break;
+                case TrialRunState.TrialEnd:
+
+                    //In this state, we finalize a trial and save it to the disk.
+
+                    //Get the number of minutes into the session that this trial occurred at
+                    double minutes_passed = CurrentTrial.StartTime.Subtract(CurrentSession.StartTime).TotalMinutes;
+
+                    //Get a value that can be used for the session overview plot for this trial
+                    try
+                    {
+                        double plot_val = CurrentSession.SelectedStage.StageImplementation.CalculateYValueForSessionOverviewPlot(
+                            current_trial_data_transformed, CurrentSession.SelectedStage);
+                        bool trial_success = CurrentTrial.Result == MotorTrialResult.Hit;
+
+                        SessionOverviewValues.Add(new Tuple<double, double, bool>(minutes_passed, plot_val, trial_success));
+                        BackgroundPropertyChanged("SessionOverviewValues");
+                    }
+                    catch
+                    {
+                        //Don't save anything to be plotted under this scenario
+                    }
+
+                    //Create an end of trial message
+                    try
+                    {
+                        string msg = CurrentSession.SelectedStage.StageImplementation.CreateEndOfTrialMessage(CurrentTrial.Result == MotorTrialResult.Hit,
+                            CurrentSession.Trials.Count + 1, current_trial_data_transformed, CurrentSession.SelectedStage);
+                        MotoTrakMessaging.GetInstance().AddMessage(msg);
+                    }
+                    catch
+                    {
+                        //If an error was encountered, log it
+                        MotoTrakMessaging.GetInstance().AddMessage("Error in stage implementation: CreateEndOfTrialMessage function");
+                    }
+
+                    //First, add the trial to our collection of total trials for the currently running session.
+                    CurrentSession.Trials.Add(CurrentTrial);
+
+                    //Adjust the hit threshold for adaptive stages
+                    CurrentSession.SelectedStage.StageImplementation.AdjustDynamicStageParameters(CurrentSession.Trials,
+                        current_trial_data_transformed, CurrentSession.SelectedStage);
+
+                    //Set the current trial to null.  This will subsequently send notifications up to the UI,
+                    //telling the UI that there is not currently a trial taking place.
+                    CurrentTrial = null;
+
+                    //Tell the program to wait for another trial to begin
+                    TrialState = TrialRunState.TrialSetup;
+
+                    break;
+                case TrialRunState.TrialManualFeed:
+
+                    //Trigger a manual feed
+                    ControllerBoard.TriggerFeeder();
+
+                    //Set up a new trial
+                    TrialState = TrialRunState.TrialSetup;
+
+                    break;
+            }
+
+            return current_trial_data_transformed;
+        }
+
+        private void HandleSessionState ( )
+        {
+            //Act on any changes to the session state
+            switch (SessionState)
+            {
+                case SessionRunState.SessionBegin:
+
+                    //Create an empty list of trials for the new session.
+                    CurrentSession.Trials = Enumerable.Empty<MotorTrial>().ToList();
+
+                    //Set that start time of the new session
+                    CurrentSession.StartTime = DateTime.Now;
+
+                    //Clear all messages for the new session to begin.
+                    MotoTrakMessaging.GetInstance().ClearMessages();
+
+                    //Clear the session overview values
+                    SessionOverviewValues.Clear();
+                    BackgroundPropertyChanged("SessionOverviewValues");
+
+                    //Set the session state to be running
+                    SessionState = SessionRunState.SessionRunning;
+
+                    //Set the trial state
+                    TrialState = TrialRunState.TrialSetup;
+
+                    break;
+                case SessionRunState.SessionEnd:
+
+                    //Do any work to finish up a session here.
+
+                    //Set the end time of the current session
+                    CurrentSession.EndTime = DateTime.Now;
+
+                    //Set the trial state to idle
+                    TrialState = TrialRunState.Idle;
+
+                    //Set the session state to "not running"
+                    SessionState = SessionRunState.SessionNotRunning;
+
+                    break;
+                case SessionRunState.SessionPaused:
+
+                    //In the case that the session is paused, the trial state will be set to "Idle".
+                    //This is the ONLY time in which the trial state is "Idle" while a session is running.
+                    //This will allow the pull handle output to still be viewed on the window, but trials
+                    //cannot be initiated.
+                    TrialState = TrialRunState.Idle;
+
+                    break;
+                case SessionRunState.SessionUnpaused:
+
+                    //In the case that the user has unpaused the session, we simply set the trial state to allow
+                    //trials to begin again
+                    TrialState = TrialRunState.TrialSetup;
+
+                    //Now set the session state to be running
+                    SessionState = SessionRunState.SessionRunning;
+
+                    break;
+            }
         }
 
         private void BackgroundThread_ReactToMessagingSystemUpdate(object sender, PropertyChangedEventArgs e)

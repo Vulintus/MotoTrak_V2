@@ -10,10 +10,6 @@ namespace MotoTrakBase
     /// </summary>
     public class MotorStage
     {
-        #region Public enumerated type
-
-        #endregion
-
         #region Private data members
         
         /// <summary>
