@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MotoTrakUtilities;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -159,7 +160,8 @@ namespace MotoTrakBase
                     uint trial_number = reader.ReadUInt32();
 
                     //Read in the start time of the trial
-                    double trial_start_time = reader.ReadDouble();
+                    double trial_start_time_matlab = reader.ReadDouble();
+                    DateTime trial_start_time = MotorMath.ConvertMatlabDatenumToDateTime(trial_start_time_matlab);
 
                     //Read in the trial's outcome
                     byte trial_outcome = reader.ReadByte();
@@ -176,8 +178,87 @@ namespace MotoTrakBase
                     }
                     else
                     {
+                        //Set the trial start time
+                        trial.StartTime = trial_start_time;
 
+                        //Set the duration of the hit window for this trial
+                        trial.HitWindowDurationInSeconds = Convert.ToDouble(reader.ReadSingle());
+
+                        //Read in the trial initiation threshold
+                        trial.VariableParameters[MotoTrak_V1_CommonParameters.InitiationThreshold] = Convert.ToDouble(reader.ReadSingle());
+
+                        //Read in the trial hit threshold
+                        trial.VariableParameters[MotoTrak_V1_CommonParameters.HitThreshold] = Convert.ToDouble(reader.ReadSingle());
+                        
+                        //If the file is version -4, then read in the hit threshold ceiling (I believe this is primarily for April's code)
+                        if (version == -4)
+                        {
+                            trial.VariableParameters[MotoTrak_V1_CommonParameters.HitThresholdCeiling] = Convert.ToDouble(reader.ReadSingle());
+                        }
+
+                        //Read in the number of hits that occurred during this trial
+                        N = (SByte)reader.ReadByte();
+
+                        //Read in the timestamp for each hit that occurred
+                        for (int i = 0; i < N; i++)
+                        {
+                            double hit_time = reader.ReadDouble();
+                            trial.HitTimes.Add(MotorMath.ConvertMatlabDatenumToDateTime(hit_time));
+                        }
+
+                        //Set the result of the trial
+                        if (trial.HitTimes.Count > 0)
+                        {
+                            trial.Result = MotorTrialResult.Hit;
+                        }
+                        else
+                        {
+                            trial.Result = MotorTrialResult.Miss;
+                        }
+
+                        //Read in the number of VNS events that occurred during this trial
+                        N = (SByte)reader.ReadByte();
+
+                        //Read in the timestamps of each VNS event that occurred during this trial
+                        for (int i = 0; i < N; i++)
+                        {
+                            double vns_time = reader.ReadDouble();
+                            trial.OutputTriggers.Add(MotorMath.ConvertMatlabDatenumToDateTime(vns_time));
+                        }
+
+                        //Read in the number of samples in this trial
+                        UInt32 buffer_size = reader.ReadUInt32();
+
+                        //Read in timestamps for each sample
+                        UInt16[] sample_timestamps = new UInt16[buffer_size];
+                        byte[] sample_timestamps_bytes = reader.ReadBytes(Convert.ToInt32(buffer_size * sizeof(UInt16)));
+                        Buffer.BlockCopy(sample_timestamps_bytes, 0, sample_timestamps, 0, sample_timestamps_bytes.Length);
+                        List<double> trial_timestamps = sample_timestamps.Select(x => Convert.ToDouble(x)).ToList();
+
+                        //Read in the device signal values for each sample
+                        float[] sample_device_values = new float[buffer_size];
+                        byte[] sample_device_values_bytes = reader.ReadBytes(Convert.ToInt32(buffer_size * sizeof(float)));
+                        Buffer.BlockCopy(sample_device_values_bytes, 0, sample_device_values, 0, sample_device_values_bytes.Length);
+                        List<double> trial_signal = sample_device_values.Select(x => Convert.ToDouble(x)).ToList();
+
+                        //Read in the IR signal values for each sample
+                        Int16[] sample_ir_values = new Int16[buffer_size];
+                        byte[] sample_ir_values_bytes = reader.ReadBytes(Convert.ToInt32(buffer_size * sizeof(Int16)));
+                        Buffer.BlockCopy(sample_ir_values_bytes, 0, sample_ir_values, 0, sample_ir_values_bytes.Length);
+                        List<double> ir_signal = sample_device_values.Select(x => Convert.ToDouble(x)).ToList();
+
+                        //Subtract the pre-trial sampling duration from the sampling times
+                        trial_timestamps = trial_timestamps.Select(x => 
+                            x - Convert.ToInt32(session.SelectedStage.PreTrialSamplingPeriodInSeconds.CurrentValue * 1000)).ToList();
+
+                        //Add the data streams to the trial
+                        trial.TrialData.Add(trial_timestamps);
+                        trial.TrialData.Add(trial_signal);
+                        trial.TrialData.Add(ir_signal);
                     }
+
+                    //Add the trial that we just read from the file to the session
+                    session.Trials.Add(trial);
                 }
                 catch
                 {
@@ -186,6 +267,13 @@ namespace MotoTrakBase
                 }
             }
 
+            if (version < -1)
+            {
+                if (session.Trials.Count > 0)
+                {
+                    session.StartTime = session.Trials[0].StartTime;
+                }
+            }
 
             //Return the session that was loaded from the file
             return session;

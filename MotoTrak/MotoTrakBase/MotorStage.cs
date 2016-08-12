@@ -487,8 +487,8 @@ namespace MotoTrakBase
                     
                     try
                     {
-                        stage.StageName = stageLine[0];
-                        stage.Description = stageLine[1];
+                        stage.StageName = stageLine[0].Trim(new char[] { '\'', ' ', '\n', '\r', '\t' });
+                        stage.Description = stageLine[1].Trim(new char[] { '\'', ' ', '\n', '\r', '\t' });
                         stage.DeviceType = MotorDeviceTypeConverter.ConvertToMotorDeviceType(stageLine[2]);
                         
                         //Read the constraint from the stage file and throw it away

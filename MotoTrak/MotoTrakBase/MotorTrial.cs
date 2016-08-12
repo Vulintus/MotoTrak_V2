@@ -14,7 +14,7 @@ namespace MotoTrakBase
     {
         #region Private data members
 
-        private List<List<int>> _trial_data = new List<List<int>>();
+        private List<List<double>> _trial_data = new List<List<double>>();
 
         private DateTime _start_time = DateTime.MinValue;
         private DateTime _end_time = DateTime.MinValue;
@@ -26,15 +26,12 @@ namespace MotoTrakBase
         private double _post_trial_sampling_period_in_seconds = 0;
         private double _post_trial_time_out_in_seconds = 0;
         private double _manipulandum_position = 0;
-        private double _trial_initiation_threshold = 0;
-        private double _minimum_hit_threshold = 0;
-        private double _maximum_hit_threshold = 0;
-
+        
         private List<int> _hit_indices = new List<int>();
         private List<DateTime> _hit_times = new List<DateTime>();
         private List<DateTime> _output_trigger_times = new List<DateTime>();
 
-        private List<double> _variable_parameters = new List<double>();
+        private Dictionary<string, double> _variable_parameters = new Dictionary<string, double>();
         
         #endregion
 
@@ -58,7 +55,7 @@ namespace MotoTrakBase
         /// [ [a1, a2, a3, ..., a_n], [b1 ... b_n], [c1 ... c_n] ]
         /// Therefore, each sub-list is a "stream" of data.
         /// </summary>
-        public List<List<int>> TrialData
+        public List<List<double>> TrialData
         {
             get
             {
@@ -198,55 +195,7 @@ namespace MotoTrakBase
                 _manipulandum_position = value;
             }
         }
-
-        /// <summary>
-        /// The initiation threshold for this trial
-        /// </summary>
-        public double TrialInitiationThreshold
-        {
-            get
-            {
-                return _trial_initiation_threshold;
-            }
-
-            set
-            {
-                _trial_initiation_threshold = value;
-            }
-        }
-
-        /// <summary>
-        /// The minimum hit threshold for this trial
-        /// </summary>
-        public double MinimumHitThreshold
-        {
-            get
-            {
-                return _minimum_hit_threshold;
-            }
-
-            set
-            {
-                _minimum_hit_threshold = value;
-            }
-        }
-
-        /// <summary>
-        /// The maximum hit threshold for this trial
-        /// </summary>
-        public double MaximumHitThreshold
-        {
-            get
-            {
-                return _maximum_hit_threshold;
-            }
-
-            set
-            {
-                _maximum_hit_threshold = value;
-            }
-        }
-
+        
         /// <summary>
         /// The indices into the trial data of where the hits occurred.
         /// </summary>
@@ -282,7 +231,7 @@ namespace MotoTrakBase
         /// <summary>
         /// Values of variable parameters that are defined by the user for this trial.
         /// </summary>
-        public List<double> VariableParameters
+        public Dictionary<string, double> VariableParameters
         {
             get
             {

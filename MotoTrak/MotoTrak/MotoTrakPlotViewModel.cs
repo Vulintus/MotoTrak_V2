@@ -490,8 +490,7 @@ namespace MotoTrak
                         Plot.Series.Add(new AreaSeries());
                         return Plot.Series.FirstOrDefault();
                     }
-
-                    break;
+                    
                 case SeriesType.ScatterSeries:
                     
                     if (first_series is ScatterSeries)
@@ -511,8 +510,7 @@ namespace MotoTrak
                         Plot.Series.Add(scatter);
                         return Plot.Series.FirstOrDefault();
                     }
-
-                    break;
+                    
             }
 
             return first_series;

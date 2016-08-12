@@ -10,6 +10,24 @@ namespace MotoTrakUtilities
     public static class MotorMath
     {
         /// <summary>
+        /// This function converts a Matlab datenum to a C#/.NET DateTime.
+        /// </summary>
+        /// <param name="datenum">Matlab datenum</param>
+        /// <returns>C# DateTime</returns>
+        public static DateTime ConvertMatlabDatenumToDateTime ( double datenum )
+        {
+            DateTime result = DateTime.MinValue;
+
+            long a = Convert.ToInt64(Math.Pow(10, 7)) * 60 * 60 * 24;
+            long offset = -367 * Convert.ToInt64(Math.Pow(10, 7)) * 60 * 60 * 24;
+            long ticks = Convert.ToInt64(a * datenum) + offset;
+
+            result = new DateTime(ticks);
+
+            return result;
+        }
+
+        /// <summary>
         /// Calculates the iterative mean of a set of numbers
         /// </summary>
         /// <param name="previous_mean">The previous mean of all the numbers consumed so far</param>
