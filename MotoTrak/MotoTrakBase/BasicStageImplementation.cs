@@ -13,12 +13,6 @@ namespace MotoTrakBase
     /// </summary>
     public class BasicStageImplementation : IMotorStageImplementation
     {
-        #region Private data members
-
-        List<double> _peak_force = new List<double>();
-
-        #endregion
-
         #region Constructors
 
         /// <summary>

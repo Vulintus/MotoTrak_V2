@@ -15,58 +15,101 @@ from MotoTrakBase import MotorTrialAction
 from MotoTrakBase import MotorTrialActionType
 from MotoTrakBase import MotorStageStimulationType
 from MotoTrakBase import MotorStageAdaptiveThresholdType
+from MotoTrakBase import MotoTrak_V1_CommonParameters
+from MotoTrakBase import MotorTrialEventType
 
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
 
 class PythonBasicStageImplementation (IMotorStageImplementation):
 
-    #This is a private variable that is referred to by one of the implemented methods
-    _peak_force = List[System.Double]()
+    #Declare string parameters for this stage
+    Hit_Threshold_String = MotoTrak_V1_CommonParameters.HitThreshold
+    Initiation_Threshold_String = MotoTrak_V1_CommonParameters.InitiationThreshold
+
+    def TransformSignals(self, new_data_from_controller, stage, device):
+        result = List[List[System.Double]]()
+        for i in range(0, new_data_from_controller.Count):
+            stream_data = new_data_from_controller[i]
+            transformed_stream_data = List[System.Double]()
+            if (i is 1):
+                transformed_stream_data = List[System.Double](stream_data.Select(lambda x: System.Double(device.Slope * (x - device.Baseline))).ToList())
+            else:
+                transformed_stream_data = List[System.Double](stream_data.Select(lambda x: System.Double(x)).ToList())
+            result.Add(transformed_stream_data)
+        return result
 
     def CheckSignalForTrialInitiation(self, signal, new_datapoint_count, stage):
         #Create the value that will be our return value
         return_value = -1
 
-        #We must have more than 0 new datapoints.  If the code inside the if-statement was run with 0 new datapoints, it would
-        #generate an exception.
-        if new_datapoint_count > 0:
-            #Look only at the most recent data from the signal
-            signal_to_use = signal.Skip(signal.Count - new_datapoint_count).ToList()
-            
-            #Calculate the difference in size between the two
-            difference_in_size = signal.Count - signal_to_use.Count
+        #Look to see if the Initiation Threshold key exists
+        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Initiation_Threshold_String):
+            #Get the stage's initiation threshold
+            init_thresh = stage.StageParameters[PythonBasicStageImplementation.Initiation_Threshold_String].CurrentValue
 
-            #Retrieve the maximal value from the device signal
-            maximal_value = signal_to_use.Max()
-            if maximal_value >= stage.TrialInitiationThreshold:
-                #If the maximal value in the signal exceeded the trial initiation force threshold
-                #Find the position at which the signal exceeded the threshold, and return it.
-                return_value = signal_to_use.IndexOf(maximal_value) + difference_in_size
+            #Get the data stream itself
+            stream_data = signal[1]
+
+            #Check to make sure we actually have new data to work with before going on
+            if new_datapoint_count > 0 and new_datapoint_count <= stream_data.Count:
+                #Look only at the most recent data from the signal
+                stream_data_to_use = stream_data.Skip(stream_data.Count - new_datapoint_count).ToList()
+
+                #Calculate how many OLD elements there are
+                difference_in_size = stream_data.Count - stream_data_to_use.Count
+
+                #Retrieve the maximal value for the signal
+                maximal_value = stream_data_to_use.Max()
+
+                if maximal_value >= init_thresh:
+                    return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
+                
         return return_value
 
-    def CheckForTrialSuccess(self, trial_signal, stage):
-        #Create an empty Tuple that will hold our result
-        result = Tuple[MotorTrialResult, System.Int32](MotorTrialResult.Unknown, -1)
+    def CheckForTrialEvent(self, trial_signal, stage):
+        #Instantiate a list of tuples that will hold any events that capture as a result of this function.
+        result = List[Tuple[MotorTrialEventType, System.Int32]]()
 
-        #Find the point at which the animal exceeds the hit threshold.  This function returns -1 if nothing is found.
-        l = Enumerable.Range(0, trial_signal.Count).Where(lambda index: trial_signal[index] >= stage.HitThreshold and \
-            (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
-            (index < stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow)).ToList()
-        if l is not None and l.Count > 0:
-            result = Tuple[MotorTrialResult, System.Int32](MotorTrialResult.Hit, l[0])
+        #Only proceed if a hit threshold has been defined for this stage
+        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_String):
+            #Get the stream data from the device
+            stream_data = trial_signal[1]
+            
+            #Check to see if the hit threshold has been exceeded
+            current_hit_thresh = stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_String].CurrentValue
 
+            #Check to see if the stream data has exceeded the current hit threshold
+            try:
+                indices_of_hits = Enumerable.Range(0, stream_data.Count) \
+                    .Where(lambda index: stream_data[index] >= current_hit_thresh and \
+                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
+                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).ToList()
+
+                if indices_of_hits is not None and indices_of_hits.Count > 0:
+                    result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, indices_of_hits[0]))
+            except ValueError:
+                pass
+
+        #Return the result
         return result
 
-    def ReactToTrialSuccess(self, trial_signal, stage):
+    def ReactToTrialEvents(self, trial_events_list, trial_signal, stage):
         result = List[MotorTrialAction]()
-        feed_action = MotorTrialAction()
-        feed_action.ActionType = MotorTrialActionType.TriggerFeeder
-        result.Add(feed_action)
-        if stage.StimulationType == MotorStageStimulationType.On:
-            stim_action = MotorTrialAction()
-            stim_action.ActionType = MotorTrialActionType.SendStimulationTrigger
-            result.Add(stim_action)
+        for event_tuple in trial_events_list:
+            event_type = event_tuple.Item1
+            if event_type is MotorTrialEventType.SuccessfulTrial:
+                #If a successful trial happened, then feed the animal
+                new_action = MotorTrialAction()
+                new_action.ActionType = MotorTrialActionType.TriggerFeeder
+                result.Add(new_action)
+
+                #If stimulation is on for this stage, stimulate the animal
+                if stage.OutputTriggerType is MotorStageStimulationType.All:
+                    new_stim_action = MotorTrialAction()
+                    new_stim_action.ActionType = MotorTrialActionType.SendStimulationTrigger
+                    result.Add(new_stim_action)
+
         return result
 
     def PerformActionDuringTrial(self, trial_signal, stage):
@@ -82,23 +125,35 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
             msg += "MISS"
         return msg
 
-    def AdjustDynamicHitThreshold(self, all_trials, trial_signal, stage):
-        if stage.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Median:
+    def CalculateYValueForSessionOverviewPlot(self, trial_signal, stage):
+        #Adjust the hit threshold if necessary
+        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_String):
+            #Grab the device signal for this trial
+            stream_data = trial_signal[1]
+
+            #Find the maximal force of the current trial
+            max_force = stream_data.Where(lambda val, index: \
+                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
+                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max()
+
+            return max_force
+
+        return System.Double.NaN
+
+    def AdjustDynamicStageParameters(self, all_trials, trial_signal, stage):
+        #Adjust the hit threshold if necessary
+        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_String):
+            #Grab the device signal for this trial
+            stream_data = trial_signal[1]
+        
             #Find the maximal force from the current trial
-            max_force = trial_signal.Where(lambda val, index: \
+            max_force = stream_data.Where(lambda val, index: \
                 (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
                 (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max()
-            
+
             #Retain the maximal force of the most recent 10 trials
-            _peak_force.Add(max_force)
-            if _peak_force.Count > stage.TrialsToRetainForAdaptiveAdjustments:
-                _peak_force.RemoveAt(0)
+            stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_String].History.Enqueue(max_force);
+            stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_String].CalculateAndSetBoundedCurrentValue();
             
-            #Adjust the hit threshold
-            if _peak_force.Count == stage.TrialsToRetainForAdaptiveAdjustments:
-                median = MotorMath.Median(_peak_force)
-                stage.HitThreshold = System.Math.Max(stage.HitThresholdMinimum, Math.Min(stage.HitThresholdMaximum, median))
-
         return
-
 

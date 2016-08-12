@@ -6,7 +6,7 @@ using Dynamitey;
 
 namespace MotoTrakBase
 {
-    public class PythonStageImplementation //: IMotorStageImplementation
+    public class PythonStageImplementation : IMotorStageImplementation
     {
         #region Private data members
         
@@ -34,17 +34,12 @@ namespace MotoTrakBase
 
         #region Implementation of IMotorStageImplementation
 
-        public void AdjustDynamicHitThreshold(List<MotorTrial> all_trials, List<double> trial_signal, MotorStage stage)
+        public List<List<double>> TransformSignals(List<List<int>> new_data_from_controller, MotorStage stage, MotorDevice device)
         {
-            Dynamic.InvokeMemberAction(_pythonStageImplementationInstance, "AdjustDynamicHitThreshold", all_trials, trial_signal, stage);
+            return Dynamic.InvokeMember(_pythonStageImplementationInstance, "TransformSignals", new_data_from_controller, stage, device);
         }
 
-        public Tuple<MotorTrialResult, int> CheckForTrialSuccess(List<double> trial_signal, MotorStage stage)
-        {
-            return Dynamic.InvokeMember(_pythonStageImplementationInstance, "CheckForTrialSuccess", trial_signal, stage);
-        }
-
-        public int CheckSignalForTrialInitiation(List<double> signal, int new_datapoint_count, MotorStage stage)
+        public int CheckSignalForTrialInitiation(List<List<double>> signal, int new_datapoint_count, MotorStage stage)
         {
             //Option 1 (slower):
             //return PythonEngine.GetInstance().PythonScriptingEngine.Operations.InvokeMember(_pythonStageImplementationInstance, "CheckSignalForTrialInitiation",
@@ -53,21 +48,37 @@ namespace MotoTrakBase
             return Dynamic.InvokeMember(_pythonStageImplementationInstance, "CheckSignalForTrialInitiation", signal, new_datapoint_count, stage);
         }
 
-        public string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<double> trial_signal, MotorStage stage)
+        public List<Tuple<MotorTrialEventType, int>> CheckForTrialEvent(List<List<double>> trial_signal, MotorStage stage)
         {
-            return Dynamic.InvokeMember(_pythonStageImplementationInstance, "CreateEndOfTrialMessage", successful_trial, trial_number, trial_signal, stage);
+            return Dynamic.InvokeMember(_pythonStageImplementationInstance, "CheckForTrialEvent", trial_signal, stage);
         }
 
-        public List<MotorTrialAction> PerformActionDuringTrial(List<double> trial_signal, MotorStage stage)
+        public List<MotorTrialAction> ReactToTrialEvents(List<Tuple<MotorTrialEventType, int>> trial_events_list,
+                List<List<double>> trial_signal, MotorStage stage)
+        {
+            return Dynamic.InvokeMember(_pythonStageImplementationInstance, "ReactToTrialEvents", trial_events_list, trial_signal, stage);
+        }
+
+        public List<MotorTrialAction> PerformActionDuringTrial(List<List<double>> trial_signal, MotorStage stage)
         {
             return Dynamic.InvokeMember(_pythonStageImplementationInstance, "PerformActionDuringTrial", trial_signal, stage);
         }
 
-        public List<MotorTrialAction> ReactToTrialSuccess(List<double> trial_signal, MotorStage stage)
+        public string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<List<double>> trial_signal, MotorStage stage)
         {
-            return Dynamic.InvokeMember(_pythonStageImplementationInstance, "ReactToTrialSuccess", trial_signal, stage);
+            return Dynamic.InvokeMember(_pythonStageImplementationInstance, "CreateEndOfTrialMessage", successful_trial, trial_number, trial_signal, stage);
         }
 
+        public double CalculateYValueForSessionOverviewPlot(List<List<double>> trial_signal, MotorStage stage)
+        {
+            return Dynamic.InvokeMember(_pythonStageImplementationInstance, "CalculateYValueForSessionOverviewPlot", trial_signal, stage);
+        }
+
+        public void AdjustDynamicStageParameters(List<MotorTrial> all_trials, List<List<double>> trial_signal, MotorStage stage)
+        {
+            Dynamic.InvokeMemberAction(_pythonStageImplementationInstance, "AdjustDynamicStageParameters", all_trials, trial_signal, stage);
+        }
+        
         #endregion
     }
 }
