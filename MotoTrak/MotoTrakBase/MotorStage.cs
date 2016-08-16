@@ -563,8 +563,8 @@ namespace MotoTrakBase
                         if (hit_thresh_type == MotorTaskTypeV1.PeakForce)
                         {
                             //Set the implementation of this stage
-                            //stage.StageImplementation = new PullStageImplementation();
-                            stage.StageImplementation = new PythonStageImplementation("PythonBasicStageImplementation.py");
+                            stage.StageImplementation = new PullStageImplementation();
+                            //stage.StageImplementation = new PythonStageImplementation("PythonBasicStageImplementation.py");
 
                             //Set the parameters of this stage
                             stage.StageParameters.Clear();

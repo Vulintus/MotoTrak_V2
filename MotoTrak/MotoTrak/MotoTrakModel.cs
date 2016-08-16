@@ -618,6 +618,9 @@ namespace MotoTrak
         /// <param name="e"></param>
         private void NotifyMainThreadOfNewData(object sender, ProgressChangedEventArgs e)
         {
+            //Stopwatch k = new Stopwatch();
+            //k.Start();
+
             lock (propertyNamesLock)
             {
                 foreach (var name in propertyNames)
@@ -627,6 +630,10 @@ namespace MotoTrak
 
                 propertyNames.Clear();
             }
+
+            //k.Stop();
+            //TimeSpan j = k.Elapsed;
+            //Console.WriteLine(j.TotalMilliseconds.ToString());
         }
 
         /// <summary>
@@ -642,6 +649,9 @@ namespace MotoTrak
         /// <param name="e"></param>
         private void HandleStreaming(object sender, DoWorkEventArgs e)
         {
+            //Set how much time we want to spend on each processing frame
+            int expected_millis_per_frame = 30;
+
             //Begin periodic streaming from the Arduino board
             ControllerBoard.EnableStreaming(1);
 
@@ -824,9 +834,16 @@ namespace MotoTrak
                 {
                     stop_watch_single_iteration_samples.RemoveAt(0);
                 }
-                    
-                //Sleep the thread for 30 milliseconds so we don't consume too much CPU time
-                Thread.Sleep(30);
+
+                //Sleep the thread for X milliseconds so we don't consume too much CPU time
+                //The default sleep time is ~30 ms.  This could change depending on how long it takes to process each frame.
+                //This could should ideally fix the frame rat at 32 - 33 fps.
+                int millis_to_sleep = expected_millis_per_frame - Convert.ToInt32(Math.Round(single_iteration_timespan.TotalMilliseconds));
+                if (millis_to_sleep > 0)
+                {
+                    Thread.Sleep(millis_to_sleep);
+                }
+                
             }
 
             //If we reach this point in the code, it means that user has decided to close the MotoTrak window.  This next line of code

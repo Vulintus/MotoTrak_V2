@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Forms.DataVisualization.Charting;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -24,7 +25,7 @@ namespace MotoTrak
         public MainWindow()
         {
             InitializeComponent();
-
+            
             //Create a window to allow the user to select a port
             PortSelectionUI portSelectorWindow = new PortSelectionUI();
 
@@ -39,6 +40,11 @@ namespace MotoTrak
                 MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
                 if (viewModel != null)
                 {
+                    //Assign the win-forms plot
+                    //viewModel.PlotViewModel.WinFormsPlot = WinFormsPlot;
+                    //viewModel.PlotViewModel.InitializePlot();
+                    
+                    //Initialize MotoTrak
                     viewModel.InitializeMotoTrak(portName);
                 }
             }

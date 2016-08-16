@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:oxy="http://oxyplot.org/wpf"
+        xmlns:winformchart="clr-namespace:System.Windows.Forms.DataVisualization.Charting;assembly=System.Windows.Forms.DataVisualization"
         xmlns:local="clr-namespace:MotoTrak"
         mc:Ignorable="d"
         Title="MotoTrak" MinHeight="490" Height="490" MinWidth="600" Width="600"
@@ -61,10 +62,23 @@
 
             </Grid>
 
+        <!--
+        <Grid Grid.Row="1">
+            <WindowsFormsHost x:Name="host">
+                <winformchart:Chart x:Name="WinFormsPlot" Dock="Fill">
+                    <winformchart:Chart.ChartAreas>
+                        <winformchart:ChartArea />
+                    </winformchart:Chart.ChartAreas>
+                </winformchart:Chart>
+            </WindowsFormsHost>
+        </Grid>
+        -->
+        
         
         <oxy:PlotView Grid.Row="1" MinHeight="250" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" 
                       Model="{Binding Path=PlotViewModel.Plot}" MouseEnter="PlotView_MouseEnter"
                       MouseLeave="PlotView_MouseLeave" />
+        
         
         <!-- The following UI elements are for debuggin purposes only!!!! -->
         <Grid Name="DebuggingPanel" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,50"

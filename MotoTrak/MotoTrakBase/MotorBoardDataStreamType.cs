@@ -13,15 +13,19 @@ namespace MotoTrakBase
     public enum MotorBoardDataStreamType
     {
         [Description("Unknown stream type")]
+        [Units("Unknown")]
         Unknown,
 
         [Description("Timestamp")]
+        [Units("ms")]
         Timestamp,
 
         [Description("Device signal")]
+        [Units("Unknown")]
         DeviceValue,
 
         [Description("IR sensor signal")]
+        [Units("Unknown")]
         IRSensorValue
     }
 }

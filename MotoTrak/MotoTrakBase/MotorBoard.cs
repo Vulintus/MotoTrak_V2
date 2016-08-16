@@ -132,9 +132,9 @@ namespace MotoTrakBase
                 SerialConnection.DtrEnable = true;
 
                 SerialConnection.Open();
-                SerialConnection.ReadExisting();
-                SerialConnection.Close();
-                SerialConnection.Open();
+                //SerialConnection.ReadExisting();
+                //SerialConnection.Close();
+                //SerialConnection.Open();
 
                 bool success = false;
                 string ardyResponse = SerialConnection.ReadLine().Trim();

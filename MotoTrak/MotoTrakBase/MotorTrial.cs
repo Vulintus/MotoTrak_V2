@@ -101,6 +101,22 @@ namespace MotoTrakBase
         }
 
         /// <summary>
+        /// The time at which the trial ended.
+        /// </summary>
+        public DateTime EndTime
+        {
+            get
+            {
+                return _end_time;
+            }
+            set
+            {
+                _end_time = value;
+                NotifyPropertyChanged("EndTime");
+            }
+        }
+
+        /// <summary>
         /// The time(s) at which stimulation occurred in this trial
         /// </summary>
         public List<DateTime> OutputTriggers

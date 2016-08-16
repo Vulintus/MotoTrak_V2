@@ -466,7 +466,8 @@ namespace MotoTrak
         {
             get
             {
-                return Visibility.Visible;
+                //return Visibility.Visible;
+                return Visibility.Collapsed;
             }
         }
 

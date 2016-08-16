@@ -73,10 +73,12 @@
     <Compile Include="MotorTrialEventType.cs" />
     <Compile Include="MotorTrialEventTypeConverter.cs" />
     <Compile Include="MotorTrialResult.cs" />
+    <Compile Include="MotorTrialResultConverter.cs" />
     <Compile Include="MotoTrakAutopositioner.cs" />
     <Compile Include="MotoTrakConfiguration.cs" />
     <Compile Include="MotoTrakExceptionType.cs" />
     <Compile Include="MotoTrakFileRead.cs" />
+    <Compile Include="MotoTrakFileSave.cs" />
     <Compile Include="MotoTrakMessageType.cs" />
     <Compile Include="MotoTrakMessaging.cs" />
     <Compile Include="MotoTrakPlotViewType.cs" />
@@ -88,6 +90,8 @@
     <Compile Include="PythonEngine.cs" />
     <Compile Include="PythonStageImplementation.cs" />
     <Compile Include="ReactToModelPropertyChanged.cs" />
+    <Compile Include="TrialResultCodeAttribute.cs" />
+    <Compile Include="UnitsAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MotoTrakUtilities\MotoTrakUtilities.csproj">

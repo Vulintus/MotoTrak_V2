@@ -57,5 +57,25 @@ namespace MotoTrakBase
             else
                 return thresholdType.ToString();
         }
+
+        /// <summary>
+        /// Retrieves the units string associated with a stream type.
+        /// </summary>
+        /// <param name="thresholdType">The type of data stream</param>
+        /// <returns>The units that the data stream uses</returns>
+        public static string ConvertToUnitsDescription(MotorBoardDataStreamType thresholdType)
+        {
+            FieldInfo fi = thresholdType.GetType().GetField(thresholdType.ToString());
+
+            UnitsAttribute[] attributes = (UnitsAttribute[])fi.GetCustomAttributes(typeof(UnitsAttribute), false);
+            if (attributes != null && attributes.Length > 0)
+            {
+                return attributes[0].UnitsDescription;
+            }
+            else
+            {
+                return thresholdType.ToString();
+            }
+        }
     }
 }

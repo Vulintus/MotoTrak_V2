@@ -245,6 +245,7 @@ namespace MotoTrak
             }
         }
         
+        
         private void AddTrialEventAnnotations ()
         {
             while (!Model.TrialEventsQueue.IsEmpty)
@@ -290,7 +291,7 @@ namespace MotoTrak
                 }
             }
         }
-
+        
         private void DrawTrialAnnotations ()
         {
             if (Model.CurrentTrial != null)
@@ -370,7 +371,7 @@ namespace MotoTrak
                 Plot.InvalidatePlot(true);
             }
         }
-
+        
         private void DrawStreamedData ()
         {
             if (StreamIndex >= 0 && StreamIndex < Model.MonitoredSignal.Count)
@@ -401,7 +402,7 @@ namespace MotoTrak
             //Invalidate the plot so it is updated on screen
             Plot.InvalidatePlot(true);
         }
-
+        
         private void DrawSessionOverviewPlot()
         {
             if (StreamIndex == Model.MonitoredSignal.Count)
@@ -430,7 +431,7 @@ namespace MotoTrak
                 Plot.InvalidatePlot(true);
             }
         }
-
+        
         private List<ScatterSeries> SetupSessionOverviewPlot ()
         {
             bool create_series = false;
@@ -471,7 +472,7 @@ namespace MotoTrak
 
             return new List<ScatterSeries>() { Plot.Series[0] as ScatterSeries, Plot.Series[1] as ScatterSeries };
         }
-
+        
         private Series GetPlotSeries ( SeriesType series_type )
         {
             var first_series = Plot.Series.FirstOrDefault();

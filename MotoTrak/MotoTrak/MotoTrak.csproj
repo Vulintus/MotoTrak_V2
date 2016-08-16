@@ -53,7 +53,10 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -66,6 +69,7 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -74,6 +78,7 @@
     </ApplicationDefinition>
     <Compile Include="MotoTrakModel.cs" />
     <Compile Include="MotoTrakPlotViewModel.cs" />
+    <Compile Include="MotoTrakPlotViewModel_WinForms.cs" />
     <Compile Include="PortSelectionUI.xaml.cs">
       <DependentUpon>PortSelectionUI.xaml</DependentUpon>
     </Compile>

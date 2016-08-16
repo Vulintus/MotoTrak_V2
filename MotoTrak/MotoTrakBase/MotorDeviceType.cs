@@ -8,15 +8,19 @@ namespace MotoTrakBase
     public enum MotorDeviceType
     {
         [Description("Unknown")]
+        [Units("Unknown")]
         Unknown,
 
         [Description("Knob")]
+        [Units("degrees")]
         Knob,
 
         [Description("Pull")]
+        [Units("grams")]
         Pull,
 
         [Description("Lever")]
+        [Units("degrees")]
         Lever
     }
 }
