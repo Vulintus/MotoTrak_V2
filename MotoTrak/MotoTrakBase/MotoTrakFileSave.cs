@@ -243,35 +243,35 @@ namespace MotoTrakBase
                 _binary_writer.Write(N);
 
                 //Save the characters of the rat's name
-                _binary_writer.Write(current_session.RatName);
+                _binary_writer.Write(current_session.RatName.ToCharArray());
 
                 //Save the number of characters in the booth title
                 N = Convert.ToByte(current_session.BoothLabel.Length);
                 _binary_writer.Write(N);
 
                 //Save the characters of the booth title
-                _binary_writer.Write(current_session.BoothLabel);
+                _binary_writer.Write(current_session.BoothLabel.ToCharArray());
 
                 //Save the number of characters in the stage title
                 N = Convert.ToByte(current_session.SelectedStage.StageName.Length);
                 _binary_writer.Write(N);
 
                 //Save the characters of the stage title
-                _binary_writer.Write(current_session.SelectedStage.StageName);
+                _binary_writer.Write(current_session.SelectedStage.StageName.ToCharArray());
 
                 //Save the number of characters in the device description
                 N = Convert.ToByte(current_session.Device.DeviceName.Length);
                 _binary_writer.Write(N);
 
                 //Save the device description
-                _binary_writer.Write(current_session.Device.DeviceName);
+                _binary_writer.Write(current_session.Device.DeviceName.ToCharArray());
 
                 //Save the number of characters found in the session notes
                 UInt16 n_notes = Convert.ToUInt16(current_session.SessionNotes.Length);
                 _binary_writer.Write(n_notes);
 
                 //Save the session notes
-                _binary_writer.Write(current_session.SessionNotes);
+                _binary_writer.Write(current_session.SessionNotes.ToCharArray());
 
                 //Save the number of coefficients used in the calibration function
                 N = Convert.ToByte(current_session.Device.Coefficients.Keys.Count);
@@ -307,12 +307,12 @@ namespace MotoTrakBase
                     //Save the description of the stream to the file
                     N = Convert.ToByte(description.Length);
                     _binary_writer.Write(N);
-                    _binary_writer.Write(description);
+                    _binary_writer.Write(description.ToCharArray());
 
                     //Save the units of the stream to the file
                     N = Convert.ToByte(units.Length);
                     _binary_writer.Write(N);
-                    _binary_writer.Write(units);
+                    _binary_writer.Write(units.ToCharArray());
                 }
 
                 //Save the number of stage parameters that exist
@@ -328,7 +328,7 @@ namespace MotoTrakBase
                     //Save the parameter name to the file
                     N = Convert.ToByte(parameter_name.Length);
                     _binary_writer.Write(N);
-                    _binary_writer.Write(parameter_name);
+                    _binary_writer.Write(parameter_name.ToCharArray());
                 }
 
                 //Make sure the data is actually written to the file before continuing
@@ -396,7 +396,7 @@ namespace MotoTrakBase
                     //Save the parameter name
                     N = Convert.ToByte(parameter_name.Length);
                     _binary_writer.Write(N);
-                    _binary_writer.Write(parameter_name);
+                    _binary_writer.Write(parameter_name.ToCharArray());
 
                     //Save the parameter value
                     _binary_writer.Write(parameter_value);

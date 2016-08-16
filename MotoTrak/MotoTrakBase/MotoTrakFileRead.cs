@@ -48,8 +48,45 @@ namespace MotoTrakBase
 
         private static MotoTrakSession ReadMotoTrakFile (byte[] file_bytes)
         {
-            return null;
+            //Create a session object that will be returned to the caller
+            MotoTrakSession session = new MotoTrakSession();
+
+            //Create a stage object within the session
+            session.SelectedStage = new MotorStage();
+
+            //Create a device object within the session
+            session.Device = new MotorDevice();
+
+            //Create a stream out of the byte array
+            MemoryStream stream = new MemoryStream(file_bytes);
+            BinaryReader reader = new BinaryReader(stream);
+
+            try
+            {
+                //Read in the MotoTrak file header
+                ReadMotoTrakFileHeader(session, reader);
+            }
+            catch
+            {
+                //Add an error message to the log for the user to see
+                MotoTrakMessaging.GetInstance().AddMessage("Unable to load MotoTrak file!");
+            }
+            
+
+            //Return the session to the caller
+            return session;
         }
+
+        private static void ReadMotoTrakFileHeader (MotoTrakSession session, BinaryReader reader)
+        {
+
+        }
+
+        private static void ReadMotoTrakFileTrial ()
+        {
+
+        }
+
 
         private static MotoTrakSession ReadArdyMotorVersion2File (byte[] file_bytes)
         {
