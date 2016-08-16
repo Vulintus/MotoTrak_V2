@@ -12,3 +12,51 @@ Parameter name: index
 Function name: ThrowArgumentOutOfRangeException
 END OF NEW ERROR
 
+NEW ERROR DETECTED
+2016-08-16:15:35:06
+Stack trace:    at System.Number.StringToNumber(String str, NumberStyles options, NumberBuffer& number, NumberFormatInfo info, Boolean parseDecimal)
+   at System.Number.ParseInt32(String s, NumberStyles style, NumberFormatInfo info)
+   at System.Byte.Parse(String s, NumberStyles style, NumberFormatInfo info)
+   at System.Convert.ToByte(String value)
+   at MotoTrakBase.MotoTrakFileSave.SaveSessionHeaders(MotoTrakSession current_session) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\MotoTrakFileSave.cs:line 256
+   at MotoTrak.MotoTrakModel.HandleSessionState() in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 1162
+   at MotoTrak.MotoTrakModel.HandleStreaming(Object sender, DoWorkEventArgs e) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 824
+   at System.ComponentModel.BackgroundWorker.OnDoWork(DoWorkEventArgs e)
+   at System.ComponentModel.BackgroundWorker.WorkerThreadStart(Object argument)
+Outermost exception message: Input string was not in a correct format.
+Innermost exception message: Input string was not in a correct format.
+Function name: StringToNumber
+END OF NEW ERROR
+
+NEW ERROR DETECTED
+2016-08-16:15:37:05
+Stack trace:    at System.Number.StringToNumber(String str, NumberStyles options, NumberBuffer& number, NumberFormatInfo info, Boolean parseDecimal)
+   at System.Number.ParseInt32(String s, NumberStyles style, NumberFormatInfo info)
+   at System.Byte.Parse(String s, NumberStyles style, NumberFormatInfo info)
+   at System.Convert.ToByte(String value)
+   at MotoTrakBase.MotoTrakFileSave.SaveSessionHeaders(MotoTrakSession current_session) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\MotoTrakFileSave.cs:line 256
+   at MotoTrak.MotoTrakModel.HandleSessionState() in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 1164
+   at MotoTrak.MotoTrakModel.HandleStreaming(Object sender, DoWorkEventArgs e) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 824
+   at System.ComponentModel.BackgroundWorker.OnDoWork(DoWorkEventArgs e)
+   at System.ComponentModel.BackgroundWorker.WorkerThreadStart(Object argument)
+Outermost exception message: Input string was not in a correct format.
+Innermost exception message: Input string was not in a correct format.
+Function name: StringToNumber
+END OF NEW ERROR
+
+NEW ERROR DETECTED
+2016-08-16:15:38:49
+Stack trace:    at System.Number.StringToNumber(String str, NumberStyles options, NumberBuffer& number, NumberFormatInfo info, Boolean parseDecimal)
+   at System.Number.ParseInt32(String s, NumberStyles style, NumberFormatInfo info)
+   at System.Byte.Parse(String s, NumberStyles style, NumberFormatInfo info)
+   at System.Convert.ToByte(String value)
+   at MotoTrakBase.MotoTrakFileSave.SaveSessionHeaders(MotoTrakSession current_session) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\MotoTrakFileSave.cs:line 256
+   at MotoTrak.MotoTrakModel.HandleSessionState() in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 1164
+   at MotoTrak.MotoTrakModel.HandleStreaming(Object sender, DoWorkEventArgs e) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 824
+   at System.ComponentModel.BackgroundWorker.OnDoWork(DoWorkEventArgs e)
+   at System.ComponentModel.BackgroundWorker.WorkerThreadStart(Object argument)
+Outermost exception message: Input string was not in a correct format.
+Innermost exception message: Input string was not in a correct format.
+Function name: StringToNumber
+END OF NEW ERROR
+

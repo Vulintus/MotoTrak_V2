@@ -591,6 +591,7 @@ namespace MotoTrak
         private double _milliseconds_per_frame = 0;
         private int _device_analog_value = 0;
         private int _device_calibrated_value = 0;
+        private MotoTrakFileSave _file_save = null;
 
         #endregion
 
@@ -1101,14 +1102,20 @@ namespace MotoTrak
                         //If an error was encountered, log it
                         MotoTrakMessaging.GetInstance().AddMessage("Error in stage implementation: CreateEndOfTrialMessage function");
                     }
-
+                    
                     //First, add the trial to our collection of total trials for the currently running session.
                     CurrentSession.Trials.Add(CurrentTrial);
+
+                    //Save the current trial to the save location
+                    if (_file_save != null)
+                    {
+                        _file_save.SaveTrial(CurrentTrial, Convert.ToUInt32(CurrentSession.Trials.Count));
+                    }
 
                     //Adjust the hit threshold for adaptive stages
                     CurrentSession.SelectedStage.StageImplementation.AdjustDynamicStageParameters(CurrentSession.Trials,
                         CurrentTrial.TrialData, CurrentSession.SelectedStage);
-
+                    
                     //Set the current trial to null.  This will subsequently send notifications up to the UI,
                     //telling the UI that there is not currently a trial taking place.
                     CurrentTrial = null;
@@ -1149,6 +1156,18 @@ namespace MotoTrak
                     SessionOverviewValues.Clear();
                     BackgroundPropertyChanged("SessionOverviewValues");
 
+                    //Open a file at the primary save path to save the data for this session
+                    _file_save = new MotoTrakFileSave(CurrentSession);
+                    bool success = _file_save.OpenFileStream();
+                    if (success)
+                    {
+                        _file_save.SaveSessionHeaders(CurrentSession);
+                    }
+                    else
+                    {
+                        MotoTrakMessaging.GetInstance().AddMessage("Unable to save to primary data path!");
+                    }
+                    
                     //Set the session state to be running
                     SessionState = SessionRunState.SessionRunning;
 
@@ -1160,6 +1179,12 @@ namespace MotoTrak
 
                     //Do any work to finish up a session here.
 
+                    //Close the file that we are saving data to
+                    if (_file_save != null)
+                    {
+                        _file_save.CloseFileStream();
+                    }
+                    
                     //Set the end time of the current session
                     CurrentSession.EndTime = DateTime.Now;
 

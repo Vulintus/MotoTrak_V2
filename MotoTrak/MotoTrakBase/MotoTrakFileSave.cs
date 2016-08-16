@@ -33,7 +33,7 @@ namespace MotoTrakBase
         #endregion
 
         #region Private data members
-
+        
         private string _file_path = string.Empty;
         private FileStream _file_stream = null;
         private BinaryWriter _binary_writer = null;
@@ -120,7 +120,7 @@ namespace MotoTrakBase
                 full_path += rat_folder + @"\" + stage_folder + @"\";
 
                 //Calculate the session's file name
-                string session_time = DateTime.Now.ToString("YYYYMMddTHHmmss");
+                string session_time = DateTime.Now.ToString("yyyyMMddTHHmmss");
                 string file_name = rat_name + "_" + session_time + "_" + stage_folder + ".MotoTrak";
 
                 //Append the file name to the full path
@@ -165,6 +165,10 @@ namespace MotoTrakBase
 
             try
             {
+                //Create directory if it doesn't exist
+                new FileInfo(_file_path).Directory.Create();
+
+                //Open a file at the path location to write to
                 _file_stream = new FileStream(_file_path, FileMode.Create);
                 _binary_writer = new BinaryWriter(_file_stream, Encoding.ASCII);
                 return true;
@@ -249,14 +253,14 @@ namespace MotoTrakBase
                 _binary_writer.Write(current_session.BoothLabel);
 
                 //Save the number of characters in the stage title
-                N = Convert.ToByte(current_session.SelectedStage.StageName);
+                N = Convert.ToByte(current_session.SelectedStage.StageName.Length);
                 _binary_writer.Write(N);
 
                 //Save the characters of the stage title
                 _binary_writer.Write(current_session.SelectedStage.StageName);
 
                 //Save the number of characters in the device description
-                N = Convert.ToByte(current_session.Device.DeviceName);
+                N = Convert.ToByte(current_session.Device.DeviceName.Length);
                 _binary_writer.Write(N);
 
                 //Save the device description
@@ -326,6 +330,9 @@ namespace MotoTrakBase
                     _binary_writer.Write(N);
                     _binary_writer.Write(parameter_name);
                 }
+
+                //Make sure the data is actually written to the file before continuing
+                _file_stream.Flush();
             }
         }
 
@@ -429,6 +436,9 @@ namespace MotoTrakBase
                         _binary_writer.Write(trial.TrialData[i][x]);
                     }
                 }
+
+                //Make sure the data is actually written to the file before continuing
+                _file_stream.Flush();
             }
         }
 

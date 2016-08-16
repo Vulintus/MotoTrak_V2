@@ -19,7 +19,7 @@ namespace MotoTrakBase
         /// However, all ArdyMotor version 2.0 files should be compatible with this function.
         /// </summary>
         /// <param name="fully_qualified_path">The path of the file (including the file name)</param>
-        public static void ReadFile (string fully_qualified_path)
+        public static MotoTrakSession ReadFile (string fully_qualified_path)
         {
             try
             {
@@ -30,7 +30,11 @@ namespace MotoTrakBase
                 SByte version = (sbyte)file_bytes[0];
                 if (version < 0)
                 {
-                    ReadArdyMotorVersion2File(file_bytes);
+                    return ReadArdyMotorVersion2File(file_bytes);
+                }
+                if (version == -5)
+                {
+                    return ReadMotoTrakFile(file_bytes);
                 }
             }
             catch
@@ -38,6 +42,13 @@ namespace MotoTrakBase
                 //Inform the user that messaging data could not be loaded
                 MotoTrakMessaging.GetInstance().AddMessage("Could not load session data!");
             }
+
+            return null;
+        }
+
+        private static MotoTrakSession ReadMotoTrakFile (byte[] file_bytes)
+        {
+            return null;
         }
 
         private static MotoTrakSession ReadArdyMotorVersion2File (byte[] file_bytes)
