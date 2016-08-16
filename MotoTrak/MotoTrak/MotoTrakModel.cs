@@ -1072,6 +1072,19 @@ namespace MotoTrak
 
                     //In this state, we finalize a trial and save it to the disk.
 
+                    //Resolve some values for the trial
+                    CurrentTrial.HitWindowDurationInSeconds = CurrentSession.SelectedStage.HitWindowInSeconds.CurrentValue;
+                    CurrentTrial.PreTrialSamplingPeriodInSeconds = CurrentSession.SelectedStage.PreTrialSamplingPeriodInSeconds.CurrentValue;
+                    CurrentTrial.PostTrialSamplingPeriodInSeconds = CurrentSession.SelectedStage.PostTrialSamplingPeriodInSeconds.CurrentValue;
+                    CurrentTrial.PostTrialTimeOutInSeconds = CurrentSession.SelectedStage.PostTrialTimeoutInSeconds.CurrentValue;
+                    CurrentTrial.DevicePosition = CurrentSession.SelectedStage.Position.CurrentValue;
+                    CurrentTrial.EndTime = DateTime.Now;
+                    
+                    foreach (var k in CurrentSession.SelectedStage.StageParameters)
+                    {
+                        CurrentTrial.VariableParameters[k.Key] = k.Value.CurrentValue;
+                    }
+
                     //Get the number of minutes into the session that this trial occurred at
                     double minutes_passed = CurrentTrial.StartTime.Subtract(CurrentSession.StartTime).TotalMinutes;
 
