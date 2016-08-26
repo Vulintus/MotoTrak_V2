@@ -578,6 +578,17 @@ namespace MotoTrakBase
                             case MotorTaskTypeV1.TotalDegrees:
                                 break;
                             case MotorTaskTypeV1.LeverPresses:
+
+                                //Set the implementation of this stage
+                                stage.StageImplementation = new PythonStageImplementation("PythonLeverStageImplementation.py");
+
+                                //Set the parameters for this stage
+                                stage.StageParameters.Clear();
+                                stage.StageParameters["Full Press"] = new MotorStageParameter() { CurrentValue = 11 };
+                                stage.StageParameters["Release Point"] = new MotorStageParameter() { CurrentValue = 9 };
+                                stage.StageParameters["Initiation Threshold"] = new MotorStageParameter() { CurrentValue = 3 };
+                                stage.StageParameters["Hit Threshold"] = hit_thresh;
+
                                 break;
                             default:
 

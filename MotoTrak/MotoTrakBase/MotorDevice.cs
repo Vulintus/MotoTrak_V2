@@ -205,6 +205,11 @@ namespace MotoTrakBase
                 //It's a pull
                 return MotorDeviceType.Pull;
             }
+            else if (deviceValue >= LEVERHD_MIN_VALUE && deviceValue <= LEVERHD_MAX_VALUE)
+            {
+                //It's a lever
+                return MotorDeviceType.Lever;
+            }
             else
             {
                 //It's undefined
@@ -226,6 +231,8 @@ namespace MotoTrakBase
                     return new Tuple<int, int>(PULL_MIN_VALUE, PULL_MAX_VALUE);
                 case MotorDeviceType.Knob:
                     return new Tuple<int, int>(KNOB_MIN_VALUE, KNOB_MAX_VALUE);
+                case MotorDeviceType.Lever:
+                    return new Tuple<int, int>(LEVERHD_MIN_VALUE, LEVERHD_MAX_VALUE);
             }
 
             return new Tuple<int, int>(0, 0);
@@ -269,6 +276,19 @@ namespace MotoTrakBase
                     Slope /= motorBoard.NPerCalGrams();
 
                     break;
+
+                case MotorDeviceType.Lever:
+
+                    //Set the baseline of the lever apparatus
+                    Baseline = motorBoard.GetBaseline();
+
+                    //Set the total range in degrees
+                    int total_range_in_degrees = motorBoard.CalGrams();
+                    int total_range_in_analog_values = motorBoard.NPerCalGrams();
+                    Slope = -(Convert.ToDouble(total_range_in_degrees) / Convert.ToDouble(total_range_in_analog_values));
+
+                    break;
+
                 default:
                     break;
             }

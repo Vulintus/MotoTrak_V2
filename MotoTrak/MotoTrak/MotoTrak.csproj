@@ -143,7 +143,8 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy $(SolutionDir)MotoTrakPythonCode\PythonBasicStageImplementation.py $(TargetDir)
-copy $(SolutionDir)MotoTrakPythonCode\PythonPullStageImplementation.py $(TargetDir)</PostBuildEvent>
+copy $(SolutionDir)MotoTrakPythonCode\PythonPullStageImplementation.py $(TargetDir)
+copy $(SolutionDir)MotoTrakPythonCode\PythonLeverStageImplementation.py $(TargetDir)</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
