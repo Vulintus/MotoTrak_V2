@@ -23,6 +23,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="PythonBasicStageImplementation.py" />
+    <Compile Include="PythonPullStageImplementation.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MotoTrakBase\MotoTrakBase.csproj">

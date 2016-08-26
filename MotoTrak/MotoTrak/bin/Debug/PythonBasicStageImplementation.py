@@ -24,9 +24,9 @@ from MotoTrakUtilities import MotorMath
 class PythonBasicStageImplementation (IMotorStageImplementation):
 
     #Declare string parameters for this stage
-    Hit_Threshold_String = MotoTrak_V1_CommonParameters.HitThreshold
-    Initiation_Threshold_String = MotoTrak_V1_CommonParameters.InitiationThreshold
-
+    Hit_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.HitThreshold, "Unknown")
+    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.InitiationThreshold, "Unknown")
+    
     def TransformSignals(self, new_data_from_controller, stage, device):
         result = List[List[System.Double]]()
         for i in range(0, new_data_from_controller.Count):
@@ -44,9 +44,9 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
         return_value = -1
 
         #Look to see if the Initiation Threshold key exists
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Initiation_Threshold_String):
+        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Initiation_Threshold_Parameter.Item1):
             #Get the stage's initiation threshold
-            init_thresh = stage.StageParameters[PythonBasicStageImplementation.Initiation_Threshold_String].CurrentValue
+            init_thresh = stage.StageParameters[PythonBasicStageImplementation.Initiation_Threshold_Parameter.Item1].CurrentValue
 
             #Get the data stream itself
             stream_data = signal[1]
@@ -72,12 +72,12 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
         result = List[Tuple[MotorTrialEventType, System.Int32]]()
 
         #Only proceed if a hit threshold has been defined for this stage
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_String):
+        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
             #Get the stream data from the device
             stream_data = trial_signal[1]
             
             #Check to see if the hit threshold has been exceeded
-            current_hit_thresh = stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_String].CurrentValue
+            current_hit_thresh = stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
 
             #Check to see if the stream data has exceeded the current hit threshold
             try:
@@ -127,7 +127,7 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
 
     def CalculateYValueForSessionOverviewPlot(self, trial_signal, stage):
         #Adjust the hit threshold if necessary
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_String):
+        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
             #Grab the device signal for this trial
             stream_data = trial_signal[1]
 
@@ -142,7 +142,7 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
 
     def AdjustDynamicStageParameters(self, all_trials, trial_signal, stage):
         #Adjust the hit threshold if necessary
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_String):
+        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
             #Grab the device signal for this trial
             stream_data = trial_signal[1]
         

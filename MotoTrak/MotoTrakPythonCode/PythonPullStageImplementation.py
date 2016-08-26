@@ -21,11 +21,11 @@ from MotoTrakBase import MotorTrialEventType
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
 
-class PythonBasicStageImplementation (IMotorStageImplementation):
+class PythonPullStageImplementation (IMotorStageImplementation):
 
     #Declare string parameters for this stage
-    Hit_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.HitThreshold, "Unknown")
-    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.InitiationThreshold, "Unknown")
+    Hit_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.HitThreshold, "grams")
+    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.InitiationThreshold, "grams")
     
     def TransformSignals(self, new_data_from_controller, stage, device):
         result = List[List[System.Double]]()
@@ -44,9 +44,9 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
         return_value = -1
 
         #Look to see if the Initiation Threshold key exists
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Initiation_Threshold_Parameter.Item1):
+        if stage.StageParameters.ContainsKey(PythonPullStageImplementation.Initiation_Threshold_Parameter.Item1):
             #Get the stage's initiation threshold
-            init_thresh = stage.StageParameters[PythonBasicStageImplementation.Initiation_Threshold_Parameter.Item1].CurrentValue
+            init_thresh = stage.StageParameters[PythonPullStageImplementation.Initiation_Threshold_Parameter.Item1].CurrentValue
 
             #Get the data stream itself
             stream_data = signal[1]
@@ -72,12 +72,12 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
         result = List[Tuple[MotorTrialEventType, System.Int32]]()
 
         #Only proceed if a hit threshold has been defined for this stage
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
+        if stage.StageParameters.ContainsKey(PythonPullStageImplementation.Hit_Threshold_Parameter.Item1):
             #Get the stream data from the device
             stream_data = trial_signal[1]
             
             #Check to see if the hit threshold has been exceeded
-            current_hit_thresh = stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
+            current_hit_thresh = stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
 
             #Check to see if the stream data has exceeded the current hit threshold
             try:
@@ -118,16 +118,32 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
 
     def CreateEndOfTrialMessage(self, successful_trial, trial_number, trial_signal, stage):
         msg = ""
-        msg += "Trial " + str(trial_number) + " "
-        if successful_trial:
-            msg += "HIT"
-        else:
-            msg += "MISS"
-        return msg
+
+        #Get the device stream data
+        device_stream = trial_signal[1]
+        try:
+            peak_force = device_stream.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max()
+
+            msg += "Trial " + str(trial_number) + " "
+            if successful_trial:
+                msg += "HIT, "
+            else:
+                msg += "MISS, "
+
+            msg += "maximal force = " + System.Convert.ToInt32(System.Math.Floor(peak_force)).ToString() + " grams."
+
+            if stage.StageParameters.ContainsKey(PythonPullStageImplementation.Hit_Threshold_Parameter.Item1):
+                if stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].AdaptiveThresholdType is MotorStageAdaptiveThresholdType.Median:
+                    current_hit_threshold = stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
+                    msg += "(Hit threshold = " + Math.Floor(current_hit_threshold).ToString() + " grams)"
+            
+            return msg
+        except ValueError:
+            return System.String.Empty;
 
     def CalculateYValueForSessionOverviewPlot(self, trial_signal, stage):
         #Adjust the hit threshold if necessary
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
+        if stage.StageParameters.ContainsKey(PythonPullStageImplementation.Hit_Threshold_Parameter.Item1):
             #Grab the device signal for this trial
             stream_data = trial_signal[1]
 
@@ -142,7 +158,7 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
 
     def AdjustDynamicStageParameters(self, all_trials, trial_signal, stage):
         #Adjust the hit threshold if necessary
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
+        if stage.StageParameters.ContainsKey(PythonPullStageImplementation.Hit_Threshold_Parameter.Item1):
             #Grab the device signal for this trial
             stream_data = trial_signal[1]
         
@@ -152,8 +168,8 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
                 (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max()
 
             #Retain the maximal force of the most recent 10 trials
-            stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_String].History.Enqueue(max_force);
-            stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_String].CalculateAndSetBoundedCurrentValue();
+            stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].History.Enqueue(max_force);
+            stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].CalculateAndSetBoundedCurrentValue();
             
         return
 

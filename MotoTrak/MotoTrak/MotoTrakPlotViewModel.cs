@@ -202,6 +202,8 @@ namespace MotoTrak
             //Create a y-axis for this plot
             LinearAxis y_axis = new LinearAxis();
             y_axis.Position = AxisPosition.Left;
+            y_axis.Minimum = -5;
+            y_axis.Maximum = 180;
 
             //Set the y-axis title to be the units for the stream
             //y_axis.Title = stream_description.Item2;

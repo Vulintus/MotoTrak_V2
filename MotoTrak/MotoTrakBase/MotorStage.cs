@@ -559,17 +559,37 @@ namespace MotoTrakBase
                             hit_thresh.CurrentValue = hit_thresh.MinimumValue;
                         }
 
-                        
-                        if (hit_thresh_type == MotorTaskTypeV1.PeakForce)
-                        {
-                            //Set the implementation of this stage
-                            stage.StageImplementation = new PullStageImplementation();
-                            //stage.StageImplementation = new PythonStageImplementation("PythonBasicStageImplementation.py");
 
-                            //Set the parameters of this stage
-                            stage.StageParameters.Clear();
-                            stage.StageParameters["Hit Threshold"] = hit_thresh;
-                            stage.StageParameters["Initiation Threshold"] = init_thresh;
+                        switch (hit_thresh_type)
+                        {
+                            case MotorTaskTypeV1.PeakForce:
+
+                                //Set the implementation of this stage
+                                stage.StageImplementation = new PythonStageImplementation("PythonPullStageImplementation.py");
+
+                                //Set the parameters of this stage
+                                stage.StageParameters.Clear();
+                                stage.StageParameters["Hit Threshold"] = hit_thresh;
+                                stage.StageParameters["Initiation Threshold"] = init_thresh;
+
+                                break;
+                            case MotorTaskTypeV1.SustainedForce:
+                                break;
+                            case MotorTaskTypeV1.TotalDegrees:
+                                break;
+                            case MotorTaskTypeV1.LeverPresses:
+                                break;
+                            default:
+
+                                //Set the implementation of this stage
+                                stage.StageImplementation = new PythonStageImplementation("PythonBasicStageImplementation.py");
+
+                                //Set the parameters of this stage
+                                stage.StageParameters.Clear();
+                                stage.StageParameters["Hit Threshold"] = hit_thresh;
+                                stage.StageParameters["Initiation Threshold"] = init_thresh;
+
+                                break;
                         }
                         
                         //Add the stage to our list of stages

@@ -17,6 +17,9 @@ namespace MotoTrakBase
         SustainedForce,
 
         [Description("degrees (total)")]
-        TotalDegrees
+        TotalDegrees,
+
+        [Description("presses")]
+        LeverPresses
     }
 }

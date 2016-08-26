@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using IronPython.Hosting;
 using Microsoft.Scripting.Hosting;
 using Dynamitey;
+using System.Runtime.Remoting;
+using System.Linq;
 
 namespace MotoTrakBase
 {
@@ -12,7 +14,7 @@ namespace MotoTrakBase
         
         private ScriptScope _pythonScriptScope = null;
         private dynamic _pythonStageImplementationInstance;
-        private string _class_name = "PythonBasicStageImplementation";
+        private string _class_name = "PythonPullStageImplementation";
 
         #endregion
 
@@ -25,9 +27,42 @@ namespace MotoTrakBase
 
             engine.PythonScriptingEngine.ExecuteFile(python_script_file_path, _pythonScriptScope);
 
-            //Get the class type and instantiate an object of that class type
-            var c = _pythonScriptScope.GetVariable(_class_name);
-            _pythonStageImplementationInstance = c();
+            bool class_found = false;
+
+            var all_python_script_items = _pythonScriptScope.GetItems();
+            var python_script_items = all_python_script_items.Where(x => x.Value is IronPython.Runtime.Types.PythonType);
+
+            foreach (var item in python_script_items)
+            {
+                //Get the type of the python object
+                System.Type item_type = (Type)item.Value;
+
+                //Get the interfaces that are implemented by the type
+                var implemented_interfaces = item_type.GetInterfaces();
+                if (implemented_interfaces != null && implemented_interfaces.Length > 0)
+                {
+                    //Check to see if this type implements IMotorStageImplementation
+                    if (implemented_interfaces.ToList().Contains(typeof(IMotorStageImplementation)))
+                    {
+                        //If so, it is the class that we want
+                        var python_stage_impl_class = item.Value;
+                        _pythonStageImplementationInstance = python_stage_impl_class();
+
+                        //Set the class_found flag to be true
+                        class_found = true;
+
+                        //Break out of the loop.  Our work is finished.
+                        break;
+                    }
+                }
+            }
+
+            //If we couldn't find the python class, log the error and inform the user
+            if (!class_found)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Unable to find python stage class!");
+                ErrorLoggingService.GetInstance().LogStringError("Unable to find python stage class!");
+            }
         }
 
         #endregion
