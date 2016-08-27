@@ -24,8 +24,8 @@ from MotoTrakUtilities import MotorMath
 class PythonBasicStageImplementation (IMotorStageImplementation):
 
     #Declare string parameters for this stage
-    Hit_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.HitThreshold, "Unknown")
-    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.InitiationThreshold, "Unknown")
+    Hit_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.HitThreshold, "Unknown", True)
+    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.InitiationThreshold, "Unknown", True)
     
     def TransformSignals(self, new_data_from_controller, stage, device):
         result = List[List[System.Double]]()

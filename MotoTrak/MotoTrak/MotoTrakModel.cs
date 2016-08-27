@@ -479,6 +479,9 @@ namespace MotoTrak
             MotoTrakConfiguration config = MotoTrakConfiguration.GetInstance();
             config.ReadConfigurationFile();
 
+            //Now read in all stage implementations that exist
+            config.InitializeStageImplementations();
+
             //Now that configuration file has been loaded, and all config variables have been set, let's read in stages
             //Setting the "Stages" variable also sets the "AvailableStages" variable because of the nature of how the 
             //getters/setters are written.

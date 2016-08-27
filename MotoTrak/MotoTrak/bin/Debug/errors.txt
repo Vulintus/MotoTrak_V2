@@ -200,3 +200,12 @@ Innermost exception message: 'type' object has no attribute 'Hit_Threshold_Strin
 Function name: Target
 END OF NEW ERROR
 
+NEW ERROR DETECTED
+2016-08-27:16:41:42
+Stack trace:    at MotoTrakBase.MotoTrakConfiguration.InitializeStageImplementations() in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\MotoTrakConfiguration.cs:line 147
+Outermost exception message: Object reference not set to an instance of an object.
+Innermost exception message: Object reference not set to an instance of an object.
+Function name: InitializeStageImplementations
+END OF NEW ERROR
+
+Error while attempting to load Python stage implementations!

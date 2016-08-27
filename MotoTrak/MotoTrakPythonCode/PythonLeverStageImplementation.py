@@ -24,10 +24,10 @@ from MotoTrakUtilities import MotorMath
 class PythonLeverStageImplementation (IMotorStageImplementation):
 
     #Declare string parameters for this stage
-    Hit_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.HitThreshold, "presses")
-    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.InitiationThreshold, "degrees")
-    Lever_Full_Press_Parameter = System.Tuple[System.String, System.String]("Full Press", "degrees")
-    Lever_Release_Point_Parameter = System.Tuple[System.String, System.String]("Release Point", "degrees")
+    Hit_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.HitThreshold, "presses", False)
+    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.InitiationThreshold, "degrees", True)
+    Lever_Full_Press_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Full Press", "degrees", True)
+    Lever_Release_Point_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Release Point", "degrees", True)
     
     def TransformSignals(self, new_data_from_controller, stage, device):
         result = List[List[System.Double]]()

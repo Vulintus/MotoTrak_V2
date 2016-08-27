@@ -21,11 +21,13 @@ from MotoTrakBase import MotorTrialEventType
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
 
-class PythonPullStageImplementation (IMotorStageImplementation):
+class PythonLeverStageImplementation (IMotorStageImplementation):
 
     #Declare string parameters for this stage
-    Hit_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.HitThreshold, "grams")
-    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String](MotoTrak_V1_CommonParameters.InitiationThreshold, "grams")
+    Hit_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.HitThreshold, "presses", False)
+    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.InitiationThreshold, "degrees", True)
+    Lever_Full_Press_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Full Press", "degrees", True)
+    Lever_Release_Point_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Release Point", "degrees", True)
     
     def TransformSignals(self, new_data_from_controller, stage, device):
         result = List[List[System.Double]]()
@@ -44,9 +46,9 @@ class PythonPullStageImplementation (IMotorStageImplementation):
         return_value = -1
 
         #Look to see if the Initiation Threshold key exists
-        if stage.StageParameters.ContainsKey(PythonPullStageImplementation.Initiation_Threshold_Parameter.Item1):
+        if stage.StageParameters.ContainsKey(PythonLeverStageImplementation.Initiation_Threshold_Parameter.Item1):
             #Get the stage's initiation threshold
-            init_thresh = stage.StageParameters[PythonPullStageImplementation.Initiation_Threshold_Parameter.Item1].CurrentValue
+            init_thresh = stage.StageParameters[PythonLeverStageImplementation.Initiation_Threshold_Parameter.Item1].CurrentValue
 
             #Get the data stream itself
             stream_data = signal[1]
@@ -72,22 +74,41 @@ class PythonPullStageImplementation (IMotorStageImplementation):
         result = List[Tuple[MotorTrialEventType, System.Int32]]()
 
         #Only proceed if a hit threshold has been defined for this stage
-        if stage.StageParameters.ContainsKey(PythonPullStageImplementation.Hit_Threshold_Parameter.Item1):
+        if stage.StageParameters.ContainsKey(PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1):
             #Get the stream data from the device
             stream_data = trial_signal[1]
             
             #Check to see if the hit threshold has been exceeded
-            current_hit_thresh = stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
+            current_hit_thresh = stage.StageParameters[PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
 
             #Check to see if the stream data has exceeded the current hit threshold
             try:
-                indices_of_hits = Enumerable.Range(0, stream_data.Count) \
-                    .Where(lambda index: stream_data[index] >= current_hit_thresh and \
-                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
-                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).ToList()
+                #For the lever task, the hit threshold is in units of "presses", while the signal is in units of "degrees"
+                #We must analyze the signal to determine how many "presses" have occurred
 
-                if indices_of_hits is not None and indices_of_hits.Count > 0:
-                    result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, indices_of_hits[0]))
+                #Let's keep a press count, as well as indices of each press, and a current state.
+                press_count = 0
+                indices_of_presses = List[System.Int32]()
+                press_state = 0;   #0 = released, 1 = pressed
+
+                #Now iterate over the signal
+                for i in range(0, stream_data.Count):
+                    #Only look at samples within the hit window
+                    if (i >= stage.TotalRecordedSamplesBeforeHitWindow) and (i < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow)):
+                        #If the lever is currently released, check to see if it has been pressed
+                        if (press_state is 0):
+                            if (stream_data[i] > stage.StageParameters[PythonLeverStageImplementation.Lever_Full_Press_Parameter.Item1].CurrentValue):
+                                press_count = press_count + 1
+                                indices_of_presses.Add(i)
+                                press_state = 1
+                        elif (press_state is 1):
+                            #Otherwise, if the lever is pressed, check to see if it has been fully released
+                            if (stream_data[i] <= stage.StageParameters[PythonLeverStageImplementation.Lever_Release_Point_Parameter.Item1].CurrentValue):
+                                press_state = 0
+
+                #If 2 hits have been detected, add a result to return to the caller
+                if (press_count >= stage.StageParameters[PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue):
+                    result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, indices_of_presses[indices_of_presses.Count-1]))
             except ValueError:
                 pass
 
@@ -118,58 +139,16 @@ class PythonPullStageImplementation (IMotorStageImplementation):
 
     def CreateEndOfTrialMessage(self, successful_trial, trial_number, trial_signal, stage):
         msg = ""
-
-        #Get the device stream data
-        device_stream = trial_signal[1]
-        try:
-            peak_force = device_stream.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max()
-
-            msg += "Trial " + str(trial_number) + " "
-            if successful_trial:
-                msg += "HIT, "
-            else:
-                msg += "MISS, "
-
-            msg += "maximal force = " + System.Convert.ToInt32(System.Math.Floor(peak_force)).ToString() + " grams."
-
-            if stage.StageParameters.ContainsKey(PythonPullStageImplementation.Hit_Threshold_Parameter.Item1):
-                if stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].AdaptiveThresholdType is MotorStageAdaptiveThresholdType.Median:
-                    current_hit_threshold = stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
-                    msg += "(Hit threshold = " + Math.Floor(current_hit_threshold).ToString() + " grams)"
-            
-            return msg
-        except ValueError:
-            return System.String.Empty;
+        msg += "Trial " + str(trial_number) + " "
+        if successful_trial:
+            msg += "HIT"
+        else:
+            msg += "MISS"
+        return msg
 
     def CalculateYValueForSessionOverviewPlot(self, trial_signal, stage):
-        #Adjust the hit threshold if necessary
-        if stage.StageParameters.ContainsKey(PythonPullStageImplementation.Hit_Threshold_Parameter.Item1):
-            #Grab the device signal for this trial
-            stream_data = trial_signal[1]
+        return 0
 
-            #Find the maximal force of the current trial
-            max_force = stream_data.Where(lambda val, index: \
-                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
-                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max()
-
-            return max_force
-
-        return System.Double.NaN
-
-    def AdjustDynamicStageParameters(self, all_trials, trial_signal, stage):
-        #Adjust the hit threshold if necessary
-        if stage.StageParameters.ContainsKey(PythonPullStageImplementation.Hit_Threshold_Parameter.Item1):
-            #Grab the device signal for this trial
-            stream_data = trial_signal[1]
-        
-            #Find the maximal force from the current trial
-            max_force = stream_data.Where(lambda val, index: \
-                (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
-                (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max()
-
-            #Retain the maximal force of the most recent 10 trials
-            stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].History.Enqueue(max_force);
-            stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].CalculateAndSetBoundedCurrentValue();
-            
+    def AdjustDynamicStageParameters(self, all_trials, trial_signal, stage):    
         return
 

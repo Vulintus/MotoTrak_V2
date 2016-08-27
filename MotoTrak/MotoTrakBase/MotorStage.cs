@@ -565,8 +565,8 @@ namespace MotoTrakBase
                             case MotorTaskTypeV1.PeakForce:
 
                                 //Set the implementation of this stage
-                                stage.StageImplementation = new PythonStageImplementation("PythonPullStageImplementation.py");
-
+                                stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonPullStageImplementation.py"];
+                                
                                 //Set the parameters of this stage
                                 stage.StageParameters.Clear();
                                 stage.StageParameters["Hit Threshold"] = hit_thresh;
@@ -580,7 +580,7 @@ namespace MotoTrakBase
                             case MotorTaskTypeV1.LeverPresses:
 
                                 //Set the implementation of this stage
-                                stage.StageImplementation = new PythonStageImplementation("PythonLeverStageImplementation.py");
+                                stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonLeverStageImplementation.py"];
 
                                 //Set the parameters for this stage
                                 stage.StageParameters.Clear();
@@ -593,7 +593,7 @@ namespace MotoTrakBase
                             default:
 
                                 //Set the implementation of this stage
-                                stage.StageImplementation = new PythonStageImplementation("PythonBasicStageImplementation.py");
+                                stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonBasicStageImplementation.py"];
 
                                 //Set the parameters of this stage
                                 stage.StageParameters.Clear();

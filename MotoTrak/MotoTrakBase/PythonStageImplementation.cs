@@ -5,16 +5,41 @@ using Microsoft.Scripting.Hosting;
 using Dynamitey;
 using System.Runtime.Remoting;
 using System.Linq;
+using System.Collections.Concurrent;
 
 namespace MotoTrakBase
 {
+    /// <summary>
+    /// A shell class that implements IMotorStageImplementation and calls into IronPython code to execute the methods.
+    /// </summary>
     public class PythonStageImplementation : IMotorStageImplementation
     {
         #region Private data members
-        
+
+        private ConcurrentDictionary<string, Tuple<string, string, bool>> _required_stage_parameters = new ConcurrentDictionary<string, Tuple<string, string, bool>>();
+
         private ScriptScope _pythonScriptScope = null;
         private dynamic _pythonStageImplementationInstance;
-        private string _class_name = "PythonPullStageImplementation";
+
+        #endregion
+
+        #region Public properties
+
+        /// <summary>
+        /// This is the list of parameters defined WITHIN the Python file that are required to be defined by the stage definition file
+        /// in order for this stage to function.
+        /// </summary>
+        public ConcurrentDictionary<string, Tuple<string, string, bool>> RequiredStageParameters
+        {
+            get
+            {
+                return _required_stage_parameters;
+            }
+            set
+            {
+                _required_stage_parameters = value;
+            }
+        }
 
         #endregion
 
@@ -48,6 +73,24 @@ namespace MotoTrakBase
                         var python_stage_impl_class = item.Value;
                         _pythonStageImplementationInstance = python_stage_impl_class();
 
+                        //var class_to_instantiate = _pythonScriptScope.GetVariable(item.Key);
+                        //_pythonStageImplementationInstance = class_to_instantiate();
+                        
+                        var list_of_members = Dynamic.GetMemberNames(_pythonStageImplementationInstance);
+                        foreach (var member_name in list_of_members)
+                        {
+                            object member_object = null;
+                            bool success = _pythonScriptScope.Engine.Operations.TryGetMember(_pythonStageImplementationInstance, member_name, out member_object);
+                            if (success)
+                            {
+                                Tuple<string, string, bool> type_converted_object = member_object as Tuple<string, string, bool>;
+                                if (type_converted_object != null)
+                                {
+                                    RequiredStageParameters[type_converted_object.Item1] = type_converted_object;
+                                }
+                            }
+                        }
+                        
                         //Set the class_found flag to be true
                         class_found = true;
 

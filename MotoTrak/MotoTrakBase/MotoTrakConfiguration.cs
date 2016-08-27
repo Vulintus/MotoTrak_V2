@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace MotoTrakBase
         #region Constructors - This is a singleton class
 
         private static MotoTrakConfiguration _instance = null;
-
+        
         /// <summary>
         /// </summary>
         private MotoTrakConfiguration()
@@ -40,19 +41,22 @@ namespace MotoTrakBase
         #endregion
 
         #region Private data members
-
+        
         private string ConfigurationFileName = "mototrak.config";
+        private string StageImplementationsPath = "StageImplementations";
 
         #endregion
 
         #region Properties
+
+        public ConcurrentDictionary<string, IMotorStageImplementation> PythonStageImplementations = new ConcurrentDictionary<string, IMotorStageImplementation>();
 
         public int ConfigurationVersion { get; set; }
         public string VariantName { get; set; }
         public string StagePath { get; set; }
         public string DataPath { get; set; }
         public string SecondaryDataPath { get; set; }
-
+        
         #endregion
 
         #region Methods
@@ -120,6 +124,35 @@ namespace MotoTrakBase
             {
                 MotoTrakMessaging m = MotoTrakMessaging.GetInstance();
                 m.AddMessage("Unable to read MotoTrak configuration file!");
+            }
+        }
+
+        /// <summary>
+        /// This method loads in all stage implementations found in the standard folder containing stage implementations.
+        /// </summary>
+        public void InitializeStageImplementations ()
+        {
+            //First, find all Python files in the stage implementations folder
+            List<string> files = new List<string>();
+
+            try
+            {
+                //Get all files in the stage implementations folder
+                files = Directory.GetFiles(StageImplementationsPath, "*.py").ToList();
+
+                //Load in each file
+                foreach (string f in files)
+                {
+                    PythonStageImplementation new_stage_implementation = new PythonStageImplementation(f);
+                    string file_name_only = Path.GetFileName(f);
+                    PythonStageImplementations[file_name_only] = new_stage_implementation;
+                }
+            }
+            catch (Exception e)
+            {
+                ErrorLoggingService.GetInstance().LogExceptionError(e);
+                ErrorLoggingService.GetInstance().LogStringError("Error while attempting to load Python stage implementations!");
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to load Python stage implementations!");
             }
         }
 

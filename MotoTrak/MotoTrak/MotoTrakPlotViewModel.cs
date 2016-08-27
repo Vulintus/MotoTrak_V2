@@ -336,6 +336,21 @@ namespace MotoTrak
                     //Get the stage parameter itself
                     var sp = Model.CurrentSession.SelectedStage.StageParameters[sp_key];
 
+                    //Now check to see if this stage parameter should be added as an annotation
+                    var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
+                    if (stage_impl != null)
+                    {
+                        var tuple_indicators = stage_impl.RequiredStageParameters[sp_key];
+                        bool plot_this_annotation = tuple_indicators.Item3;
+                        if (!plot_this_annotation)
+                        {
+                            //If the stage implementation says to not create an annotation for this specific parameter,
+                            //then we will tell the loop to continue with its next iteration.
+                            //Otherwise, the code below this if-statement will execute and an annotation will be created.
+                            continue;
+                        }
+                    }
+
                     //Create a horizontal line annotation for the value of this parameter.
                     LineAnnotation parameter_annotation = new LineAnnotation();
                     parameter_annotation.Type = LineAnnotationType.Horizontal;
