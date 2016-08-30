@@ -5,21 +5,49 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StageDesigner"
         mc:Ignorable="d"
-        Title="MotoTrak Stage Designer" Height="350" Width="525">
+        Title="MotoTrak Stage Designer" Height="350" Width="650">
 
     <!-- Define resources for this Window -->
     <Window.Resources>
 
+        <DataTemplate x:Key="StageHeaderDataTemplate">
+            <TextBlock Text="{Binding Path=SelectedStageName, FallbackValue=TestStage}" />
+        </DataTemplate>
+
         <!-- This is the data template for all the stage definition documents that will be shown in tabs in this window. -->
         <DataTemplate x:Key="StageDefinitionDataTemplate">
             <Grid>
-                <TextBlock Text="This is a stage definition" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Stage Task: " VerticalAlignment="Center" />
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Stage Name: " VerticalAlignment="Center" />
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Stage Description: " VerticalAlignment="Center" />
+
+                <ComboBox Grid.Row="0" Grid.Column="1" Width="400" VerticalAlignment="Center" SelectedIndex="0" ItemsSource="{Binding Path=TaskNames}">
+                    <!--<ComboBox.ItemsSource>
+                        <CompositeCollection>
+                            <ListBoxItem>Please select a task</ListBoxItem>
+                            <CollectionContainer Collection="{Binding Path=TaskNames}" />
+                        </CompositeCollection>
+                    </ComboBox.ItemsSource>-->
+                </ComboBox>
+                <TextBox Grid.Row="1" Grid.Column="1" Width="400" VerticalAlignment="Center" />
+                <TextBox Grid.Row="2" Grid.Column="1" Width="400" VerticalAlignment="Center" />
+
             </Grid>
         </DataTemplate>
         
     </Window.Resources>
-    
-    
     
     <StackPanel Orientation="Vertical">
         <DockPanel Height="25" VerticalAlignment="Top">
@@ -36,7 +64,13 @@
             </Menu>
         </DockPanel>
 
-        <TabControl Name="StageFileTabControl">
+        <TabControl Name="StageFileTabControl" 
+                    Height="173" 
+                    SelectedIndex="0"
+                    ItemTemplate="{StaticResource StageHeaderDataTemplate}" 
+                    ContentTemplate="{StaticResource StageDefinitionDataTemplate}" 
+                    ItemsSource="{Binding Path=OpenStages}"
+                    >
             <!-- Stage files will become tabs in this tab control when they are opened. -->
         </TabControl>
         

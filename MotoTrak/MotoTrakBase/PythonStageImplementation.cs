@@ -41,6 +41,12 @@ namespace MotoTrakBase
             }
         }
 
+        /// <summary>
+        /// The name of the task (as defined by the user) that this stage implementation actually implements.
+        /// This is only for general UI purposes.  Nothing serious.
+        /// </summary>
+        public string TaskName = string.Empty;
+
         #endregion
 
         #region Constructors
@@ -77,17 +83,25 @@ namespace MotoTrakBase
                         //_pythonStageImplementationInstance = class_to_instantiate();
                         
                         var list_of_members = Dynamic.GetMemberNames(_pythonStageImplementationInstance);
-                        foreach (var member_name in list_of_members)
+                        foreach (string member_name in list_of_members)
                         {
                             object member_object = null;
                             bool success = _pythonScriptScope.Engine.Operations.TryGetMember(_pythonStageImplementationInstance, member_name, out member_object);
                             if (success)
                             {
-                                Tuple<string, string, bool> type_converted_object = member_object as Tuple<string, string, bool>;
-                                if (type_converted_object != null)
+                                if (member_name.Equals("TaskName"))
                                 {
-                                    RequiredStageParameters[type_converted_object.Item1] = type_converted_object;
+                                    TaskName = member_object as string;
                                 }
+                                else
+                                {
+                                    Tuple<string, string, bool> type_converted_object = member_object as Tuple<string, string, bool>;
+                                    if (type_converted_object != null)
+                                    {
+                                        RequiredStageParameters[type_converted_object.Item1] = type_converted_object;
+                                    }
+                                }
+                                
                             }
                         }
                         

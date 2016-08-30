@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MotoTrakBase;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,13 @@ namespace StageDesigner
         public MainWindow()
         {
             InitializeComponent();
+
+            //Read in the MotoTrak configuration file
+            var mototrak_config = MotoTrakConfiguration.GetInstance();
+            mototrak_config.ReadConfigurationFile();
+            mototrak_config.InitializeStageImplementations();
+
+            DataContext = new StageDesignerViewModel();
         }
 
         private void NewStage_Click (object sender, RoutedEventArgs e)
