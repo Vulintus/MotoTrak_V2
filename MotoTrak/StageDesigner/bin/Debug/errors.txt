@@ -1,0 +1,154 @@
+NEW ERROR DETECTED
+2016-09-08:14:14:30
+Stack trace:    at IronPython.Runtime.Operations.PythonOps.GetVariable(CodeContext context, String name, Boolean isGlobal, Boolean lightThrow)
+   at IronPython.Runtime.Operations.PythonOps.GetGlobal(CodeContext context, String name)
+   at <unnamed>$1.PythonBasicStageImplementation$1(CodeContext $parentContext) in StageImplementations\PythonBasicStageImplementation.py:line 146
+   at IronPython.Runtime.Operations.PythonOps.MakeClass(FunctionCode funcCode, Func`2 body, CodeContext parentContext, String name, Object[] bases, String selfNames)
+   at <unnamed>$1.<unnamed>(CodeContext $globalContext, FunctionCode $functionCode) in StageImplementations\PythonBasicStageImplementation.py:line 24
+   at IronPython.Compiler.PythonScriptCode.RunWorker(CodeContext ctx)
+   at IronPython.Compiler.PythonScriptCode.Run(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.InvokeTarget(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.Run(Scope scope)
+   at Microsoft.Scripting.SourceUnit.Execute(Scope scope, ErrorSink errorSink)
+   at Microsoft.Scripting.Hosting.ScriptSource.Execute(ScriptScope scope)
+   at Microsoft.Scripting.Hosting.ScriptEngine.ExecuteFile(String path, ScriptScope scope)
+   at MotoTrakBase.PythonStageImplementation..ctor(String python_script_file_path) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 69
+   at MotoTrakBase.MotoTrakConfiguration.InitializeStageImplementations() in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\MotoTrakConfiguration.cs:line 146
+Outermost exception message: global name 'MotorDeviceType' is not defined
+Innermost exception message: global name 'MotorDeviceType' is not defined
+Function name: GetVariable
+END OF NEW ERROR
+
+Error while attempting to load Python stage implementations!
+NEW ERROR DETECTED
+2016-09-08:14:15:03
+Stack trace:    at IronPython.Runtime.Operations.PythonOps.GetVariable(CodeContext context, String name, Boolean isGlobal, Boolean lightThrow)
+   at IronPython.Runtime.Operations.PythonOps.GetGlobal(CodeContext context, String name)
+   at <unnamed>$1.PythonBasicStageImplementation$1(CodeContext $parentContext) in StageImplementations\PythonBasicStageImplementation.py:line 146
+   at IronPython.Runtime.Operations.PythonOps.MakeClass(FunctionCode funcCode, Func`2 body, CodeContext parentContext, String name, Object[] bases, String selfNames)
+   at <unnamed>$1.<unnamed>(CodeContext $globalContext, FunctionCode $functionCode) in StageImplementations\PythonBasicStageImplementation.py:line 24
+   at IronPython.Compiler.PythonScriptCode.RunWorker(CodeContext ctx)
+   at IronPython.Compiler.PythonScriptCode.Run(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.InvokeTarget(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.Run(Scope scope)
+   at Microsoft.Scripting.SourceUnit.Execute(Scope scope, ErrorSink errorSink)
+   at Microsoft.Scripting.Hosting.ScriptSource.Execute(ScriptScope scope)
+   at Microsoft.Scripting.Hosting.ScriptEngine.ExecuteFile(String path, ScriptScope scope)
+   at MotoTrakBase.PythonStageImplementation..ctor(String python_script_file_path) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 69
+   at MotoTrakBase.MotoTrakConfiguration.InitializeStageImplementations() in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\MotoTrakConfiguration.cs:line 146
+Outermost exception message: global name 'MotorDeviceType' is not defined
+Innermost exception message: global name 'MotorDeviceType' is not defined
+Function name: GetVariable
+END OF NEW ERROR
+
+Error while attempting to load Python stage implementations!
+NEW ERROR DETECTED
+2016-09-08:14:15:22
+Stack trace:    at IronPython.Runtime.Operations.PythonOps.GetVariable(CodeContext context, String name, Boolean isGlobal, Boolean lightThrow)
+   at IronPython.Runtime.Operations.PythonOps.GetGlobal(CodeContext context, String name)
+   at <unnamed>$1.PythonBasicStageImplementation$1(CodeContext $parentContext) in StageImplementations\PythonBasicStageImplementation.py:line 146
+   at IronPython.Runtime.Operations.PythonOps.MakeClass(FunctionCode funcCode, Func`2 body, CodeContext parentContext, String name, Object[] bases, String selfNames)
+   at <unnamed>$1.<unnamed>(CodeContext $globalContext, FunctionCode $functionCode) in StageImplementations\PythonBasicStageImplementation.py:line 24
+   at IronPython.Compiler.PythonScriptCode.RunWorker(CodeContext ctx)
+   at IronPython.Compiler.PythonScriptCode.Run(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.InvokeTarget(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.Run(Scope scope)
+   at Microsoft.Scripting.SourceUnit.Execute(Scope scope, ErrorSink errorSink)
+   at Microsoft.Scripting.Hosting.ScriptSource.Execute(ScriptScope scope)
+   at Microsoft.Scripting.Hosting.ScriptEngine.ExecuteFile(String path, ScriptScope scope)
+   at MotoTrakBase.PythonStageImplementation..ctor(String python_script_file_path) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 69
+   at MotoTrakBase.MotoTrakConfiguration.InitializeStageImplementations() in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\MotoTrakConfiguration.cs:line 146
+Outermost exception message: global name 'MotorDeviceType' is not defined
+Innermost exception message: global name 'MotorDeviceType' is not defined
+Function name: GetVariable
+END OF NEW ERROR
+
+Error while attempting to load Python stage implementations!
+NEW ERROR DETECTED
+2016-09-08:14:15:35
+Stack trace:    at IronPython.Runtime.Operations.PythonOps.GetVariable(CodeContext context, String name, Boolean isGlobal, Boolean lightThrow)
+   at IronPython.Runtime.Operations.PythonOps.GetGlobal(CodeContext context, String name)
+   at <unnamed>$1.PythonBasicStageImplementation$1(CodeContext $parentContext) in StageImplementations\PythonBasicStageImplementation.py:line 146
+   at IronPython.Runtime.Operations.PythonOps.MakeClass(FunctionCode funcCode, Func`2 body, CodeContext parentContext, String name, Object[] bases, String selfNames)
+   at <unnamed>$1.<unnamed>(CodeContext $globalContext, FunctionCode $functionCode) in StageImplementations\PythonBasicStageImplementation.py:line 24
+   at IronPython.Compiler.PythonScriptCode.RunWorker(CodeContext ctx)
+   at IronPython.Compiler.PythonScriptCode.Run(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.InvokeTarget(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.Run(Scope scope)
+   at Microsoft.Scripting.SourceUnit.Execute(Scope scope, ErrorSink errorSink)
+   at Microsoft.Scripting.Hosting.ScriptSource.Execute(ScriptScope scope)
+   at Microsoft.Scripting.Hosting.ScriptEngine.ExecuteFile(String path, ScriptScope scope)
+   at MotoTrakBase.PythonStageImplementation..ctor(String python_script_file_path) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 69
+   at MotoTrakBase.MotoTrakConfiguration.InitializeStageImplementations() in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\MotoTrakConfiguration.cs:line 146
+Outermost exception message: global name 'MotorDeviceType' is not defined
+Innermost exception message: global name 'MotorDeviceType' is not defined
+Function name: GetVariable
+END OF NEW ERROR
+
+Error while attempting to load Python stage implementations!
+NEW ERROR DETECTED
+2016-09-08:14:15:58
+Stack trace:    at IronPython.Runtime.Operations.PythonOps.GetVariable(CodeContext context, String name, Boolean isGlobal, Boolean lightThrow)
+   at IronPython.Runtime.Operations.PythonOps.GetGlobal(CodeContext context, String name)
+   at <unnamed>$1.PythonBasicStageImplementation$1(CodeContext $parentContext) in StageImplementations\PythonBasicStageImplementation.py:line 146
+   at IronPython.Runtime.Operations.PythonOps.MakeClass(FunctionCode funcCode, Func`2 body, CodeContext parentContext, String name, Object[] bases, String selfNames)
+   at <unnamed>$1.<unnamed>(CodeContext $globalContext, FunctionCode $functionCode) in StageImplementations\PythonBasicStageImplementation.py:line 24
+   at IronPython.Compiler.PythonScriptCode.RunWorker(CodeContext ctx)
+   at IronPython.Compiler.PythonScriptCode.Run(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.InvokeTarget(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.Run(Scope scope)
+   at Microsoft.Scripting.SourceUnit.Execute(Scope scope, ErrorSink errorSink)
+   at Microsoft.Scripting.Hosting.ScriptSource.Execute(ScriptScope scope)
+   at Microsoft.Scripting.Hosting.ScriptEngine.ExecuteFile(String path, ScriptScope scope)
+   at MotoTrakBase.PythonStageImplementation..ctor(String python_script_file_path) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 69
+   at MotoTrakBase.MotoTrakConfiguration.InitializeStageImplementations() in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\MotoTrakConfiguration.cs:line 146
+Outermost exception message: global name 'MotorDeviceType' is not defined
+Innermost exception message: global name 'MotorDeviceType' is not defined
+Function name: GetVariable
+END OF NEW ERROR
+
+Error while attempting to load Python stage implementations!
+NEW ERROR DETECTED
+2016-09-08:14:16:31
+Stack trace:    at IronPython.Runtime.Operations.PythonOps.GetVariable(CodeContext context, String name, Boolean isGlobal, Boolean lightThrow)
+   at IronPython.Runtime.Operations.PythonOps.GetGlobal(CodeContext context, String name)
+   at <unnamed>$1.PythonBasicStageImplementation$1(CodeContext $parentContext) in StageImplementations\PythonBasicStageImplementation.py:line 146
+   at IronPython.Runtime.Operations.PythonOps.MakeClass(FunctionCode funcCode, Func`2 body, CodeContext parentContext, String name, Object[] bases, String selfNames)
+   at <unnamed>$1.<unnamed>(CodeContext $globalContext, FunctionCode $functionCode) in StageImplementations\PythonBasicStageImplementation.py:line 24
+   at IronPython.Compiler.PythonScriptCode.RunWorker(CodeContext ctx)
+   at IronPython.Compiler.PythonScriptCode.Run(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.InvokeTarget(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.Run(Scope scope)
+   at Microsoft.Scripting.SourceUnit.Execute(Scope scope, ErrorSink errorSink)
+   at Microsoft.Scripting.Hosting.ScriptSource.Execute(ScriptScope scope)
+   at Microsoft.Scripting.Hosting.ScriptEngine.ExecuteFile(String path, ScriptScope scope)
+   at MotoTrakBase.PythonStageImplementation..ctor(String python_script_file_path) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 69
+   at MotoTrakBase.MotoTrakConfiguration.InitializeStageImplementations() in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\MotoTrakConfiguration.cs:line 146
+Outermost exception message: global name 'MotorDeviceType' is not defined
+Innermost exception message: global name 'MotorDeviceType' is not defined
+Function name: GetVariable
+END OF NEW ERROR
+
+Error while attempting to load Python stage implementations!
+NEW ERROR DETECTED
+2016-09-08:14:17:21
+Stack trace:    at IronPython.Runtime.Operations.PythonOps.GetVariable(CodeContext context, String name, Boolean isGlobal, Boolean lightThrow)
+   at IronPython.Runtime.Operations.PythonOps.GetGlobal(CodeContext context, String name)
+   at <unnamed>$1.PythonBasicStageImplementation$1(CodeContext $parentContext) in StageImplementations\PythonBasicStageImplementation.py:line 146
+   at IronPython.Runtime.Operations.PythonOps.MakeClass(FunctionCode funcCode, Func`2 body, CodeContext parentContext, String name, Object[] bases, String selfNames)
+   at <unnamed>$1.<unnamed>(CodeContext $globalContext, FunctionCode $functionCode) in StageImplementations\PythonBasicStageImplementation.py:line 24
+   at IronPython.Compiler.PythonScriptCode.RunWorker(CodeContext ctx)
+   at IronPython.Compiler.PythonScriptCode.Run(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.InvokeTarget(Scope scope)
+   at IronPython.Compiler.RuntimeScriptCode.Run(Scope scope)
+   at Microsoft.Scripting.SourceUnit.Execute(Scope scope, ErrorSink errorSink)
+   at Microsoft.Scripting.Hosting.ScriptSource.Execute(ScriptScope scope)
+   at Microsoft.Scripting.Hosting.ScriptEngine.ExecuteFile(String path, ScriptScope scope)
+   at MotoTrakBase.PythonStageImplementation..ctor(String python_script_file_path) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 69
+   at MotoTrakBase.MotoTrakConfiguration.InitializeStageImplementations() in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\MotoTrakConfiguration.cs:line 146
+Outermost exception message: global name 'MotorDeviceType' is not defined
+Innermost exception message: global name 'MotorDeviceType' is not defined
+Function name: GetVariable
+END OF NEW ERROR
+
+Error while attempting to load Python stage implementations!

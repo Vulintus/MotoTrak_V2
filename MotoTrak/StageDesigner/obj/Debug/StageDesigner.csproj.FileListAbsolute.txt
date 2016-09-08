@@ -27,3 +27,6 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\bin\Debug\Dynam
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\bin\Debug\Dynamitey.xml
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\bin\Debug\Microsoft.Dynamic.xml
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\bin\Debug\Microsoft.Scripting.Metadata.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Debug\StageParameterControl.g.cs
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Debug\StageParameterControl.baml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Debug\GeneratedInternalTypeHelper.g.cs

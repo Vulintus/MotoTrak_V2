@@ -24,6 +24,9 @@ from MotoTrakUtilities import MotorMath
 class PythonBasicStageImplementation (IMotorStageImplementation):
 
     #Declare string parameters for this stage
+    #RecommendedDevice = MotorDeviceType.Unknown
+    TaskName = "Unknown"
+    TaskDescription = "This is a basic stage implementation."
     Hit_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.HitThreshold, "Unknown", True)
     Initiation_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.InitiationThreshold, "Unknown", True)
     

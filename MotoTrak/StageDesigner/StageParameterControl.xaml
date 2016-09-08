@@ -1,0 +1,58 @@
+﻿<UserControl x:Class="StageDesigner.StageParameterControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:StageDesigner"
+             mc:Ignorable="d" 
+             d:DesignHeight="40" d:DesignWidth="950">
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20" />
+            <RowDefinition Height="20" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Center">
+            <TextBlock FontSize="12" FontWeight="Bold" Text="{Binding Path=ParameterName, FallbackValue=Parameter Name}" />
+            <TextBlock FontSize="12" FontWeight="Normal" Text="(" Margin="5,0,0,0" />
+            <TextBlock FontSize="12" FontWeight="Normal" Text="{Binding Path=ParameterUnits, FallbackValue=Unknown units}" />
+            <TextBlock FontSize="12" FontWeight="Normal" Text=")" />
+        </StackPanel>
+        
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="40,0,0,0">
+            <TextBlock Text="Initial value:" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center" />
+            <TextBox Width="50" Margin="5,0" Text="{Binding Path=ParameterInitialValue, FallbackValue=0}" FontSize="10" />
+            
+            <TextBlock Text="Does the value change during a session?" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"  />
+            <ComboBox FontSize="10" SelectedIndex="{Binding Path=AdaptiveSelectedIndex, FallbackValue=1}" Margin="5,0">
+                <ComboBoxItem Content="Yes" />
+                <ComboBoxItem Content="No" />
+            </ComboBox>
+
+            <StackPanel Name="AdaptiveParametersStackPanel" Visibility="{Binding Path=AdaptiveParametersVisibility, FallbackValue=Visible}" Orientation="Horizontal">
+                <TextBlock Text="In what way does the value change?" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                <ComboBox FontSize="10" SelectedIndex="{Binding Path=AdaptiveModeSelectedIndex, FallbackValue=0}" Margin="5,0"
+                          IsEnabled="{Binding Path=AdaptiveParametersAreEnabled, FallbackValue=False}">
+                    <ComboBoxItem Content="Median" />
+                    <ComboBoxItem Content="Linear" />
+                    <ComboBoxItem Content="Dynamic" />
+                </ComboBox>
+
+                <TextBlock Text="Minimum value:" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"  />
+                <TextBox Width="50" Margin="5,0" FontSize="10" Text="{Binding Path=ParameterMinimumValue, FallbackValue=0}"
+                         IsEnabled="{Binding Path=AdaptiveParametersAreEnabled, FallbackValue=False}" />
+            
+                <TextBlock Text="Maximum value:" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"  />
+                <TextBox Width="50" Margin="5,0" FontSize="10" Text="{Binding Path=ParameterMaximumValue, FallbackValue=0}"
+                         IsEnabled="{Binding Path=AdaptiveParametersAreEnabled, FallbackValue=False}" />
+            
+                <TextBlock Text="History size:" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"  />
+                <TextBox Width="50" Margin="5,0" FontSize="10" Text="{Binding Path=ParameterHistorySize, FallbackValue=10}"
+                         IsEnabled="{Binding Path=AdaptiveParametersAreEnabled, FallbackValue=False}" />
+            </StackPanel>
+        </StackPanel>
+
+
+    </Grid>
+</UserControl>

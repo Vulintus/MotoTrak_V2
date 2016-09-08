@@ -239,6 +239,17 @@ namespace MotoTrakBase
         }
 
         /// <summary>
+        /// Returns a list of all device types
+        /// </summary>
+        /// <returns>List of MotorDeviceType values that is all possible devices</returns>
+        public static List<MotorDeviceType> GetAllDeviceTypes ()
+        {
+            var result = Enum.GetValues(typeof(MotorDeviceType)).Cast<MotorDeviceType>().ToList();
+            result.Remove(MotorDeviceType.Unknown);
+            return result;
+        }
+
+        /// <summary>
         /// This function is called by the constructor
         /// </summary>
         private void InitializeDevice()

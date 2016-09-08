@@ -20,6 +20,9 @@ namespace MotoTrakBase
         private const int _defaultPostTrialSamplingPeriodInSeconds = 2;
         private const int _defaultPostTrialTimeoutPeriodInSeconds = 0;
 
+        private int _sampling_period_in_milliseconds = 10;
+        private MotorDeviceType _device_type = MotorDeviceType.Pull;
+
         /// <summary>
         /// This will hold the stage implementation code
         /// </summary>
@@ -33,6 +36,8 @@ namespace MotoTrakBase
 
         private MotorStageParameter _pre_trial_sampling_period_in_seconds = new MotorStageParameter()
         {
+            ParameterName = "Pre-Trial Sampling Duration",
+            ParameterUnits = "seconds",
             ParameterType = MotorStageParameter.StageParameterType.Fixed,
             InitialValue = _defaultPreTrialSamplingPeriodInSeconds,
             CurrentValue = _defaultPreTrialSamplingPeriodInSeconds
@@ -40,6 +45,8 @@ namespace MotoTrakBase
 
         private MotorStageParameter _post_trial_sampling_period_in_seconds = new MotorStageParameter()
         {
+            ParameterName = "Post-Trial Sampling Duration",
+            ParameterUnits = "seconds",
             ParameterType = MotorStageParameter.StageParameterType.Fixed,
             InitialValue = _defaultPostTrialSamplingPeriodInSeconds,
             CurrentValue = _defaultPostTrialSamplingPeriodInSeconds
@@ -47,6 +54,8 @@ namespace MotoTrakBase
 
         private MotorStageParameter _post_trial_timeout_period_in_seconds = new MotorStageParameter()
         {
+            ParameterName = "Post-Trial Timeout Period",
+            ParameterUnits = "seconds",
             ParameterType = MotorStageParameter.StageParameterType.Fixed,
             InitialValue = _defaultPostTrialTimeoutPeriodInSeconds,
             CurrentValue = _defaultPostTrialTimeoutPeriodInSeconds
@@ -54,6 +63,8 @@ namespace MotoTrakBase
 
         private MotorStageParameter _hit_window_in_seconds = new MotorStageParameter()
         {
+            ParameterName = "Hit Window Duration",
+            ParameterUnits = "seconds",
             ParameterType = MotorStageParameter.StageParameterType.Fixed,
             InitialValue = _defaultHitWindowDurationInSeconds,
             CurrentValue = _defaultHitWindowDurationInSeconds
@@ -61,6 +72,8 @@ namespace MotoTrakBase
 
         private MotorStageParameter _position_of_device = new MotorStageParameter()
         {
+            ParameterName = "Device Position",
+            ParameterUnits = "centimeters",
             ParameterType = MotorStageParameter.StageParameterType.Fixed,
             InitialValue = 0,
             CurrentValue = 0
@@ -69,9 +82,7 @@ namespace MotoTrakBase
         private ConcurrentDictionary<string, MotorStageParameter> _stage_parameters = new ConcurrentDictionary<string, MotorStageParameter>();
         
         private MotorStageStimulationType _output_trigger_type = MotorStageStimulationType.Off;
-
-        private int _trial_count_lookback_for_adaptive_adjustments = 10;
-
+        
         private List<MotorBoardDataStreamType> _data_streams = new List<MotorBoardDataStreamType>()
         {
             MotorBoardDataStreamType.Timestamp,
@@ -108,12 +119,32 @@ namespace MotoTrakBase
         /// <summary>
         /// The type of device the stage uses
         /// </summary>
-        public MotorDeviceType DeviceType { get; set; }
+        public MotorDeviceType DeviceType
+        {
+            get
+            {
+                return _device_type;
+            }
+            set
+            {
+                _device_type = value;
+            }
+        }
 
         /// <summary>
         /// The number of milliseconds each sample in the signal represents.
         /// </summary>
-        public int SamplePeriodInMilliseconds { get; set; }
+        public int SamplePeriodInMilliseconds
+        {
+            get
+            {
+                return _sampling_period_in_milliseconds;
+            }
+            set
+            {
+                _sampling_period_in_milliseconds = value;
+            }
+        }
         
         /// <summary>
         /// The path leading to the stage file
@@ -214,23 +245,7 @@ namespace MotoTrakBase
                 _stageImplementation = value;
             }
         }
-
-        /// <summary>
-        /// The number of trials to retain, or rather, the number of trials to "look back" when needing
-        /// to make adaptive adjustments at the end of every trial.
-        /// </summary>
-        public int TrialsToRetainForAdaptiveAdjustments
-        {
-            get
-            {
-                return _trial_count_lookback_for_adaptive_adjustments;
-            }
-            set
-            {
-                _trial_count_lookback_for_adaptive_adjustments = value;
-            }
-        }
-
+        
         /// <summary>
         /// The position of the "peg" for the device on this stage
         /// </summary>
@@ -546,10 +561,7 @@ namespace MotoTrakBase
                         
                         //Read in the output trigger type
                         //hit_thresh.OutputTriggerType = MotorStageStimulationTypeConverter.ConvertToMotorStageStimulationType(stageLine[13]);
-
-                        //For all "version 1" stages, this value will be 10.
-                        stage.TrialsToRetainForAdaptiveAdjustments = 10;
-
+                        
                         if (hit_thresh.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Static)
                         {
                             hit_thresh.CurrentValue = hit_thresh.MaximumValue;

@@ -39,6 +39,7 @@ namespace MotoTrakBase
         #region Properties
 
         public string ParameterName = string.Empty;
+        public string ParameterUnits = string.Empty;
         public StageParameterType ParameterType = StageParameterType.Fixed;
         public int ParameterStreamIndex = -1;
 

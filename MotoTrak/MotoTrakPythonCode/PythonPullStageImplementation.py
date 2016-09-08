@@ -17,6 +17,7 @@ from MotoTrakBase import MotorStageStimulationType
 from MotoTrakBase import MotorStageAdaptiveThresholdType
 from MotoTrakBase import MotoTrak_V1_CommonParameters
 from MotoTrakBase import MotorTrialEventType
+from MotoTrakBase import MotorDeviceType
 
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
@@ -24,7 +25,9 @@ from MotoTrakUtilities import MotorMath
 class PythonPullStageImplementation (IMotorStageImplementation):
 
     #Declare string parameters for this stage
+    RecommendedDevice = MotorDeviceType.Pull
     TaskName = "Pull Task"
+    TaskDescription = "The pull task is a straightforward task in which subjects must pull a handle with a certain amount of force to receive a reward."
     Hit_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.HitThreshold, "grams", True)
     Initiation_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.InitiationThreshold, "grams", True)
     

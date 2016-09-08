@@ -5,46 +5,110 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StageDesigner"
         mc:Ignorable="d"
-        Title="MotoTrak Stage Designer" Height="350" Width="650">
+        Title="MotoTrak Stage Designer" Height="850" Width="1000">
 
     <!-- Define resources for this Window -->
     <Window.Resources>
 
         <DataTemplate x:Key="StageHeaderDataTemplate">
-            <TextBlock Text="{Binding Path=SelectedStageName, FallbackValue=TestStage}" />
+            <TextBlock Text="{Binding Path=StageNameForTabHeader, FallbackValue=TestStage}" />
         </DataTemplate>
 
         <!-- This is the data template for all the stage definition documents that will be shown in tabs in this window. -->
         <DataTemplate x:Key="StageDefinitionDataTemplate">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="30" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="100" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Vertical">
+                <GroupBox Header="Basic stage information">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="30" />
+                            <RowDefinition Height="30" />
+                            <RowDefinition Height="30" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Stage Task: " VerticalAlignment="Center" />
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Stage Name: " VerticalAlignment="Center" />
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Stage Description: " VerticalAlignment="Center" />
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Stage Task: " VerticalAlignment="Center" />
+                        <ComboBox Grid.Row="0" Grid.Column="1" Width="400" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0"
+                          SelectedIndex="{Binding Path=SelectedTaskIndex, Mode=TwoWay}" 
+                          ItemsSource="{Binding Path=TaskNames}" />
 
-                <ComboBox Grid.Row="0" Grid.Column="1" Width="400" VerticalAlignment="Center" SelectedIndex="0" ItemsSource="{Binding Path=TaskNames}">
-                    <!--<ComboBox.ItemsSource>
-                        <CompositeCollection>
-                            <ListBoxItem>Please select a task</ListBoxItem>
-                            <CollectionContainer Collection="{Binding Path=TaskNames}" />
-                        </CompositeCollection>
-                    </ComboBox.ItemsSource>-->
-                </ComboBox>
-                <TextBox Grid.Row="1" Grid.Column="1" Width="400" VerticalAlignment="Center" />
-                <TextBox Grid.Row="2" Grid.Column="1" Width="400" VerticalAlignment="Center" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                           VerticalAlignment="Center" HorizontalAlignment="Left" 
+                           TextWrapping="Wrap" Margin="0,5"
+                           Visibility="{Binding Path=TaskDescriptionVisibility, FallbackValue=Collapsed}"
+                           Text="{Binding Path=TaskDescription}" />
 
-            </Grid>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Stage Name: " VerticalAlignment="Center" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Width="400" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0"
+                         ToolTip="{Binding Path=StageNameTooltip}"
+                         Text="{Binding Path=StageName, Mode=TwoWay}" />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Stage Description: " VerticalAlignment="Center" />
+                        <TextBox Grid.Row="3" Grid.Column="1" Width="400" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0"
+                         ToolTip="{Binding Path=StageDescriptionTooltip}" />
+                    </Grid>
+                </GroupBox>
+
+                <GroupBox Header="Device settings">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="25" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="25" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="400" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Select a device to use on this stage:" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                        <ComboBox Grid.Row="0" Grid.Column="1" SelectedIndex="{Binding Path=DeviceSelectedIndex, FallbackValue=0}" ItemsSource="{Binding Path=DevicesAvailable}" HorizontalAlignment="Left"
+                                  VerticalAlignment="Center" Height="20" Width="100" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                                   Text="Warning: you have selected a device different from what this task was designed to use." 
+                                   Visibility="{Binding Path=DeviceTypeWarningVisibility}"
+                                   Foreground="Red" FontWeight="Bold" FontSize="10" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="How fast would you like to sample the device? (ms/sample)" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Path=SamplingRate, FallbackValue=10}" HorizontalAlignment="Left" VerticalAlignment="Center" Width="100" />
+
+                        <local:StageParameterControl Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" x:Name="DevicePositionStageParameterControl"
+                                                     DataContext="{Binding Path=DevicePositionViewModel}" />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="Please note: for the knob device, we recommend a minimum position of 0.5 cm."
+                                   Foreground="Red" FontWeight="Bold" FontSize="10" Visibility="{Binding Path=DevicePositionWarningVisibility}" />
+
+                    </Grid>
+                    
+                    
+                </GroupBox>
+
+                <GroupBox Header="Trial timing settings">
+                    <StackPanel Orientation="Vertical">
+                        <local:StageParameterControl x:Name="PreTrialRecordingDurationStageParameterControl" DataContext="{Binding Path=PreTrialRecordingDurationViewModel}" />
+                        <local:StageParameterControl x:Name="HitWindowDurationStageParameterControl" DataContext="{Binding Path=HitWindowDurationViewModel}" />
+                        <local:StageParameterControl x:Name="PostHitWindowRecordingDurationStageParameterControl" DataContext="{Binding Path=PostHitWindowRecordingDurationViewModel}" />
+                        <local:StageParameterControl x:Name="PostTrialTimeoutDurationStageParameterControl" DataContext="{Binding Path=PostTrialTimeoutDurationViewModel}" />
+                        <TextBlock Text="{Binding Path=StageTimingMessage}" FontSize="12" FontWeight="Normal" Margin="0,5,0,5"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Stage parameters">
+                    <ItemsControl ItemsSource="{Binding Path=StageParameters}" Name="StageParametersItemsControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <local:StageParameterControl />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </GroupBox>
+
+            </StackPanel>
         </DataTemplate>
         
     </Window.Resources>
@@ -65,7 +129,6 @@
         </DockPanel>
 
         <TabControl Name="StageFileTabControl" 
-                    Height="173" 
                     SelectedIndex="0"
                     ItemTemplate="{StaticResource StageHeaderDataTemplate}" 
                     ContentTemplate="{StaticResource StageDefinitionDataTemplate}" 

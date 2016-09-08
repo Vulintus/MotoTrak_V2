@@ -34,7 +34,8 @@ namespace StageDesigner
             get
             {
                 List<StageViewModel> new_stage_list = new List<StageViewModel>();
-                new_stage_list.Add(new StageViewModel());
+                MotorStage new_stage = new MotorStage();
+                new_stage_list.Add(new StageViewModel(new_stage));
                 return new_stage_list;
             }
         }

@@ -47,6 +47,16 @@ namespace MotoTrakBase
         /// </summary>
         public string TaskName = string.Empty;
 
+        /// <summary>
+        /// The description of the task that is defined in this stage implementation file
+        /// </summary>
+        public string TaskDescription = string.Empty;
+
+        /// <summary>
+        /// This is the recommended device for this task, as defined by the stage implementation file
+        /// </summary>
+        public MotorDeviceType RecommendedDevice = MotorDeviceType.Unknown;
+
         #endregion
 
         #region Constructors
@@ -92,6 +102,14 @@ namespace MotoTrakBase
                                 if (member_name.Equals("TaskName"))
                                 {
                                     TaskName = member_object as string;
+                                }
+                                else if (member_name.Equals("TaskDescription"))
+                                {
+                                    TaskDescription = member_object as string;
+                                }
+                                else if (member_name.Equals("RecommendedDevice"))
+                                {
+                                    RecommendedDevice = (MotorDeviceType)member_object;
                                 }
                                 else
                                 {
