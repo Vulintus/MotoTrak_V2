@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StageDesigner"
         mc:Ignorable="d"
-        Title="MotoTrak Stage Designer" Height="850" Width="1000">
+        Title="MotoTrak Stage Designer" Height="850" Width="1100">
 
     <!-- Define resources for this Window -->
     <Window.Resources>

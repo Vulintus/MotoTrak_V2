@@ -130,14 +130,15 @@ namespace MotoTrakBase
             return result;
         }
 
-        public virtual List<MotorTrialAction> ReactToTrialEvents(List<Tuple<MotorTrialEventType, int>> trial_events_list, 
+        public virtual List<MotorTrialAction> ReactToTrialEvents(List<Tuple<MotorTrialEventType, int>> new_events,
+            List<Tuple<MotorTrialEventType, int>> all_events,
             List<List<double>> trial_signal, MotorStage stage)
         {
             //Create an empty list of actions that we will return to the caller
             List<MotorTrialAction> actions = new List<MotorTrialAction>();
 
             //Iterate through each event that occurred
-            foreach (var event_tuple in trial_events_list)
+            foreach (var event_tuple in new_events)
             {
                 var event_type = event_tuple.Item1;
 

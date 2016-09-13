@@ -8,19 +8,25 @@ namespace MotoTrakBase
     /// </summary>
     public enum MotorStageAdaptiveThresholdType
     {
-        [Description("undefined")]
+        [Description("Undefined")]
         Undefined,
 
-        [Description("static")]
+        [Description("Static")]
         Static,
 
-        [Description("median")]
+        [Description("50th percentile")]
         Median,
 
-        [Description("linear")]
+        [Description("25th percentile")]
+        Percentile25,
+
+        [Description("75th percentile")]
+        Percentile75,
+
+        [Description("Linear")]
         Linear,
 
-        [Description("dynamic")]
+        [Description("Dynamic")]
         Dynamic
     }
 }

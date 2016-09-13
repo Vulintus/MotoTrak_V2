@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using OxyPlot.Annotations;
+using MotoTrakUtilities;
 
 namespace MotoTrak
 {
@@ -187,6 +188,37 @@ namespace MotoTrak
         #endregion
 
         #region Private methods
+
+        public void ScaleYAxis ()
+        {
+            //Figure out the proper scale
+            if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
+            {
+                List<double> values = new List<double>();
+                values.Add(0); //Make sure the baseline of 0 is in the values array
+                var keys = Model.CurrentSession.SelectedStage.StageParameters.Keys;
+
+                foreach (var k in keys)
+                {
+                    var sp = Model.CurrentSession.SelectedStage.StageParameters[k];
+                    values.Add(sp.MinimumValue);
+                    values.Add(sp.MaximumValue);
+                    values.Add(sp.InitialValue);
+                }
+
+                var ymin = MotorMath.NanMin(values);
+                var ymax = MotorMath.NanMax(values);
+                var yrange = Math.Abs(ymax - ymin) * 1.2;  //Multiply the range by 120% to extend it a bit
+
+                //Get the y-axis object
+                var y_axis = Plot.Axes.Where(x => x.Position == AxisPosition.Left).FirstOrDefault();
+                if (y_axis != null)
+                {
+                    y_axis.MinimumRange = yrange;
+                }
+            }
+            
+        }
 
         private void InitializePlot()
         {

@@ -15,7 +15,6 @@ namespace MotoTrakBase
         TriggerFeeder,
         PlaySound,
         SendStimulationTrigger,
-        AdjustHitThreshold,
         AdjustAutopositionerPosition,
         Unknown
     }

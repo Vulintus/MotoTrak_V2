@@ -161,6 +161,9 @@ namespace MotoTrak
             }
         }
 
+        private List<Tuple<MotorTrialEventType, int>> AllCurrentTrialEvents = new List<Tuple<MotorTrialEventType, int>>();
+
+
         /// <summary>
         /// The device currently connected to the MotoTrak controller
         /// </summary>
@@ -589,6 +592,7 @@ namespace MotoTrak
 
         private SynchronizedCollection<SynchronizedCollection<double>> _monitoredSignal = new SynchronizedCollection<SynchronizedCollection<double>>();
         private ConcurrentQueue<Tuple<MotorTrialEventType, int>> _trial_events = new ConcurrentQueue<Tuple<MotorTrialEventType, int>>();
+        private ConcurrentQueue<MotorTrialAction> _trial_actions = new ConcurrentQueue<MotorTrialAction>();
         private SynchronizedCollection<Tuple<double, double, bool>> _sessionOverviewValues = new SynchronizedCollection<Tuple<double, double, bool>>();
         private int fps = 0;
         private double _milliseconds_per_frame = 0;
@@ -829,6 +833,28 @@ namespace MotoTrak
                 //Handle the current trial state
                 HandleTrialState(device_signal_index, number_of_new_data_points, buffer_size, 
                     stream_data_transformed, transposed_new_data, transformed_new_data);
+
+                //Iterate through all trial actions and perform any actions that need to occur during this frame
+                List<MotorTrialAction> actions_to_retain = new List<MotorTrialAction>();
+                MotorTrialAction a = null;
+                while (!_trial_actions.IsEmpty)
+                {
+                    bool success = _trial_actions.TryDequeue(out a);
+                    if (success)
+                    {
+                        a.ExecuteAction();
+                        if (!a.Completed)
+                        {
+                            actions_to_retain.Add(a);
+                        }
+                    }
+                }
+
+                //Enqueue actions that were not yet completed
+                foreach (var a2 in actions_to_retain)
+                {
+                    _trial_actions.Enqueue(a2);
+                }
                 
                 //Finish the single-iteration stopwatch (for debugging)
                 TimeSpan single_iteration_timespan = stop_watch_single_iteration.Elapsed;
@@ -858,6 +884,9 @@ namespace MotoTrak
         private void HandleTrialState (int device_signal_index, int number_of_new_data_points, int buffer_size, 
             List<List<double>> stream_data_transformed, List<List<int>> transposed_new_data, List<List<double>> transformed_new_data)
         {
+            //Create an empty list that will contain any events detected during this phase of the trial
+            List<Tuple<MotorTrialEventType, int>> events_found = new List<Tuple<MotorTrialEventType, int>>();
+
             //Perform actions based on which trial state we are in
             switch (TrialState)
             {
@@ -941,6 +970,10 @@ namespace MotoTrak
                             //broke the trial initiation threshold.  It also fills the same data into the "trial" object, but in raw form.
                             HandleTrialInitiation(buffer_size, trial_initiation_index, stream_data_transformed, CurrentTrial);
 
+                            //Create an event for the trial initation
+                            events_found.Add(new Tuple<MotorTrialEventType, int>(MotorTrialEventType.TrialInitiation,
+                                this.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow));
+
                             //Change the session state
                             TrialState = TrialRunState.TrialRun;
                         }
@@ -965,7 +998,7 @@ namespace MotoTrak
                     //then we should follow the procedure for a successful trial based on the stage settings (typically a feed, and also
                     //maybe a VNS stimulus or other output).  After the trial time has expired, we should move on to the next state.
                     //Trial success does NOT immediately move us to the next state.  ONLY TIME.
-
+                    
                     //Add the new raw data to the trial object to be saved to disk later.
                     for (int i = 0; i < CurrentTrial.TrialData.Count; i++)
                     {
@@ -975,13 +1008,17 @@ namespace MotoTrak
                     //Check to see if the animal has succeeded up until this point in the trial, based on this stage's criterion for success.
                     if (CurrentTrial.Result == MotorTrialResult.Unknown)
                     {
-                        //Check to see whether the trial was a success, based on the criterion defined by the stage definition.
-                        List<Tuple<MotorTrialEventType, int>> events_found = null;
-
                         try
                         {
-                            events_found = CurrentSession.SelectedStage.StageImplementation.CheckForTrialEvent(CurrentTrial.TrialData, 
+                            //Check to see whether the trial was a success, based on the criterion defined by the stage definition.
+                            var new_events = CurrentSession.SelectedStage.StageImplementation.CheckForTrialEvent(CurrentTrial.TrialData, 
                                 CurrentSession.SelectedStage);
+
+                            //Add the detected events to our array of new events for this frame of the trial
+                            events_found.AddRange(new_events);
+
+                            //Add the detected events to our array of all events have occurred during this trial
+                            AllCurrentTrialEvents.AddRange(events_found);
                         }
                         catch
                         {
@@ -1009,50 +1046,45 @@ namespace MotoTrak
                         }
 
                         //Check to see what actions we need to take based on the events that occurred
-                        List<MotorTrialAction> event_actions = null;
-
                         try
                         {
-                            event_actions = CurrentSession.SelectedStage.StageImplementation.ReactToTrialEvents(events_found, CurrentTrial.TrialData, CurrentSession.SelectedStage);
+                            List<MotorTrialAction> event_actions = null;
+                            event_actions = CurrentSession.SelectedStage.StageImplementation.ReactToTrialEvents(events_found, AllCurrentTrialEvents, CurrentTrial.TrialData, CurrentSession.SelectedStage);
+                            if (event_actions != null)
+                            {
+                                foreach (var a in event_actions)
+                                {
+                                    _trial_actions.Enqueue(a);
+                                }
+                            }
                         }
                         catch
                         {
-                            //In the event of an error within the stage implementation's code, make event_actions an empty list
-                            event_actions = new List<MotorTrialAction>();
-
                             //Log the error
                             MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to react to trial events within stage implementation");
                         }
-
-                        //Perform each action
-                        foreach (var action in event_actions)
-                        {
-                            action.ExecuteAction();
-                        }
                     }
-
-                    //Perform any necessary actions that need to be taken according to the stage parameters that are unrelated to
-                    //actions that are taken given the success of a trial.
-                    List<MotorTrialAction> actions = null;
-
+                    
                     try
                     {
+                        //Perform any necessary actions that need to be taken according to the stage parameters that are unrelated to
+                        //actions that are taken given the success of a trial.
+                        List<MotorTrialAction> actions = null;
                         actions = CurrentSession.SelectedStage.StageImplementation.PerformActionDuringTrial(CurrentTrial.TrialData, CurrentSession.SelectedStage);
+                        if (actions != null)
+                        {
+                            foreach (var a in actions)
+                            {
+                                _trial_actions.Enqueue(a);
+                            }
+                        }
                     }
                     catch
                     {
-                        //Set actions to be an empty list
-                        actions = new List<MotorTrialAction>();
-
                         //Log the error
                         MotoTrakMessaging.GetInstance().AddMessage("Error in stage implementation: PerformActionDuringTrial function");
                     }
-
-                    foreach (var action in actions)
-                    {
-                        action.ExecuteAction();
-                    }
-
+                    
                     //Check to see if this trial has finished
                     int samples_collected = CurrentTrial.TrialData[0].Count;
                     if (samples_collected >= CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial)
@@ -1063,6 +1095,27 @@ namespace MotoTrak
                             CurrentTrial.Result = MotorTrialResult.Miss;
                         }
 
+                        //Send a "trial end" event to the stage implementation code
+                        events_found.Clear();
+                        events_found.Add(new Tuple<MotorTrialEventType, int>(MotorTrialEventType.TrialEnd, CurrentTrial.TrialData[0].Count-1));
+                        try
+                        {
+                            List<MotorTrialAction> event_actions = null;
+                            event_actions = CurrentSession.SelectedStage.StageImplementation.ReactToTrialEvents(events_found, AllCurrentTrialEvents, CurrentTrial.TrialData, CurrentSession.SelectedStage);
+                            if (event_actions != null)
+                            {
+                                foreach (var a in event_actions)
+                                {
+                                    _trial_actions.Enqueue(a);
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            //Log the error
+                            MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to react to trial events within stage implementation");
+                        }
+                        
                         //Change the session state to end this trial.
                         TrialState = TrialRunState.TrialEnd;
                     }
@@ -1135,6 +1188,9 @@ namespace MotoTrak
                     //Set the current trial to null.  This will subsequently send notifications up to the UI,
                     //telling the UI that there is not currently a trial taking place.
                     CurrentTrial = null;
+
+                    //Set the list containing all current trial events to be empty
+                    AllCurrentTrialEvents.Clear();
 
                     //Tell the program to wait for another trial to begin
                     TrialState = TrialRunState.TrialSetup;

@@ -37,6 +37,7 @@ namespace MotoTrakBase
         private string _file_path = string.Empty;
         private FileStream _file_stream = null;
         private BinaryWriter _binary_writer = null;
+        private List<string> keys = new List<string>();
 
         #endregion
 
@@ -325,6 +326,9 @@ namespace MotoTrakBase
                     //Get the parameter name
                     string parameter_name = k.Key;
 
+                    //Add this parameter name to our ordered list of keys
+                    keys.Add(parameter_name);
+
                     //Save the parameter name to the file
                     N = Convert.ToByte(parameter_name.Length);
                     _binary_writer.Write(N);
@@ -387,21 +391,18 @@ namespace MotoTrakBase
                 _binary_writer.Write(N);
 
                 //Save each of the variable parameters for this trial
-                foreach (var k in trial.VariableParameters)
+                foreach (var k in keys)
                 {
-                    //Get the parameter name and its current value
-                    string parameter_name = k.Key;
-                    double parameter_value = k.Value;
-
-                    //Save the parameter name
-                    N = Convert.ToByte(parameter_name.Length);
-                    _binary_writer.Write(N);
-                    _binary_writer.Write(parameter_name.ToCharArray());
-
                     //Save the parameter value
+                    float parameter_value = float.NaN;
+                    if (trial.VariableParameters.Keys.Contains(k))
+                    {
+                        parameter_value = Convert.ToSingle(trial.VariableParameters[k]);
+                    }
+                    
                     _binary_writer.Write(parameter_value);
                 }
-
+                
                 //Save the number of hits that occurred during this trial
                 N = Convert.ToByte(trial.HitTimes.Count);
                 _binary_writer.Write(N);
@@ -433,7 +434,7 @@ namespace MotoTrakBase
                 {
                     for (int x = 0; x < trial.TrialData[i].Count; x++)
                     {
-                        _binary_writer.Write(trial.TrialData[i][x]);
+                        _binary_writer.Write(Convert.ToSingle(trial.TrialData[i][x]));
                     }
                 }
 

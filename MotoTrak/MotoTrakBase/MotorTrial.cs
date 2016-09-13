@@ -259,7 +259,7 @@ namespace MotoTrakBase
                 _variable_parameters = value;
             }
         }
-
+        
         #endregion
     }
 }

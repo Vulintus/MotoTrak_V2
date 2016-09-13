@@ -16,6 +16,18 @@ namespace MotoTrakBase
         UndefinedEvent,
 
         [Description("Successful trial")]
-        SuccessfulTrial
+        SuccessfulTrial,
+
+        [Description("Hit window end")]
+        HitWindowEnd,
+
+        [Description("Trial initiation")]
+        TrialInitiation,
+
+        [Description("Trial end")]
+        TrialEnd,
+
+        [Description("User-defined event")]
+        UserDefinedEvent
     }
 }

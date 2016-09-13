@@ -15,6 +15,8 @@ namespace MotoTrakBase
 
         private MotorTrialActionType _actionType = MotorTrialActionType.Unknown;
         private Dictionary<object, object> _parameters = new Dictionary<object, object>();
+        private DateTime _actionTime = DateTime.Now;
+        private bool _completed = false;
 
         #endregion
 
@@ -83,50 +85,80 @@ namespace MotoTrakBase
             }
         }
 
+        /// <summary>
+        /// The time at which this action is supposed to take place
+        /// </summary>
+        public DateTime ActionTime
+        {
+            get
+            {
+                return _actionTime;
+            }
+            set
+            {
+                _actionTime = value;
+            }
+        }
+
+        /// <summary>
+        /// Whether or not this action has been completed
+        /// </summary>
+        public bool Completed
+        {
+            get
+            {
+                return _completed;
+            }
+            private set
+            {
+                _completed = value;
+            }
+        }
+
         #endregion
 
         #region Public methods
 
         public void ExecuteAction()
         {
-            switch (this.ActionType)
+            if (DateTime.Now >= ActionTime)
             {
-                case MotorTrialActionType.AdjustAutopositionerPosition:
+                switch (this.ActionType)
+                {
+                    case MotorTrialActionType.AdjustAutopositionerPosition:
 
-                    //Unbox the double from the object
-                    double position = (double)this.ActionParameters[AutopositionerParameterType.Position];
+                        //Unbox the double from the object
+                        double position = (double)this.ActionParameters[AutopositionerParameterType.Position];
 
-                    //Perform the autopositioner action
-                    MotoTrakAutopositioner.GetInstance().SetPosition(position);
+                        //Perform the autopositioner action
+                        MotoTrakAutopositioner.GetInstance().SetPosition(position);
 
-                    break;
-                case MotorTrialActionType.AdjustHitThreshold:
+                        break;
+                    case MotorTrialActionType.PlaySound:
 
-                    //TODO: complete this
+                        //Unbox the data from the dictionary
+                        double frequency = (double)this.ActionParameters[SoundActionParameterType.SoundFrequency];
+                        double duration = (double)this.ActionParameters[SoundActionParameterType.SoundDuration];
 
-                    break;
-                case MotorTrialActionType.PlaySound:
+                        //Perform the sound action
+                        //TO DO: complete this
 
-                    //Unbox the data from the dictionary
-                    double frequency = (double)this.ActionParameters[SoundActionParameterType.SoundFrequency];
-                    double duration = (double)this.ActionParameters[SoundActionParameterType.SoundDuration];
+                        break;
+                    case MotorTrialActionType.SendStimulationTrigger:
 
-                    //Perform the sound action
-                    //TO DO: complete this
+                        //Perform the stimulation trigger
+                        MotorBoard.GetInstance().TriggerStim();
 
-                    break;
-                case MotorTrialActionType.SendStimulationTrigger:
+                        break;
+                    case MotorTrialActionType.TriggerFeeder:
 
-                    //Perform the stimulation trigger
-                    MotorBoard.GetInstance().TriggerStim();
+                        //Perform the feed
+                        MotorBoard.GetInstance().TriggerFeeder();
 
-                    break;
-                case MotorTrialActionType.TriggerFeeder:
+                        break;
+                }
 
-                    //Perform the feed
-                    MotorBoard.GetInstance().TriggerFeeder();
-
-                    break;
+                Completed = true;
             }
         }
 

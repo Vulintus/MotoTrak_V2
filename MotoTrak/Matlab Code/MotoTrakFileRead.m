@@ -143,20 +143,11 @@ if (version == -5)
         N = fread(fid, 1, 'uint8');
         
         %Read in each variable parameter
-        variable_params = struct('name', {}, 'value', {});
+        variable_params = [];
         for i=1:N
-            %Read in the length of the parameter name
-            n_param_name = fread(fid, 1, 'uint8');
-            
-            %Read in the parameter name
-            param_name = fread(fid, n_param_name, '*char')';
-            
             %Read in the parameter value
-            param_value = fread(fid, 1, 'float64');
-            
-            new_param.name = param_name;
-            new_param.value = param_value;
-            variable_params(end+1) = new_param;
+            param_value = fread(fid, 1, 'float32');
+            variable_params(end+1) = param_value;
         end
         data.trial(trial_number).parameters = variable_params;
         
@@ -180,7 +171,7 @@ if (version == -5)
         num_streams = length(data.data_streams);
         data.trial(trial_number).signal = nan(num_streams, N);
         for i=1:num_streams
-            data.trial(trial_number).signal(i, :) = fread(fid, N, '*float64');
+            data.trial(trial_number).signal(i, :) = fread(fid, N, '*float32');
         end
         
     end

@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:StageDesigner"
              mc:Ignorable="d" 
-             d:DesignHeight="40" d:DesignWidth="950">
+             d:DesignHeight="40" d:DesignWidth="975">
     <Grid>
 
         <Grid.RowDefinitions>
@@ -32,11 +32,10 @@
 
             <StackPanel Name="AdaptiveParametersStackPanel" Visibility="{Binding Path=AdaptiveParametersVisibility, FallbackValue=Visible}" Orientation="Horizontal">
                 <TextBlock Text="In what way does the value change?" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                <ComboBox FontSize="10" SelectedIndex="{Binding Path=AdaptiveModeSelectedIndex, FallbackValue=0}" Margin="5,0"
-                          IsEnabled="{Binding Path=AdaptiveParametersAreEnabled, FallbackValue=False}">
-                    <ComboBoxItem Content="Median" />
-                    <ComboBoxItem Content="Linear" />
-                    <ComboBoxItem Content="Dynamic" />
+                <ComboBox FontSize="10" Margin="5,0"
+                          SelectedIndex="{Binding Path=AdaptiveModeSelectedIndex, FallbackValue=0}" 
+                          IsEnabled="{Binding Path=AdaptiveParametersAreEnabled, FallbackValue=False}"
+                          ItemsSource="{Binding Path=AdaptiveModes}">
                 </ComboBox>
 
                 <TextBlock Text="Minimum value:" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"  />
@@ -47,8 +46,8 @@
                 <TextBox Width="50" Margin="5,0" FontSize="10" Text="{Binding Path=ParameterMaximumValue, FallbackValue=0}"
                          IsEnabled="{Binding Path=AdaptiveParametersAreEnabled, FallbackValue=False}" />
             
-                <TextBlock Text="History size:" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"  />
-                <TextBox Width="50" Margin="5,0" FontSize="10" Text="{Binding Path=ParameterHistorySize, FallbackValue=10}"
+                <TextBlock Text="{Binding Path=IncrementText, FallbackValue=Increment}" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"  />
+                <TextBox Width="50" Margin="5,0" FontSize="10" Text="{Binding Path=ParameterIncrement, FallbackValue=10}"
                          IsEnabled="{Binding Path=AdaptiveParametersAreEnabled, FallbackValue=False}" />
             </StackPanel>
         </StackPanel>

@@ -41,11 +41,17 @@ namespace MotoTrakBase
 
         /// <summary>
         /// Creates a list of actions that MotoTrak should take given the success of a trial.
+        /// Each event that occurs is a 2-element Tuple of a MotorTrialEventType and an integer.
+        /// The MotoTrialEventType indicates what kind of event occurred during the trial.
+        /// The integer indicates at what index into the trial_signal the event occurred.
         /// </summary>
+        /// <param name="new_events">New events that have occurred during the present trial since the last time this function was executed.</param>
+        /// <param name="all_events">All events that have occurred during the present trial.</param>
         /// <param name="trial_signal">The device signal</param>
         /// <param name="stage">The currently selected stage</param>
         /// <returns></returns>
-        List<MotorTrialAction> ReactToTrialEvents(List<Tuple<MotorTrialEventType, int>> trial_events_list, 
+        List<MotorTrialAction> ReactToTrialEvents(List<Tuple<MotorTrialEventType, int>> new_events,
+            List<Tuple<MotorTrialEventType, int>> all_events,
             List<List<double>> trial_signal, MotorStage stage);
 
         /// <summary>

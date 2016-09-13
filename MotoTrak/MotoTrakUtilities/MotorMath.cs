@@ -201,6 +201,28 @@ namespace MotoTrakUtilities
         }
 
         /// <summary>
+        /// Calculate the Nth percentile of a sequence of numbers
+        /// </summary>
+        /// <param name="sequence">The sequence of numbers</param>
+        /// <param name="excelPercentile">Desired percentile between 0 and 1</param>
+        /// <returns>The number at the Nth percentile</returns>
+        public static double Percentile(double[] sequence, double excelPercentile)
+        {
+            Array.Sort(sequence);
+            int N = sequence.Length;
+            double n = (N - 1) * excelPercentile + 1;
+            // Another method: double n = (N + 1) * excelPercentile;
+            if (n == 1d) return sequence[0];
+            else if (n == N) return sequence[N - 1];
+            else
+            {
+                int k = (int)n;
+                double d = n - k;
+                return sequence[k - 1] + d * (sequence[k] - sequence[k - 1]);
+            }
+        }
+
+        /// <summary>
         /// Transposes a matrix (in this case a List of List<T>).
         /// Example:
         /// The following: [ [a1,b1,c1] [a2,b2,c2] [a3,b3,c3] ]
@@ -227,6 +249,26 @@ namespace MotoTrakUtilities
             }
 
             return outer;
+        }
+        
+        /// <summary>
+        /// Calculates the minimum number in an array, excluding NaN values.
+        /// </summary>
+        /// <param name="t">The array of numbers</param>
+        /// <returns>The minimum number found in the array</returns>
+        public static double NanMin ( List<double> t )
+        {
+            return t.Where(x => !Double.IsNaN(x)).Min();
+        }
+
+        /// <summary>
+        /// Calculates the maximum number in an array, excluding NaN values.
+        /// </summary>
+        /// <param name="t">The array of numbers</param>
+        /// <returns>The maximum number found in the array</returns>
+        public static double NanMax ( List<double> t )
+        {
+            return t.Where(x => !Double.IsNaN(x)).Max();
         }
     }
 }

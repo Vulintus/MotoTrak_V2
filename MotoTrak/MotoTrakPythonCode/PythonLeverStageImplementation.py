@@ -120,9 +120,9 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         #Return the result
         return result
 
-    def ReactToTrialEvents(self, trial_events_list, trial_signal, stage):
+    def ReactToTrialEvents(self, new_events, all_events, trial_signal, stage):
         result = List[MotorTrialAction]()
-        for event_tuple in trial_events_list:
+        for event_tuple in new_events:
             event_type = event_tuple.Item1
             if event_type is MotorTrialEventType.SuccessfulTrial:
                 #If a successful trial happened, then feed the animal

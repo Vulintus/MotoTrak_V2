@@ -163,10 +163,11 @@ namespace MotoTrakBase
             return Dynamic.InvokeMember(_pythonStageImplementationInstance, "CheckForTrialEvent", trial_signal, stage);
         }
 
-        public List<MotorTrialAction> ReactToTrialEvents(List<Tuple<MotorTrialEventType, int>> trial_events_list,
+        public List<MotorTrialAction> ReactToTrialEvents(List<Tuple<MotorTrialEventType, int>> new_events,
+                List<Tuple<MotorTrialEventType, int>> all_events,
                 List<List<double>> trial_signal, MotorStage stage)
         {
-            return Dynamic.InvokeMember(_pythonStageImplementationInstance, "ReactToTrialEvents", trial_events_list, trial_signal, stage);
+            return Dynamic.InvokeMember(_pythonStageImplementationInstance, "ReactToTrialEvents", new_events, all_events, trial_signal, stage);
         }
 
         public List<MotorTrialAction> PerformActionDuringTrial(List<List<double>> trial_signal, MotorStage stage)

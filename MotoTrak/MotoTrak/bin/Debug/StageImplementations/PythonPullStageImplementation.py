@@ -17,6 +17,7 @@ from MotoTrakBase import MotorStageStimulationType
 from MotoTrakBase import MotorStageAdaptiveThresholdType
 from MotoTrakBase import MotoTrak_V1_CommonParameters
 from MotoTrakBase import MotorTrialEventType
+from MotoTrakBase import MotorDeviceType
 
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
@@ -24,7 +25,7 @@ from MotoTrakUtilities import MotorMath
 class PythonPullStageImplementation (IMotorStageImplementation):
 
     #Declare string parameters for this stage
-    RecommendedDevice = 0
+    RecommendedDevice = MotorDeviceType.Pull
     TaskName = "Pull Task"
     TaskDescription = "The pull task is a straightforward task in which subjects must pull a handle with a certain amount of force to receive a reward."
     Hit_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.HitThreshold, "grams", True)
@@ -97,9 +98,9 @@ class PythonPullStageImplementation (IMotorStageImplementation):
         #Return the result
         return result
 
-    def ReactToTrialEvents(self, trial_events_list, trial_signal, stage):
+    def ReactToTrialEvents(self, new_events, all_events, trial_signal, stage):
         result = List[MotorTrialAction]()
-        for event_tuple in trial_events_list:
+        for event_tuple in new_events:
             event_type = event_tuple.Item1
             if event_type is MotorTrialEventType.SuccessfulTrial:
                 #If a successful trial happened, then feed the animal

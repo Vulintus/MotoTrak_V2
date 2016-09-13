@@ -31,7 +31,43 @@ namespace StageDesigner
 
         #endregion
 
+        #region Private methods
+
+        private List<MotorStageAdaptiveThresholdType> GetEnumValueForAdaptiveTypeListBox ()
+        {
+            var enum_values = Enum.GetValues(typeof(MotorStageAdaptiveThresholdType)).Cast<MotorStageAdaptiveThresholdType>().ToList();
+            enum_values.Remove(MotorStageAdaptiveThresholdType.Static);
+            enum_values.Remove(MotorStageAdaptiveThresholdType.Undefined);
+
+            return enum_values;
+        }
+
+        private List<string> GetStringValuesForAdaptiveTypeListBox ()
+        {
+            List<string> result = new List<string>();
+            var enum_values = GetEnumValueForAdaptiveTypeListBox();
+            foreach (var v in enum_values)
+            {
+                result.Add(MotorStageAdaptiveThresholdTypeConverter.ConvertToDescription(v));
+            }
+
+            return result;
+        }
+
+        #endregion
+
         #region Properties
+
+        /// <summary>
+        /// All the adaptive modes that can be selected for a motor stage parameter
+        /// </summary>
+        public List<string> AdaptiveModes
+        {
+            get
+            {
+                return GetStringValuesForAdaptiveTypeListBox();
+            }
+        }
 
         /// <summary>
         /// The model MotorStageParameter object
@@ -170,38 +206,23 @@ namespace StageDesigner
         {
             get
             {
-                switch (ModelParameter.AdaptiveThresholdType)
-                {
-                    case MotorStageAdaptiveThresholdType.Median:
-                        return 0;
-                    case MotorStageAdaptiveThresholdType.Linear:
-                        return 1;
-                    case MotorStageAdaptiveThresholdType.Dynamic:
-                        return 2;
-                    default:
-                        return 0;
-                }
+                var enum_values = GetEnumValueForAdaptiveTypeListBox();
+                int index = enum_values.IndexOf(ModelParameter.AdaptiveThresholdType);
+                if (index < 0)
+                    index = 0;
+                return index;
             }
             set
             {
+                var enum_values = GetEnumValueForAdaptiveTypeListBox();
                 int index = value;
-                switch (index)
+                if (enum_values.Count > 0 && index <= enum_values.Count)
                 {
-                    case 0:
-                        ModelParameter.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Median;
-                        break;
-                    case 1:
-                        ModelParameter.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Linear;
-                        break;
-                    case 2:
-                        ModelParameter.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Dynamic;
-                        break;
-                    default:
-                        ModelParameter.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Static;
-                        break;
+                    ModelParameter.AdaptiveThresholdType = enum_values[index];
                 }
-
+                
                 NotifyPropertyChanged("AdaptiveModeSelectedIndex");
+                NotifyPropertyChanged("IncrementText");
             }
         }
 
@@ -254,7 +275,7 @@ namespace StageDesigner
         /// <summary>
         /// The size of the history for this stage parameter
         /// </summary>
-        public string ParameterHistorySize
+        public string ParameterIncrement
         {
             get
             {
@@ -267,10 +288,28 @@ namespace StageDesigner
                 bool success = Int32.TryParse(max_value_string, out result);
                 if (success)
                 {
-                    ModelParameter.MaximumValue = result;
+                    ModelParameter.Increment = result;
                 }
 
-                NotifyPropertyChanged("ParameterHistorySize");
+                NotifyPropertyChanged("ParameterIncrement");
+            }
+        }
+
+        /// <summary>
+        /// The text that labels the edit box for the motor stage parameter Increment
+        /// </summary>
+        public string IncrementText
+        {
+            get
+            {
+                if (ModelParameter.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Linear)
+                {
+                    return "Increment:";
+                }
+                else
+                {
+                    return "History size:";
+                }
             }
         }
 
