@@ -201,9 +201,26 @@ namespace MotoTrak
                 foreach (var k in keys)
                 {
                     var sp = Model.CurrentSession.SelectedStage.StageParameters[k];
+
+                    //Now check to see if this stage parameter is a "plotted" parameter
+                    var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
+                    if (stage_impl != null)
+                    {
+                        var tuple_indicators = stage_impl.RequiredStageParameters[k];
+                        bool plot_this_annotation = tuple_indicators.Item3;
+                        if (!plot_this_annotation)
+                        {
+                            //If the stage implementation says to not create an annotation for this specific parameter,
+                            //then we will tell the loop to continue with its next iteration.
+                            //Otherwise, the code below this if-statement will execute and an annotation will be created.
+                            continue;
+                        }
+                    }
+
                     values.Add(sp.MinimumValue);
                     values.Add(sp.MaximumValue);
                     values.Add(sp.InitialValue);
+                    values.Add(sp.CurrentValue);
                 }
 
                 var ymin = MotorMath.NanMin(values);
@@ -218,6 +235,23 @@ namespace MotoTrak
                 }
             }
             
+        }
+
+        /// <summary>
+        /// Scales the x-axis to the appropriate size for a trial
+        /// </summary>
+        public void ScaleXAxis ()
+        {
+            //Figure out the proper scale
+            if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
+            {
+                //Get the x-axis object
+                var x_axis = Plot.Axes.Where(x => x.Position == AxisPosition.Bottom).FirstOrDefault();
+                if (x_axis != null)
+                {
+                    x_axis.MinimumRange = Model.CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial;
+                }
+            }
         }
 
         private void InitializePlot()

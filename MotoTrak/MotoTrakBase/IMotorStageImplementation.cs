@@ -37,7 +37,7 @@ namespace MotoTrakBase
         /// <param name="trial_signal">The device signal</param>
         /// <param name="stage">The currently selected stage</param>
         /// <returns></returns>
-        List<Tuple<MotorTrialEventType, int>> CheckForTrialEvent(List<List<double>> trial_signal, MotorStage stage);
+        List<Tuple<MotorTrialEventType, int>> CheckForTrialEvent(MotorTrial trial, int new_datapoint_count, MotorStage stage);
 
         /// <summary>
         /// Creates a list of actions that MotoTrak should take given the success of a trial.
@@ -50,9 +50,7 @@ namespace MotoTrakBase
         /// <param name="trial_signal">The device signal</param>
         /// <param name="stage">The currently selected stage</param>
         /// <returns></returns>
-        List<MotorTrialAction> ReactToTrialEvents(List<Tuple<MotorTrialEventType, int>> new_events,
-            List<Tuple<MotorTrialEventType, int>> all_events,
-            List<List<double>> trial_signal, MotorStage stage);
+        List<MotorTrialAction> ReactToTrialEvents(MotorTrial trial, MotorStage stage);
 
         /// <summary>
         /// Creates a list of actions that MotoTrak should take given some event in a trial that is 
@@ -63,7 +61,7 @@ namespace MotoTrakBase
         /// <param name="trial_signal">The device signal</param>
         /// <param name="stage">The currently selected stage</param>
         /// <returns></returns>
-        List<MotorTrialAction> PerformActionDuringTrial(List<List<double>> trial_signal, MotorStage stage);
+        List<MotorTrialAction> PerformActionDuringTrial(MotorTrial trial, MotorStage stage);
 
         /// <summary>
         /// Allows the creator of this stage to make custom messages that get shown to the user at the 
@@ -73,7 +71,7 @@ namespace MotoTrakBase
         /// <param name="trial_signal">The trial's signal</param>
         /// <param name="stage">The motor stage</param>
         /// <returns>A message as a string</returns>
-        string CreateEndOfTrialMessage(bool successful_trial, int trial_number, List<List<double>> trial_signal, MotorStage stage);
+        string CreateEndOfTrialMessage(int trial_number, MotorTrial trial, MotorStage stage);
 
         /// <summary>
         /// Allows the creator of this stage to calculate a y-value for the current trial that will be plotted onto the
@@ -84,13 +82,13 @@ namespace MotoTrakBase
         /// <param name="trial_signal">The transformed trial signal</param>
         /// <param name="stage">The current motor stage</param>
         /// <returns>A y-value to be plotted onto the session overview plot</returns>
-        double CalculateYValueForSessionOverviewPlot(List<List<double>> trial_signal, MotorStage stage);
+        double CalculateYValueForSessionOverviewPlot(MotorTrial trial, MotorStage stage);
 
         /// <summary>
         /// Allows the creator of the stage to adjust the hit threshold at the end of each trial.
         /// </summary>
         /// <param name="all_trials">All trials from the session up until the current point in time</param>
         /// <param name="stage">The stage that is currently being run</param>
-        void AdjustDynamicStageParameters(List<MotorTrial> all_trials, List<List<double>> trial_signal, MotorStage stage);
+        void AdjustDynamicStageParameters(List<MotorTrial> all_trials, MotorTrial current_trial, MotorStage stage);
     }
 }

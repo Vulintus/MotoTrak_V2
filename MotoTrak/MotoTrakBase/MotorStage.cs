@@ -564,13 +564,14 @@ namespace MotoTrakBase
                         
                         if (hit_thresh.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Static)
                         {
-                            hit_thresh.CurrentValue = hit_thresh.MaximumValue;
+                            hit_thresh.InitialValue = hit_thresh.MaximumValue;
+                            hit_thresh.CurrentValue = hit_thresh.InitialValue;
                         }
                         else
                         {
-                            hit_thresh.CurrentValue = hit_thresh.MinimumValue;
+                            hit_thresh.InitialValue = hit_thresh.MinimumValue;
+                            hit_thresh.CurrentValue = hit_thresh.InitialValue;
                         }
-
 
                         switch (hit_thresh_type)
                         {
@@ -586,8 +587,27 @@ namespace MotoTrakBase
 
                                 break;
                             case MotorTaskTypeV1.SustainedForce:
+
+                                //Set the implementation of this stage
+                                stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonSustainedPullStageImplementation.py"];
+
+                                //Set the parameters of this stage
+                                stage.StageParameters.Clear();
+                                stage.StageParameters["Initiation Threshold"] = init_thresh;
+                                stage.StageParameters["Minimum Force"] = new MotorStageParameter() { InitialValue = 35, CurrentValue = 35 };
+                                stage.StageParameters["Hold Duration"] = hit_thresh;
+
                                 break;
                             case MotorTaskTypeV1.TotalDegrees:
+
+                                //Set the implementation of this stage
+                                stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonKnobStageImplementation.py"];
+
+                                //Set the parameters of this stage
+                                stage.StageParameters.Clear();
+                                stage.StageParameters["Hit Threshold"] = hit_thresh;
+                                stage.StageParameters["Initiation Threshold"] = init_thresh;
+
                                 break;
                             case MotorTaskTypeV1.LeverPresses:
 
@@ -596,9 +616,9 @@ namespace MotoTrakBase
 
                                 //Set the parameters for this stage
                                 stage.StageParameters.Clear();
-                                stage.StageParameters["Full Press"] = new MotorStageParameter() { CurrentValue = 11 };
-                                stage.StageParameters["Release Point"] = new MotorStageParameter() { CurrentValue = 9 };
-                                stage.StageParameters["Initiation Threshold"] = new MotorStageParameter() { CurrentValue = 3 };
+                                stage.StageParameters["Full Press"] = new MotorStageParameter() { CurrentValue = 11, InitialValue = 11 };
+                                stage.StageParameters["Release Point"] = new MotorStageParameter() { CurrentValue = 9, InitialValue = 9 };
+                                stage.StageParameters["Initiation Threshold"] = new MotorStageParameter() { CurrentValue = 3, InitialValue = 3 };
                                 stage.StageParameters["Hit Threshold"] = hit_thresh;
 
                                 break;

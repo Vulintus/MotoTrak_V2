@@ -24,6 +24,9 @@ from MotoTrakUtilities import MotorMath
 
 class PythonLeverStageImplementation (IMotorStageImplementation):
 
+    #Variables needed for this task to operate
+    inter_press_interval = 0
+
     #Declare string parameters for this stage
     RecommendedDevice = MotorDeviceType.Lever
     TaskName = "Lever Task"
@@ -70,18 +73,22 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
                 maximal_value = stream_data_to_use.Max()
 
                 if maximal_value >= init_thresh:
+                    #Reset the inter-press-interval for the upcoming trial
+                    PythonLeverStageImplementation.inter_press_interval = 0
+
+                    #Set the return value
                     return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
                 
         return return_value
 
-    def CheckForTrialEvent(self, trial_signal, stage):
+    def CheckForTrialEvent(self, trial, new_datapoint_count, stage):
         #Instantiate a list of tuples that will hold any events that capture as a result of this function.
         result = List[Tuple[MotorTrialEventType, System.Int32]]()
 
         #Only proceed if a hit threshold has been defined for this stage
         if stage.StageParameters.ContainsKey(PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1):
             #Get the stream data from the device
-            stream_data = trial_signal[1]
+            stream_data = trial.TrialData[1]
             
             #Check to see if the hit threshold has been exceeded
             current_hit_thresh = stage.StageParameters[PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
@@ -113,17 +120,25 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
 
                 #If 2 hits have been detected, add a result to return to the caller
                 if (press_count >= stage.StageParameters[PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue):
+                    #Create a successful trial result
                     result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, indices_of_presses[indices_of_presses.Count-1]))
+
+                    #Calculate the inter-press interval for this trial
+                    indices_between_presses = MotorMath.DiffInt(indices_of_presses)
+                    avg_indices_bw_presses = indices_between_presses.Average();
+                    PythonLeverStageImplementation.inter_press_interval = avg_indices_bw_presses * stage.SamplePeriodInMilliseconds
+
             except ValueError:
                 pass
 
         #Return the result
         return result
 
-    def ReactToTrialEvents(self, trial_events_list, trial_signal, stage):
+    def ReactToTrialEvents(self, trial, stage):
         result = List[MotorTrialAction]()
-        for event_tuple in trial_events_list:
-            event_type = event_tuple.Item1
+        trial_events = trial.TrialEvents.Where(lambda x: x.Handled is False)
+        for evt in trial_events:
+            event_type = evt.EventType
             if event_type is MotorTrialEventType.SuccessfulTrial:
                 #If a successful trial happened, then feed the animal
                 new_action = MotorTrialAction()
@@ -138,22 +153,23 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
 
         return result
 
-    def PerformActionDuringTrial(self, trial_signal, stage):
+    def PerformActionDuringTrial(self, trial, stage):
         result = List[MotorTrialAction]()
         return result
 
-    def CreateEndOfTrialMessage(self, successful_trial, trial_number, trial_signal, stage):
+    def CreateEndOfTrialMessage(self, trial_number, trial, stage):
         msg = ""
         msg += "Trial " + str(trial_number) + " "
-        if successful_trial:
+        if trial.Result == MotorTrialResult.Hit:
             msg += "HIT"
         else:
             msg += "MISS"
+        msg += ", " + str(PythonLeverStageImplementation.inter_press_interval) + " ms"
         return msg
 
-    def CalculateYValueForSessionOverviewPlot(self, trial_signal, stage):
-        return 0
+    def CalculateYValueForSessionOverviewPlot(self, trial, stage):
+        return PythonLeverStageImplementation.inter_press_interval
 
-    def AdjustDynamicStageParameters(self, all_trials, trial_signal, stage):    
+    def AdjustDynamicStageParameters(self, all_trials, current_trial, stage):        
         return
 

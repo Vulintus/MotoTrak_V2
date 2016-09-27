@@ -368,6 +368,20 @@ namespace MotoTrakBase
         }
 
         /// <summary>
+        /// Indicates whether there are characters that need to be read on the serial line
+        /// </summary>
+        /// <returns>True or false</returns>
+        public bool SerialConnectionHasCharactersToRead ()
+        {
+            if (IsSerialConnectionValid)
+            {
+                return SerialConnection.BytesToRead > 0;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Returns the name or the label of the booth that we are connected to.
         /// In the event that the connection is not valid, it returns the string "Unknown booth".
         /// </summary>

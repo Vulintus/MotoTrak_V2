@@ -32,6 +32,8 @@ namespace MotoTrakBase
         private List<DateTime> _output_trigger_times = new List<DateTime>();
 
         private Dictionary<string, double> _variable_parameters = new Dictionary<string, double>();
+
+        private List<MotorTrialEvent> _trial_events = new List<MotorTrialEvent>();
         
         #endregion
 
@@ -257,6 +259,23 @@ namespace MotoTrakBase
             set
             {
                 _variable_parameters = value;
+            }
+        }
+
+        /// <summary>
+        /// Events that occur during the trial.  This list (as for now) is ONLY
+        /// populated during ACTIVELY running sessions.  This will not be populated
+        /// when loading a session from a file.
+        /// </summary>
+        public List<MotorTrialEvent> TrialEvents
+        {
+            get
+            {
+                return _trial_events;
+            }
+            set
+            {
+                _trial_events = value;
             }
         }
         

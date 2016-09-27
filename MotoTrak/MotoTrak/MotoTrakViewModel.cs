@@ -238,10 +238,11 @@ namespace MotoTrak
                     //Finally, let's change the selected stage itself
                     Model.CurrentSession.SelectedStage = new_stage;
 
-                    //Change the scale of the Y-axis on the plot based on the newly selected stage
+                    //Change the scale of the X-axis and Y-axis for the plot based on the newly selected stage.
                     if (PlotViewModel != null)
                     {
                         PlotViewModel.ScaleYAxis();
+                        PlotViewModel.ScaleXAxis();
                     }
                 }
             }

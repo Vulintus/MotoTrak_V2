@@ -49,7 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BasicStageImplementation.cs" />
+    <Compile Include="MultipleEventsAllowedAttribute.cs" />
     <Compile Include="ErrorLoggingService.cs" />
     <Compile Include="IMotorStageImplementation.cs" />
     <Compile Include="MotorBoard.cs" />
@@ -70,6 +70,7 @@
     <Compile Include="MotorTrial.cs" />
     <Compile Include="MotorTrialAction.cs" />
     <Compile Include="MotorTrialActionType.cs" />
+    <Compile Include="MotorTrialEvent.cs" />
     <Compile Include="MotorTrialEventType.cs" />
     <Compile Include="MotorTrialEventTypeConverter.cs" />
     <Compile Include="MotorTrialResult.cs" />
@@ -86,7 +87,6 @@
     <Compile Include="MotoTrak_V1_CommonParameters.cs" />
     <Compile Include="NotifyPropertyChangedObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PullStageImplementation.cs" />
     <Compile Include="PythonEngine.cs" />
     <Compile Include="PythonStageImplementation.cs" />
     <Compile Include="ReactToModelPropertyChanged.cs" />

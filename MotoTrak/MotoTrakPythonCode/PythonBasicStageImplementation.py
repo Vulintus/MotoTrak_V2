@@ -71,14 +71,14 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
                 
         return return_value
 
-    def CheckForTrialEvent(self, trial_signal, stage):
+    def CheckForTrialEvent(self, trial, new_datapoint_count, stage):
         #Instantiate a list of tuples that will hold any events that capture as a result of this function.
         result = List[Tuple[MotorTrialEventType, System.Int32]]()
 
         #Only proceed if a hit threshold has been defined for this stage
         if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
             #Get the stream data from the device
-            stream_data = trial_signal[1]
+            stream_data = trial.TrialData[1]
             
             #Check to see if the hit threshold has been exceeded
             current_hit_thresh = stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
@@ -98,11 +98,15 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
         #Return the result
         return result
 
-    def ReactToTrialEvents(self, new_events, all_events, trial_signal, stage):
+    def ReactToTrialEvents(self, trial, stage):
         result = List[MotorTrialAction]()
-        for event_tuple in new_events:
-            event_type = event_tuple.Item1
+        trial_events = trial.TrialEvents.Where(lambda x: x.Handled is False)
+        for evt in trial_events:
+            event_type = evt.EventType
             if event_type is MotorTrialEventType.SuccessfulTrial:
+                #Indicate to the program that we have handled this event
+                evt.Handled = True
+
                 #If a successful trial happened, then feed the animal
                 new_action = MotorTrialAction()
                 new_action.ActionType = MotorTrialActionType.TriggerFeeder
@@ -116,24 +120,24 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
 
         return result
 
-    def PerformActionDuringTrial(self, trial_signal, stage):
+    def PerformActionDuringTrial(self, trial, stage):
         result = List[MotorTrialAction]()
         return result
 
-    def CreateEndOfTrialMessage(self, successful_trial, trial_number, trial_signal, stage):
+    def CreateEndOfTrialMessage(self, trial_number, trial, stage):
         msg = ""
         msg += "Trial " + str(trial_number) + " "
-        if successful_trial:
+        if trial.Result == MotorTrialResult.Hit:
             msg += "HIT"
         else:
             msg += "MISS"
         return msg
 
-    def CalculateYValueForSessionOverviewPlot(self, trial_signal, stage):
+    def CalculateYValueForSessionOverviewPlot(self, trial, stage):
         #Adjust the hit threshold if necessary
         if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
             #Grab the device signal for this trial
-            stream_data = trial_signal[1]
+            stream_data = trial.TrialData[1]
 
             #Find the maximal force of the current trial
             max_force = stream_data.Where(lambda val, index: \
@@ -144,11 +148,11 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
 
         return System.Double.NaN
 
-    def AdjustDynamicStageParameters(self, all_trials, trial_signal, stage):
-        #Adjust the hit threshold if necessary
+    def AdjustDynamicStageParameters(self, all_trials, current_trial, stage):
+        #Adjust the hit threshold
         if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
             #Grab the device signal for this trial
-            stream_data = trial_signal[1]
+            stream_data = current_trial.TrialData[1]
         
             #Find the maximal force from the current trial
             max_force = stream_data.Where(lambda val, index: \
@@ -156,8 +160,8 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
                 (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max()
 
             #Retain the maximal force of the most recent 10 trials
-            stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_String].History.Enqueue(max_force);
-            stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_String].CalculateAndSetBoundedCurrentValue();
+            stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1].History.Enqueue(max_force)
+            stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1].CalculateAndSetBoundedCurrentValue()
             
         return
 

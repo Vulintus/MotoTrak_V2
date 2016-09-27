@@ -195,7 +195,7 @@ namespace MotoTrakBase
         public static MotorDeviceType ConvertAnalogDeviceValueToDeviceType(int deviceValue)
         {
             //Find out what device is there
-            if (deviceValue >= KNOB_MIN_VALUE && deviceValue <= KNOB_MAX_VALUE)
+            if ((deviceValue >= KNOB_MIN_VALUE && deviceValue <= KNOB_MAX_VALUE) || (deviceValue >= 950))
             {
                 //It's a knob
                 return MotorDeviceType.Knob;
@@ -268,6 +268,12 @@ namespace MotoTrakBase
                     //Toggle the knob as being turned on.  This is important because it initiates SPI communication, which is important
                     //for the knob to work properly.
                     motorBoard.KnobToggle(1);
+
+                    //Loop until the motor board responds (it should respond with a string that says something like "knob detected")
+                    while (!motorBoard.SerialConnectionHasCharactersToRead()) { /* empty loop */ }
+
+                    //Clear the stream
+                    motorBoard.ClearStream();
 
                     //The slope is set to a default of 0.25 for the Knob task.  This is due to the specific kind of rotary encoders we are using.
                     Slope = 0.25;

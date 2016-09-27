@@ -23,10 +23,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="PythonBasicStageImplementation.py" />
+    <Compile Include="PythonKnobStageImplementation.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PythonLeverStageImplementation.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PythonPullStageImplementation.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PythonSustainedPullStageImplementation.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

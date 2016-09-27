@@ -122,6 +122,49 @@ namespace MotoTrakUtilities
         }
 
         /// <summary>
+        /// Calculates the Matlab diff function of a list of integers
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="startIndex"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        public static List<int> DiffInt (List<int> a, int startIndex, int count)
+        {
+            List<int> b = new List<int>();
+            for (int i = 0; i < a.Count; i++)
+            {
+                if ((i < startIndex) || (i > (startIndex + count)))
+                {
+                    b.Add(a[i]);
+                }
+                else if (i <= (startIndex + count))
+                {
+                    if ((i + 1) < a.Count)
+                    {
+                        b.Add(a[i + 1] - a[i]);
+                    }
+                    else
+                    {
+                        //This is so we come out with the same amount of elements as we came in with
+                        b.Add(b.LastOrDefault());
+                    }
+                }
+            }
+
+            return b;
+        }
+
+        /// <summary>
+        /// Calculates the Matlab diff function of a list of integers
+        /// </summary>
+        /// <param name="a"></param>
+        /// <returns></returns>
+        public static List<int> DiffInt (List<int> a)
+        {
+            return DiffInt(a, 0, a.Count);
+        }
+
+        /// <summary>
         /// Finds the position of local maxima through a signal.
         /// </summary>
         /// <param name="v">The signal to be analyzed, as a list of doubles.</param>

@@ -57,5 +57,16 @@ namespace MotoTrakBase
             else
                 return thresholdType.ToString();
         }
+
+        public static bool AreMultipleEventsAllowed ( MotorTrialEventType eventType )
+        {
+            FieldInfo fi = eventType.GetType().GetField(eventType.ToString());
+            MultipleEventsAllowedAttribute[] attributes = (MultipleEventsAllowedAttribute[])fi.GetCustomAttributes(
+                typeof(MultipleEventsAllowedAttribute), false);
+            if (attributes != null && attributes.Length > 0)
+                return attributes[0].AllowMultipleEvents;
+            else
+                return false;
+        }
     }
 }
