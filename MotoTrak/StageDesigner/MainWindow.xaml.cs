@@ -13,6 +13,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Microsoft.Win32;
+using System.IO;
 
 namespace StageDesigner
 {
@@ -35,37 +37,69 @@ namespace StageDesigner
 
         private void NewStage_Click (object sender, RoutedEventArgs e)
         {
-
+            StageDesignerViewModel vm = DataContext as StageDesignerViewModel;
+            if (vm != null)
+            {
+                vm.CreateNewStage();
+            }
         }
 
         private void OpenStage_Click(object sender, RoutedEventArgs e)
         {
-
+            StageDesignerViewModel vm = DataContext as StageDesignerViewModel;
+            if (vm != null)
+            {
+                vm.OpenStageFile();
+            }
         }
 
         private void SaveStage_Click(object sender, RoutedEventArgs e)
         {
-
+            StageDesignerViewModel vm = DataContext as StageDesignerViewModel;
+            if (vm != null)
+            {
+                vm.SaveSelectedStageFile();
+            }
         }
 
         private void SaveStageAs_Click(object sender, RoutedEventArgs e)
         {
-
+            StageDesignerViewModel vm = DataContext as StageDesignerViewModel;
+            if (vm != null)
+            {
+                vm.SaveStageFileAs();                
+            }
         }
 
         private void CloseStage_Click(object sender, RoutedEventArgs e)
         {
-
+            StageDesignerViewModel vm = DataContext as StageDesignerViewModel;
+            if (vm != null)
+            {
+                vm.CloseSelectedStage();
+            }
         }
 
         private void CloseAllStages_Click(object sender, RoutedEventArgs e)
         {
-
+            StageDesignerViewModel vm = DataContext as StageDesignerViewModel;
+            if (vm != null)
+            {
+                vm.CloseAllStages();
+            }
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
+            //Safely close all the stages in the list of open stages
+            StageDesignerViewModel vm = DataContext as StageDesignerViewModel;
+            if (vm != null)
+            {
+                vm.CloseAllStages();
+            }
 
+            //Close the window
+            this.Close();
         }
     }
 }

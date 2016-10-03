@@ -49,7 +49,8 @@
 
                         <TextBlock Grid.Row="3" Grid.Column="0" Text="Stage Description: " VerticalAlignment="Center" />
                         <TextBox Grid.Row="3" Grid.Column="1" Width="400" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0"
-                         ToolTip="{Binding Path=StageDescriptionTooltip}" />
+                                 Text="{Binding Path=StageDescription}" 
+                                 ToolTip="{Binding Path=StageDescriptionTooltip}" />
                     </Grid>
                 </GroupBox>
 
@@ -129,7 +130,7 @@
         </DockPanel>
 
         <TabControl Name="StageFileTabControl" 
-                    SelectedIndex="0"
+                    SelectedIndex="{Binding Path=SelectedStageIndex, FallbackValue=0}"
                     ItemTemplate="{StaticResource StageHeaderDataTemplate}" 
                     ContentTemplate="{StaticResource StageDefinitionDataTemplate}" 
                     ItemsSource="{Binding Path=OpenStages}"

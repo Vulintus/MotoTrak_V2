@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using MotoTrakUtilities;
 using System.Collections.Concurrent;
+using System.IO;
 
 namespace MotoTrakBase
 {
@@ -155,7 +156,7 @@ namespace MotoTrakBase
             {
                 return _stageFilePath;
             }
-            private set
+            set
             {
                 _stageFilePath = value;
             }
@@ -170,7 +171,7 @@ namespace MotoTrakBase
             {
                 return _stageFileName;
             }
-            private set
+            set
             {
                 _stageFileName = value;
             }
@@ -184,7 +185,14 @@ namespace MotoTrakBase
         {
             get
             {
-                return (StageFilePath + StageFileName);
+                if (!String.IsNullOrEmpty(StageFilePath) && !String.IsNullOrEmpty(StageFileName))
+                {
+                    return (StageFilePath + @"\" + StageFileName);
+                }
+                else
+                {
+                    return string.Empty;
+                }
             }
         }
 
@@ -240,7 +248,7 @@ namespace MotoTrakBase
             {
                 return _stageImplementation;
             }
-            private set
+            set
             {
                 _stageImplementation = value;
             }
@@ -427,7 +435,7 @@ namespace MotoTrakBase
 
         #endregion
 
-        #region Methods
+        #region Static Methods
 
         /// <summary>
         /// Returns a list of all motor stages found.  Before calling this function, you MUST read in the MotoTrak configuration
@@ -452,6 +460,234 @@ namespace MotoTrakBase
             //If no proper way to load stages was used, then let's just return an empty list of stages.
             return new List<MotorStage>();
         }
+
+        /// <summary>
+        /// Saves a MotorStage object out to a file
+        /// </summary>
+        /// <param name="stage">The stage to save</param>
+        /// <param name="full_path_and_filename">The filename</param>
+        public static void SaveStageToFile (MotorStage stage, string full_path_and_filename)
+        {
+            FileInfo file_info = new FileInfo(full_path_and_filename);
+            
+            //Create the directory if it needs to be made
+            if (file_info.Directory != null && !file_info.Directory.Exists)
+            {
+                file_info.Directory.Create();
+            }
+
+            //Attempt to open the file for writing
+            StreamWriter writer = null;
+            bool successful_open = true;
+            
+            try
+            {
+                writer = new StreamWriter(full_path_and_filename);
+            }
+            catch (Exception e)
+            {
+                successful_open = false;
+                ErrorLoggingService.GetInstance().LogExceptionError(e);
+            }
+
+            if (successful_open)
+            {
+                //First, save the file version.
+                writer.WriteLine("Stage File Version: 1");
+
+                //Next, save the stage name
+                writer.WriteLine("Stage Name: " + stage.StageName);
+
+                //Save the stage description
+                writer.WriteLine("Stage Description: " + stage.Description);
+
+                //Save the name of the stage implementation file
+                var stage_impls = MotoTrakConfiguration.GetInstance().PythonStageImplementations;
+                string stage_impl_name = string.Empty;
+                foreach (var kvp in stage_impls)
+                {
+                    if (kvp.Value == stage.StageImplementation)
+                    {
+                        stage_impl_name = kvp.Key;
+                    }
+                }
+                
+                writer.WriteLine("Stage Implementation: " + stage_impl_name);
+
+                //Save the stage output trigger type
+                writer.WriteLine("Stage Output Trigger: " +
+                    MotorStageStimulationTypeConverter.ConvertToDescription(stage.OutputTriggerType));
+
+                //Save the pre-trial sampling duration
+                writer.WriteLine("Pre-Trial Sampling Duration: " + MotorStage.FormMotorStageParameter(stage.PreTrialSamplingPeriodInSeconds, false));
+
+                //Save the hit window duration
+                writer.WriteLine("Hit Window Duration: " + MotorStage.FormMotorStageParameter(stage.HitWindowInSeconds, false));
+
+                //Save the post-trial sampling duration
+                writer.WriteLine("Post-Trial Sampling Duration: " + MotorStage.FormMotorStageParameter(stage.PostTrialSamplingPeriodInSeconds, false));
+
+                //Save the post-trial timeout duration
+                writer.WriteLine("Post-Trial Timeout Duration: " + MotorStage.FormMotorStageParameter(stage.PostTrialTimeoutInSeconds, false));
+
+                //Save the device position
+                writer.WriteLine("Device Position: " + MotorStage.FormMotorStageParameter(stage.Position, false));
+
+                //Save each individual stage parameter
+                foreach (var sp in stage.StageParameters)
+                {
+                    writer.WriteLine("Stage Parameter: " + MotorStage.FormMotorStageParameter(sp.Value, true));
+                }
+
+                //We are done. Close the file.
+                writer.Close();
+            }
+        }
+
+        /// <summary>
+        /// Loads a MotorStage object from a file
+        /// </summary>
+        /// <param name="full_path_and_filename">The file name</param>
+        /// <returns>The MotoTrak stage</returns>
+        public static MotorStage LoadStageFromFile (string full_path_and_filename)
+        {
+            //Create an empty motor stage to use as we load in the stage file
+            MotorStage stage = new MotorStage();
+
+            //Check to see if the desired stage file exists
+            FileInfo file_info = new FileInfo(full_path_and_filename);
+            if (file_info.Exists)
+            {
+                //Save the stage path and file name to the stage object for future referencing
+                stage.StageFilePath = file_info.DirectoryName;
+                stage.StageFileName = file_info.Name;
+
+                //Create a stream reader object
+                StreamReader reader = null;
+
+                try
+                {
+                    //Try to open a handle to the stage file
+                    reader = new StreamReader(full_path_and_filename);
+                }
+                catch (Exception e)
+                {
+                    //Log the exception that occurred
+                    ErrorLoggingService.GetInstance().LogExceptionError(e);
+
+                    //Exit the function
+                    return null;
+                }
+
+                //Create a variable that indicates whether we have discovered the file version yet
+                bool version_found = false;
+                int file_version = 0;
+
+                //Continue loading the stage
+                while (!reader.EndOfStream)
+                {
+                    //Read in a line from the stage file
+                    string input_string = reader.ReadLine();
+
+                    //Parse away any comments that are at the end of the line
+                    string[] whole_line_parts = input_string.Split(new char[] { '%' }, 2);
+                    string line_without_comments = whole_line_parts[0].Trim();
+
+                    //If this line was just an empty line, or a line full of comments, skip it
+                    if (string.IsNullOrEmpty(line_without_comments))
+                    {
+                        continue;
+                    }
+
+                    //Check to see if the file version has been found
+                    if (!version_found)
+                    {
+                        //The file version MUST be the first thing in the file (other than comments).
+                        //If anything comes before the file version, it will be ignored.
+                        string[] parameter_string_parts = line_without_comments.Split(new char[] { ':' }, 2);
+                        string parameter = parameter_string_parts[0].Trim();
+                        if (parameter.Equals("Stage File Version"))
+                        {
+                            bool success = Int32.TryParse(parameter_string_parts[1].Trim(), out file_version);
+                            if (!success)
+                            {
+                                ErrorLoggingService.GetInstance().LogStringError("Unable to read stage file version.");
+                                return null;
+                            }
+                            else
+                            {
+                                version_found = true;
+                                if (file_version != 1)
+                                {
+                                    ErrorLoggingService.GetInstance().LogStringError("Stage has an incompatible file version.");
+                                    return null;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //At this point, we have found the file version, so we can read in parameters
+                        string[] parameter_string_parts = line_without_comments.Split(new char[] { ':' }, 2);
+                        string parameter = parameter_string_parts[0].Trim();
+
+                        //Check the parameter and read it in
+                        if (parameter.Equals("Stage Name"))
+                        {
+                            stage.StageName = parameter_string_parts[1].Trim();
+                        }
+                        else if (parameter.Equals("Stage Description"))
+                        {
+                            stage.Description = parameter_string_parts[1].Trim();
+                        }
+                        else if (parameter.Equals("Stage Implementation"))
+                        {
+                            stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations[parameter_string_parts[1].Trim()];
+                        }
+                        else if (parameter.Equals("Stage Output Trigger"))
+                        {
+                            stage.OutputTriggerType = MotorStageStimulationTypeConverter.ConvertToMotorStageStimulationType(parameter_string_parts[1].Trim());
+                        }
+                        else if (parameter.Equals("Pre-Trial Sampling Duration"))
+                        {
+                            stage.PreTrialSamplingPeriodInSeconds = MotorStage.ParseMotorStageParameter(parameter_string_parts[1]);
+                        }
+                        else if (parameter.Equals("Hit Window Duration"))
+                        {
+                            stage.HitWindowInSeconds = MotorStage.ParseMotorStageParameter(parameter_string_parts[1]);
+                        }
+                        else if (parameter.Equals("Post-Trial Sampling Duration"))
+                        {
+                            stage.PostTrialSamplingPeriodInSeconds = MotorStage.ParseMotorStageParameter(parameter_string_parts[1]);
+                        }
+                        else if (parameter.Equals("Post-Trial Timeout Duration"))
+                        {
+                            stage.PostTrialTimeoutInSeconds = MotorStage.ParseMotorStageParameter(parameter_string_parts[1]);
+                        }
+                        else if (parameter.Equals("Device Position"))
+                        {
+                            stage.Position = MotorStage.ParseMotorStageParameter(parameter_string_parts[1]);
+                        }
+                        else if (parameter.Equals("Stage Parameter"))
+                        {
+                            MotorStageParameter p = MotorStage.ParseMotorStageParameterWithName(parameter_string_parts[1]);
+                            stage.StageParameters[p.ParameterName] = p;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                ErrorLoggingService.GetInstance().LogStringError("Unable to find stage file!");
+            }
+            
+            //Return the loaded stage
+            return stage;
+        }
+        
+        #endregion
+
+        #region Private static methods
 
         /// <summary>
         /// Returns a list of all motor stages found in a spreadsheet.  The spreadsheet location is the URI that is
@@ -654,6 +890,73 @@ namespace MotoTrakBase
             }
 
             return stages;
+        }
+
+        /// <summary>
+        /// Parses out a motor stage parameter from a string that contains all the parts
+        /// </summary>
+        /// <param name="parts">The string containing the stage parameter parts</param>
+        /// <returns>The motor stage parameter</returns>
+        private static MotorStageParameter ParseMotorStageParameter(string parts)
+        {
+            string[] parts_array = parts.Split(new char[] { ',' }, 6);
+
+            MotorStageParameter p = new MotorStageParameter()
+            {
+                ParameterType = (parts_array[0].Trim().Equals("Fixed")) ?
+                    MotorStageParameter.StageParameterType.Fixed : MotorStageParameter.StageParameterType.Variable,
+                AdaptiveThresholdType =
+                    MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdType(parts_array[1].Trim()),
+                InitialValue = Double.Parse(parts_array[2]),
+                MinimumValue = Double.Parse(parts_array[3]),
+                MaximumValue = Double.Parse(parts_array[4]),
+                Increment = Double.Parse(parts_array[5]),
+            };
+
+            p.CurrentValue = p.InitialValue;
+
+            return p;
+        }
+
+        private static MotorStageParameter ParseMotorStageParameterWithName(string parts)
+        {
+            string[] parts_array = parts.Split(new char[] { ',' }, 7);
+
+            MotorStageParameter p = new MotorStageParameter()
+            {
+                ParameterName = parts_array[0].Trim(),
+                ParameterType = (parts_array[1].Trim().Equals("Fixed")) ?
+                    MotorStageParameter.StageParameterType.Fixed : MotorStageParameter.StageParameterType.Variable,
+                AdaptiveThresholdType =
+                    MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdType(parts_array[2].Trim()),
+                InitialValue = Double.Parse(parts_array[3]),
+                MinimumValue = Double.Parse(parts_array[4]),
+                MaximumValue = Double.Parse(parts_array[5]),
+                Increment = Double.Parse(parts_array[6]),
+            };
+
+            p.CurrentValue = p.InitialValue;
+
+            return p;
+        }
+
+        private static string FormMotorStageParameter (MotorStageParameter p, bool save_name_as_part_of_it)
+        {
+            string output = string.Empty;
+            if (save_name_as_part_of_it)
+            {
+                output = p.ParameterName + ", ";
+            }
+
+            output += (p.ParameterType == MotorStageParameter.StageParameterType.Fixed) ? "Fixed" : "Variable";
+            output += ", ";
+            output += MotorStageAdaptiveThresholdTypeConverter.ConvertToDescription(p.AdaptiveThresholdType) + ", ";
+            output += p.InitialValue.ToString() + ", ";
+            output += p.MinimumValue.ToString() + ", ";
+            output += p.MaximumValue.ToString() + ", ";
+            output += p.Increment.ToString() + ", ";
+
+            return output;
         }
 
         #endregion

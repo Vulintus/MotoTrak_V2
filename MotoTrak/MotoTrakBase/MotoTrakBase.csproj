@@ -66,7 +66,6 @@
     <Compile Include="MotorStageParameter.cs" />
     <Compile Include="MotorStageStimulationType.cs" />
     <Compile Include="MotorStageStimulationTypeConverter.cs" />
-    <Compile Include="MotorStreamParameters.cs" />
     <Compile Include="MotorTrial.cs" />
     <Compile Include="MotorTrialAction.cs" />
     <Compile Include="MotorTrialActionType.cs" />

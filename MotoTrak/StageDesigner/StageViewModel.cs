@@ -24,6 +24,7 @@ namespace StageDesigner
             StageModel = stage_to_edit;
             StageParameters.CollectionChanged += StageParameters_CollectionChanged;
 
+            SetStageImplementation();
             InstantiateRequiredStageParameters();
             SetDeviceToRecommendedDeviceForStageImplementation();
         }
@@ -128,7 +129,9 @@ namespace StageDesigner
                         MotorStageParameter new_param = new MotorStageParameter()
                         {
                             ParameterName = p.Item1,
-                            ParameterUnits = p.Item2
+                            ParameterUnits = p.Item2,
+                            InitialValue = 0, 
+                            CurrentValue = 0
                         };
 
                         //Add it to our dictionary of stage parameters
@@ -169,6 +172,15 @@ namespace StageDesigner
             NotifyPropertyChanged("DeviceSelectedIndex");
             NotifyPropertyChanged("DevicePositionWarningVisibility");
             NotifyPropertyChanged("DeviceTypeWarningVisibility");
+        }
+
+        private void SetStageImplementation ()
+        {
+            var stage_impls = GetOrderedListOfPythonStageImplementations();
+            if (stage_impls != null && stage_impls.Count > 0 && _selected_task_index >= 0 && _selected_task_index < stage_impls.Count)
+            {
+                StageModel.StageImplementation = stage_impls[_selected_task_index].Item2;
+            }
         }
 
         #endregion
@@ -271,9 +283,16 @@ namespace StageDesigner
             }
             set
             {
+                //Get the newly selected index
                 _selected_task_index = value;
 
+                //Set the stage implementation in the model stage object
+                SetStageImplementation();
+
+                //Instantiate required stage parameters for this stage, based on the stage implementation
                 InstantiateRequiredStageParameters();
+                
+                //Set the recommended device for this stage, based on the stage implementation
                 SetDeviceToRecommendedDeviceForStageImplementation();
 
                 NotifyPropertyChanged("SelectedTaskIndex");
