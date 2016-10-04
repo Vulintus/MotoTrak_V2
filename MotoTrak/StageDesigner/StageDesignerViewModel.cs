@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace StageDesigner
 {
@@ -39,6 +40,8 @@ namespace StageDesigner
         private void _open_stages_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             NotifyPropertyChanged("OpenStages");
+            NotifyPropertyChanged("StageFileTabControlVisibility");
+            NotifyPropertyChanged("NoStagesOpenMessageVisibility");
         }
 
         #endregion
@@ -72,6 +75,43 @@ namespace StageDesigner
             }
         }
 
+        /// <summary>
+        /// The visibility of the stage tab control, determine by whether or not any stages are open
+        /// </summary>
+        public Visibility StageFileTabControlVisibility
+        {
+            get
+            {
+                if (this.OpenStages == null || this.OpenStages.Count == 0)
+                {
+                    return Visibility.Collapsed;
+                }
+                else
+                {
+                    return Visibility.Visible;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether or not to display the message to the user that tells the user that
+        /// there are no stages currently open for editing.
+        /// </summary>
+        public Visibility NoStagesOpenMessageVisibility
+        {
+            get
+            {
+                if (this.OpenStages == null || this.OpenStages.Count == 0)
+                {
+                    return Visibility.Visible;
+                }
+                else
+                {
+                    return Visibility.Collapsed;
+                }
+            }
+        }
+
         #endregion
 
         #region Methods to save and open stages
@@ -85,6 +125,9 @@ namespace StageDesigner
             //to the list of "Open Stages" in the GUI.
             MotorStage new_stage = new MotorStage();
             this.OpenStages.Add(new StageViewModel(new_stage));
+
+            //Change the selected stage index to be that of the new stage
+            this.SelectedStageIndex = this.OpenStages.Count - 1;
         }
 
         /// <summary>
@@ -203,6 +246,21 @@ namespace StageDesigner
 
             //Update the selected stage index
             this.SelectedStageIndex = 0;
+        }
+
+        /// <summary>
+        /// Closes a specific tab at a specified index
+        /// </summary>
+        /// <param name="index">The index of the tab to close</param>
+        public void CloseStageTabAtIndex (int index)
+        {
+            this.OpenStages.RemoveAt(index);
+
+            //Make sure the selected stage index is still valid
+            if (this.SelectedStageIndex >= this.OpenStages.Count)
+            {
+                this.SelectedStageIndex = Math.Max(0, this.OpenStages.Count - 1);
+            }
         }
 
         #endregion

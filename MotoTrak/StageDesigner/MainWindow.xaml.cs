@@ -101,5 +101,33 @@ namespace StageDesigner
             //Close the window
             this.Close();
         }
+
+        private void CloseTabButton_Click(object sender, RoutedEventArgs e)
+        {
+            //Find the tab item that received the close event
+            var p = sender as DependencyObject;
+            while (p != null)
+            {
+                if (p is TabItem)
+                    break;
+                else
+                {
+                    p = VisualTreeHelper.GetParent(p);
+                }
+            }
+            
+            //If found, then close the tab
+            if (p != null)
+            {
+                TabItem user_tab = p as TabItem;
+                var item_index = StageFileTabControl.Items.Cast<StageViewModel>().ToList().IndexOf(user_tab.DataContext as StageViewModel);
+
+                StageDesignerViewModel vm = DataContext as StageDesignerViewModel;
+                if (vm != null)
+                {
+                    vm.CloseStageTabAtIndex(item_index);
+                }
+            }
+        }
     }
 }

@@ -4,14 +4,38 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StageDesigner"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Title="MotoTrak Stage Designer" Height="850" Width="1100">
 
     <!-- Define resources for this Window -->
     <Window.Resources>
 
-        <DataTemplate x:Key="StageHeaderDataTemplate">
-            <TextBlock Text="{Binding Path=StageNameForTabHeader, FallbackValue=TestStage}" />
+        <ControlTemplate x:Key="CloseButtonTemplate" TargetType="Button">
+            <Path Data="M0,0 L8,8 M8,0 L0,8" Margin="5,5,0,0" StrokeThickness="3">
+                <Path.Style>
+                    <Style TargetType="{x:Type Path}">
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="False">
+                                <Setter Property="Stroke" Value="LightGray" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Stroke" Value="Red" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Path.Style>
+            </Path>
+        </ControlTemplate>
+
+        <DataTemplate x:Key="StageHeaderDataTemplate" DataType="TabItem">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding Path=StageNameForTabHeader, FallbackValue=TestStage}" />
+                <Button Template="{StaticResource ResourceKey=CloseButtonTemplate}"
+                        Click="CloseTabButton_Click" 
+                        CommandParameter="{Binding Path=StageNameForTabHeader}">
+                </Button>
+            </StackPanel>
         </DataTemplate>
 
         <!-- This is the data template for all the stage definition documents that will be shown in tabs in this window. -->
@@ -134,9 +158,19 @@
                     ItemTemplate="{StaticResource StageHeaderDataTemplate}" 
                     ContentTemplate="{StaticResource StageDefinitionDataTemplate}" 
                     ItemsSource="{Binding Path=OpenStages}"
+                    Visibility="{Binding Path=StageFileTabControlVisibility, FallbackValue=Collapsed}"
                     >
             <!-- Stage files will become tabs in this tab control when they are opened. -->
         </TabControl>
+
+        <Grid Height="800" Visibility="{Binding Path=NoStagesOpenMessageVisibility}">
+            <TextBlock HorizontalAlignment="Center" 
+                   VerticalAlignment="Center" 
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Text="Looks like you have a blank slate.  Open a stage to edit it, or create a new one!" />
+        </Grid>
         
+
     </StackPanel>
 </Window>
