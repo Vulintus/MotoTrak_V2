@@ -5,14 +5,35 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MotoTrak"
         mc:Ignorable="d"
-        Title="Please select a MotoTrak controller" SizeToContent="Height" WindowStartupLocation="CenterOwner"  MinHeight="300" Height="Auto" Width="300">
+        Title="Please select a MotoTrak controller" 
+        SizeToContent="Height" 
+        WindowStartupLocation="CenterOwner"  
+        MinHeight="300" 
+        Height="Auto" 
+        Width="350">
     <Grid>
         <ListBox ItemsSource="{Binding Path=AvailablePorts}" SelectedIndex="{Binding Path=SelectedPortIndex}">
-            <ListBox.ItemContainerStyle>
-                <Style TargetType="ListBoxItem">
-                    <Setter Property="FontSize" Value="18" />
-                </Style>
-            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="{Binding Path=BoothName, FallbackValue=Booth}" FontSize="24" />
+                        <StackPanel Orientation="Horizontal">
+                            <!--<Path Data="M 0,0 L 0,0 5,10 L 5,10 10,-10" Stroke="ForestGreen" Fill="ForestGreen" Margin="0,0,10,0" />-->
+                            <Canvas Visibility="{Binding Path=ConnectionBadVisibility, FallbackValue=Collapsed}"
+                                    Width="16" Height="16" Margin="2,0">
+                                <Line X1="4" X2="12" Y1="4" Y2="12" StrokeThickness="2" Stroke="Red" />
+                                <Line X1="4" X2="12" Y1="12" Y2="4" StrokeThickness="2" Stroke="Red" />
+                            </Canvas>
+                            <Canvas Visibility="{Binding Path=ConnectionGoodVisibility, FallbackValue=Visible}"
+                                    Width="16" Height="16" Margin="2,0">
+                                <Line X1="4" Y1="8" X2="6" Y2="12" StrokeThickness="2" Stroke="Green" />
+                                <Line X1="6" Y1="12" X2="12" Y2="4" StrokeThickness="2" Stroke="Green" />
+                            </Canvas>
+                            <TextBlock Text="{Binding Path=DeviceInformation, FallbackValue=Arduino}" FontSize="10" />
+                        </StackPanel>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
         </ListBox>
 
         <Button Content="OK" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="120" Height="40" Margin="5,0,0,5"

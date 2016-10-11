@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO.Ports;
+using System.Management;
 
 namespace MotoTrakBase
 {
@@ -929,6 +930,41 @@ namespace MotoTrakBase
                 //may throw an exception. In this case, we will return a device with an unknown type.
                 return new MotorDevice();
             }
+        }
+
+        #endregion
+
+        #region Static methods
+
+        public static List<USBDeviceInfo> QueryConnectedArduinoDevices ()
+        {
+            //Create a list to hold information from USB devices
+            List<USBDeviceInfo> devices = new List<USBDeviceInfo>();
+
+            //Query all connected devices
+            var searcher = new ManagementObjectSearcher(@"SELECT * FROM WIN32_SerialPort");
+            var collection = searcher.Get();
+
+            //Grab the information we need
+            foreach (var device in collection)
+            {
+                string id = (string)device.GetPropertyValue("DeviceID");
+                string desc = (string)device.GetPropertyValue("Description");
+                USBDeviceInfo d = new USBDeviceInfo(desc, id);
+                
+                //Check to see if the available serial port is a connected Arduino device
+                if (d.Description.Contains("Arduino"))
+                {
+                    //If so, add the Arduino to our list of devices
+                    devices.Add(d);
+                }
+            }
+
+            //Dispose of the collection of queried devices
+            collection.Dispose();
+
+            //Return the list of devices that were found
+            return devices;
         }
 
         #endregion

@@ -7,7 +7,7 @@
         xmlns:winformchart="clr-namespace:System.Windows.Forms.DataVisualization.Charting;assembly=System.Windows.Forms.DataVisualization"
         xmlns:local="clr-namespace:MotoTrak"
         mc:Ignorable="d"
-        Title="MotoTrak" MinHeight="490" Height="490" MinWidth="600" Width="600"
+        Title="MotoTrak" MinHeight="490" Height="530" MinWidth="600" Width="600"
         Closed="Window_Closed">
     <Window.DataContext>
         <local:MotoTrakViewModel />
@@ -16,7 +16,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="100" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="110" />
+            <RowDefinition Height="150" />
         </Grid.RowDefinitions>
 
         <Grid Name="SessionInfoRegion" Grid.Row="0" Margin="5">
@@ -74,7 +74,6 @@
         </Grid>
         -->
         
-        
         <oxy:PlotView Grid.Row="1" MinHeight="250" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" 
                       Model="{Binding Path=PlotViewModel.Plot}" MouseEnter="PlotView_MouseEnter"
                       MouseLeave="PlotView_MouseLeave" />
@@ -104,7 +103,7 @@
         </Grid>
         <!-- End of UI elements meant for debugging purposes -->
 
-        <Grid Name="ButtonsAndMessagesRegion" Height="100" Grid.Row="2" Margin="5">
+        <Grid Name="ButtonsAndMessagesRegion" Height="140" Grid.Row="2" Margin="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="150" />
                 <ColumnDefinition Width="*" />
@@ -122,6 +121,15 @@
                             />
                 <Button HorizontalAlignment="Left"
                             Height="30" Width="150" Margin="0,0,0,5" 
+                            Content="{Binding Path=ManualFeedButtonText,FallbackValue=Feed}"
+                            IsEnabled="{Binding Path=ManualFeedButtonEnabled}"
+                            Click="FeedButtonClick"
+                            FontWeight="Bold"
+                            FontSize="18"
+                            Visibility="{Binding Path=ManualFeedButtonVisibility, FallbackValue=Visible}"
+                            />
+                <Button HorizontalAlignment="Left"
+                            Height="30" Width="150" Margin="0,0,0,5" 
                             Content="{Binding Path=PauseOrUnpauseButtonText,FallbackValue=Pause}" 
                             IsEnabled="{Binding Path=PauseButtonEnabled}"
                             Click="PauseButtonClick"
@@ -130,14 +138,14 @@
                             Visibility="{Binding Path=PauseButtonVisibility, FallbackValue=Visible}"
                             />
                 <Button HorizontalAlignment="Left"
-                            Height="30" Width="150" Margin="0,0,0,5" 
-                            Content="{Binding Path=ManualFeedButtonText,FallbackValue=Feed}"
-                            IsEnabled="{Binding Path=ManualFeedButtonEnabled}"
-                            Click="FeedButtonClick"
-                            FontWeight="Bold"
-                            FontSize="18"
-                            Visibility="{Binding Path=ManualFeedButtonVisibility, FallbackValue=Visible}"
-                            />
+                        Height="30" Width="150" Margin="0,0,0,5"
+                        Content="Add Note"
+                        IsEnabled="{Binding Path=AddNoteButtonEnabled}"
+                        Click="AddNoteButtonClick"
+                        FontWeight="Bold"
+                        FontSize="18"
+                        Visibility="{Binding Path=AddNoteButtonVisibility, FallbackValue=Visible}"
+                        />
 
                 <Button HorizontalAlignment="Left"
                         Height="30" Width="150" Margin="0,0,0,5"

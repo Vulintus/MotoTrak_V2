@@ -452,6 +452,9 @@ namespace MotoTrak
              *      - Start a background worker thread to handle streaming input from the Arduino board.
              */
 
+            //Get an instance of the configuration class
+            MotoTrakConfiguration config = MotoTrakConfiguration.GetInstance();
+
             //Connect to the motortrak board
             bool success = ControllerBoard.ConnectToArduino(comPort);
             if (!success || !ControllerBoard.IsSerialConnectionValid)
@@ -467,6 +470,15 @@ namespace MotoTrak
 
             //Gather information about the booth and what devices are connected to it
             BoothLabel = ControllerBoard.GetBoothLabel();
+
+            //Save the booth label the the booth pairings file
+            if (ControllerBoard.IsSerialConnectionValid)
+            {
+                config.BoothPairings[comPort] = BoothLabel;
+                config.SaveBoothPairings();
+            }
+
+            //Grab the motor device
             CurrentDevice = ControllerBoard.GetMotorDevice();
             
             //If no device was found, or if the device is unknown, throw an error.
@@ -476,7 +488,6 @@ namespace MotoTrak
             }
             
             //At this point, we need to read the MotoTrak configuration file to determine how to load in stages
-            MotoTrakConfiguration config = MotoTrakConfiguration.GetInstance();
             config.ReadConfigurationFile();
 
             //Now read in all stage implementations that exist

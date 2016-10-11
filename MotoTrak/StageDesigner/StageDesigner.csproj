@@ -118,8 +118,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(SolutionDir)MotoTrakPythonCode\PythonBasicStageImplementation.py $(TargetDir)StageImplementations\
-copy $(SolutionDir)MotoTrakPythonCode\PythonPullStageImplementation.py $(TargetDir)StageImplementations\
+    <PostBuildEvent>copy $(SolutionDir)MotoTrakPythonCode\PythonPullStageImplementation.py $(TargetDir)StageImplementations\
 copy $(SolutionDir)MotoTrakPythonCode\PythonLeverStageImplementation.py $(TargetDir)StageImplementations\
 copy $(SolutionDir)MotoTrakPythonCode\PythonKnobStageImplementation.py $(TargetDir)StageImplementations\
 copy $(SolutionDir)MotoTrakPythonCode\PythonSustainedPullStageImplementation.py $(TargetDir)StageImplementations\</PostBuildEvent>

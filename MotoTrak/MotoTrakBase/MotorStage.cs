@@ -37,7 +37,7 @@ namespace MotoTrakBase
 
         private MotorStageParameter _pre_trial_sampling_period_in_seconds = new MotorStageParameter()
         {
-            ParameterName = "Pre-Trial Sampling Duration",
+            ParameterName = "Pre-Trial Duration",
             ParameterUnits = "seconds",
             ParameterType = MotorStageParameter.StageParameterType.Fixed,
             InitialValue = _defaultPreTrialSamplingPeriodInSeconds,
@@ -46,7 +46,7 @@ namespace MotoTrakBase
 
         private MotorStageParameter _post_trial_sampling_period_in_seconds = new MotorStageParameter()
         {
-            ParameterName = "Post-Trial Sampling Duration",
+            ParameterName = "Post-Trial Duration",
             ParameterUnits = "seconds",
             ParameterType = MotorStageParameter.StageParameterType.Fixed,
             InitialValue = _defaultPostTrialSamplingPeriodInSeconds,
@@ -519,19 +519,19 @@ namespace MotoTrakBase
                     MotorStageStimulationTypeConverter.ConvertToDescription(stage.OutputTriggerType));
 
                 //Save the pre-trial sampling duration
-                writer.WriteLine("Pre-Trial Sampling Duration: " + MotorStage.FormMotorStageParameter(stage.PreTrialSamplingPeriodInSeconds, false));
+                writer.WriteLine("Stage Parameter: " + MotorStage.FormMotorStageParameter(stage.PreTrialSamplingPeriodInSeconds, true));
 
                 //Save the hit window duration
-                writer.WriteLine("Hit Window Duration: " + MotorStage.FormMotorStageParameter(stage.HitWindowInSeconds, false));
+                writer.WriteLine("Stage Parameter: " + MotorStage.FormMotorStageParameter(stage.HitWindowInSeconds, true));
 
                 //Save the post-trial sampling duration
-                writer.WriteLine("Post-Trial Sampling Duration: " + MotorStage.FormMotorStageParameter(stage.PostTrialSamplingPeriodInSeconds, false));
+                writer.WriteLine("Stage Parameter: " + MotorStage.FormMotorStageParameter(stage.PostTrialSamplingPeriodInSeconds, true));
 
                 //Save the post-trial timeout duration
-                writer.WriteLine("Post-Trial Timeout Duration: " + MotorStage.FormMotorStageParameter(stage.PostTrialTimeoutInSeconds, false));
+                writer.WriteLine("Stage Parameter: " + MotorStage.FormMotorStageParameter(stage.PostTrialTimeoutInSeconds, true));
 
                 //Save the device position
-                writer.WriteLine("Device Position: " + MotorStage.FormMotorStageParameter(stage.Position, false));
+                writer.WriteLine("Stage Parameter: " + MotorStage.FormMotorStageParameter(stage.Position, true));
 
                 //Save each individual stage parameter
                 foreach (var sp in stage.StageParameters)
@@ -648,30 +648,34 @@ namespace MotoTrakBase
                         {
                             stage.OutputTriggerType = MotorStageStimulationTypeConverter.ConvertToMotorStageStimulationType(parameter_string_parts[1].Trim());
                         }
-                        else if (parameter.Equals("Pre-Trial Sampling Duration"))
-                        {
-                            stage.PreTrialSamplingPeriodInSeconds = MotorStage.ParseMotorStageParameter(parameter_string_parts[1]);
-                        }
-                        else if (parameter.Equals("Hit Window Duration"))
-                        {
-                            stage.HitWindowInSeconds = MotorStage.ParseMotorStageParameter(parameter_string_parts[1]);
-                        }
-                        else if (parameter.Equals("Post-Trial Sampling Duration"))
-                        {
-                            stage.PostTrialSamplingPeriodInSeconds = MotorStage.ParseMotorStageParameter(parameter_string_parts[1]);
-                        }
-                        else if (parameter.Equals("Post-Trial Timeout Duration"))
-                        {
-                            stage.PostTrialTimeoutInSeconds = MotorStage.ParseMotorStageParameter(parameter_string_parts[1]);
-                        }
-                        else if (parameter.Equals("Device Position"))
-                        {
-                            stage.Position = MotorStage.ParseMotorStageParameter(parameter_string_parts[1]);
-                        }
                         else if (parameter.Equals("Stage Parameter"))
                         {
                             MotorStageParameter p = MotorStage.ParseMotorStageParameterWithName(parameter_string_parts[1]);
-                            stage.StageParameters[p.ParameterName] = p;
+
+                            if (p.ParameterName.Equals(stage.PreTrialSamplingPeriodInSeconds.ParameterName))
+                            {
+                                stage.PreTrialSamplingPeriodInSeconds = p;
+                            }
+                            else if (p.ParameterName.Equals(stage.HitWindowInSeconds.ParameterName))
+                            {
+                                stage.HitWindowInSeconds = p;
+                            }
+                            else if (p.ParameterName.Equals(stage.PostTrialSamplingPeriodInSeconds.ParameterName))
+                            {
+                                stage.PostTrialSamplingPeriodInSeconds = p;
+                            }
+                            else if (p.ParameterName.Equals(stage.PostTrialTimeoutInSeconds.ParameterName))
+                            {
+                                stage.PostTrialTimeoutInSeconds = p;
+                            }
+                            else if (p.ParameterName.Equals(stage.Position.ParameterName))
+                            {
+                                stage.Position = p;
+                            }
+                            else
+                            {
+                                stage.StageParameters[p.ParameterName] = p;
+                            }
                         }
                     }
                 }
@@ -861,7 +865,7 @@ namespace MotoTrakBase
                             default:
 
                                 //Set the implementation of this stage
-                                stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonBasicStageImplementation.py"];
+                                stage.StageImplementation = null;
 
                                 //Set the parameters of this stage
                                 stage.StageParameters.Clear();
@@ -920,19 +924,20 @@ namespace MotoTrakBase
 
         private static MotorStageParameter ParseMotorStageParameterWithName(string parts)
         {
-            string[] parts_array = parts.Split(new char[] { ',' }, 7);
+            string[] parts_array = parts.Split(new char[] { ',' }, 8);
 
             MotorStageParameter p = new MotorStageParameter()
             {
                 ParameterName = parts_array[0].Trim(),
-                ParameterType = (parts_array[1].Trim().Equals("Fixed")) ?
+                ParameterUnits = parts_array[1].Trim(),
+                ParameterType = (parts_array[2].Trim().Equals("Fixed")) ?
                     MotorStageParameter.StageParameterType.Fixed : MotorStageParameter.StageParameterType.Variable,
                 AdaptiveThresholdType =
-                    MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdType(parts_array[2].Trim()),
-                InitialValue = Double.Parse(parts_array[3]),
-                MinimumValue = Double.Parse(parts_array[4]),
-                MaximumValue = Double.Parse(parts_array[5]),
-                Increment = Double.Parse(parts_array[6]),
+                    MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdType(parts_array[3].Trim()),
+                InitialValue = Double.Parse(parts_array[4]),
+                MinimumValue = Double.Parse(parts_array[5]),
+                MaximumValue = Double.Parse(parts_array[6]),
+                Increment = Double.Parse(parts_array[7]),
             };
 
             p.CurrentValue = p.InitialValue;
@@ -946,6 +951,7 @@ namespace MotoTrakBase
             if (save_name_as_part_of_it)
             {
                 output = p.ParameterName + ", ";
+                output += p.ParameterUnits + ", ";
             }
 
             output += (p.ParameterType == MotorStageParameter.StageParameterType.Fixed) ? "Fixed" : "Variable";
@@ -954,7 +960,7 @@ namespace MotoTrakBase
             output += p.InitialValue.ToString() + ", ";
             output += p.MinimumValue.ToString() + ", ";
             output += p.MaximumValue.ToString() + ", ";
-            output += p.Increment.ToString() + ", ";
+            output += p.Increment.ToString();
 
             return output;
         }

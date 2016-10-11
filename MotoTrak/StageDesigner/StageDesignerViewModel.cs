@@ -160,6 +160,9 @@ namespace StageDesigner
 
                 //Add the stage view-model to our list of stages that are open
                 this.OpenStages.Add(stage_vm);
+
+                //Change the selected stage index to be that of the new stage
+                this.SelectedStageIndex = this.OpenStages.Count - 1;
             }
         }
 

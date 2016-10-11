@@ -36,7 +36,7 @@ namespace MotoTrak
             PortSelectorViewModel portSelectorResult = PortSelectorViewModel.GetInstance();
             if (portSelectorResult.AvailablePortCount > 0)
             {
-                string portName = portSelectorResult.AvailablePorts[portSelectorResult.SelectedPortIndex];
+                string portName = portSelectorResult.AvailablePorts[portSelectorResult.SelectedPortIndex].Model.DeviceID;
                 MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
                 if (viewModel != null)
                 {
@@ -130,6 +130,11 @@ namespace MotoTrak
                     viewModel.PlotViewModel.HandleMouseHover(false);
                 }
             }
+        }
+
+        private void AddNoteButtonClick (object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

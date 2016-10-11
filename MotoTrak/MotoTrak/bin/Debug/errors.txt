@@ -209,3 +209,4 @@ Function name: InitializeStageImplementations
 END OF NEW ERROR
 
 Error while attempting to load Python stage implementations!
+Unable to read booth pairings file!

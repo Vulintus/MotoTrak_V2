@@ -24,7 +24,8 @@ namespace MotoTrak
         /// </summary>
         private PortSelectorViewModel()
         {
-            //constructor is private
+            //Read in the booth pairings before instantiating this view model
+            MotoTrakConfiguration.GetInstance().ReadBoothPairings();
         }
 
         /// <summary>
@@ -49,18 +50,21 @@ namespace MotoTrak
         /// <summary>
         /// The list of port names that we can connect to
         /// </summary>
-        public List<string> AvailablePorts
+        public List<USBDeviceViewModel> AvailablePorts
         {
             get
             {
-                string[] portNames = SerialPort.GetPortNames();
+                var devices = MotorBoard.QueryConnectedArduinoDevices();
+                /*string[] portNames = SerialPort.GetPortNames();
                 if (portNames != null && portNames.Length > 0)
                 {
                     List<string> portNamesList = portNames.ToList();
                     return portNamesList;
                 }
 
-                return new List<string>() { "No ports found" };
+                return new List<string>() { "No ports found" };*/
+                var device_viewmodels = devices.Select(x => new USBDeviceViewModel(x)).ToList();
+                return device_viewmodels;
             }
         }
 
@@ -71,13 +75,15 @@ namespace MotoTrak
         {
             get
             {
-                string[] portNames = SerialPort.GetPortNames();
+                var devices = MotorBoard.QueryConnectedArduinoDevices();
+                return devices.Count;
+                /*string[] portNames = SerialPort.GetPortNames();
                 if (portNames != null && portNames.Length > 0)
                 {
                     return portNames.Length;
                 }
 
-                return 0;
+                return 0;*/
             }
         }
 

@@ -68,29 +68,18 @@ namespace StageDesigner
         private List<Tuple<string, PythonStageImplementation>> GetOrderedListOfPythonStageImplementations ()
         {
             List<Tuple<string, PythonStageImplementation>> result = new List<Tuple<string, PythonStageImplementation>>();
-            var stage_implementations = MotoTrakConfiguration.GetInstance().PythonStageImplementations;
-            PythonStageImplementation unknown_task_basic_stage = null;
-            foreach (var impl in stage_implementations)
+            var stage_implementations = MotoTrakConfiguration.GetInstance().PythonStageImplementations.ToList();
+            stage_implementations.Sort((x, y) => x.Key.CompareTo(y.Key));
+
+            foreach (var kvp in stage_implementations)
             {
-                PythonStageImplementation this_stage_impl = impl.Value as PythonStageImplementation;
+                PythonStageImplementation this_stage_impl = kvp.Value as PythonStageImplementation;
                 if (this_stage_impl != null)
                 {
-                    if (this_stage_impl.TaskName.Equals("Unknown"))
-                    {
-                        unknown_task_basic_stage = this_stage_impl;
-                    }
-                    else
-                    {
-                        result.Add(new Tuple<string, PythonStageImplementation>(impl.Key, this_stage_impl));
-                    }
+                    result.Add(new Tuple<string, PythonStageImplementation>(kvp.Key, this_stage_impl));
                 }
             }
-
-            if (unknown_task_basic_stage != null)
-            {
-                result.Add(new Tuple<string, PythonStageImplementation>("Unknown", unknown_task_basic_stage));
-            }
-
+            
             return result;
         }
         

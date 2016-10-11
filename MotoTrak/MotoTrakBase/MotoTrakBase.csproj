@@ -40,6 +40,8 @@
     <Reference Include="Microsoft.Scripting, Version=1.1.0.20, Culture=neutral, PublicKeyToken=7f709c5b713576e1, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Management.Instrumentation" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -91,6 +93,7 @@
     <Compile Include="ReactToModelPropertyChanged.cs" />
     <Compile Include="TrialResultCodeAttribute.cs" />
     <Compile Include="UnitsAttribute.cs" />
+    <Compile Include="USBDeviceInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MotoTrakUtilities\MotoTrakUtilities.csproj">

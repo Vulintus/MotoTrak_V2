@@ -41,7 +41,8 @@ namespace MotoTrakBase
         #endregion
 
         #region Private data members
-        
+
+        private string BoothPairingsFileName = "mototrak_booth_pairings.config";
         private string ConfigurationFileName = "mototrak.config";
         private string StageImplementationsPath = "StageImplementations";
 
@@ -50,6 +51,7 @@ namespace MotoTrakBase
         #region Properties
 
         public ConcurrentDictionary<string, IMotorStageImplementation> PythonStageImplementations = new ConcurrentDictionary<string, IMotorStageImplementation>();
+        public ConcurrentDictionary<string, string> BoothPairings = new ConcurrentDictionary<string, string>();
 
         public int ConfigurationVersion { get; set; }
         public string VariantName { get; set; }
@@ -60,6 +62,74 @@ namespace MotoTrakBase
         #endregion
 
         #region Methods
+
+        /// <summary>
+        /// Saves the booth pairings to a file
+        /// </summary>
+        public void SaveBoothPairings ()
+        {
+            try
+            {
+                //Open a stream to write to the file
+                StreamWriter writer = new StreamWriter(BoothPairingsFileName);
+
+                //Write each booth pairing to the file
+                foreach (var kvp in BoothPairings)
+                {
+                    if (!string.IsNullOrEmpty(kvp.Value))
+                    {
+                        writer.WriteLine(kvp.Value + ", " + kvp.Key);
+                    }
+                }
+
+                //Close the file handle
+                writer.Close();
+            }
+            catch
+            {
+                ErrorLoggingService.GetInstance().LogStringError("Unable to save booth pairings!");
+            }
+        }
+
+        /// <summary>
+        /// Reads the booth pairings file
+        /// </summary>
+        public void ReadBoothPairings ()
+        {
+            //Open a stream to read the booth pairings configuration file
+            try
+            {
+                StreamReader reader = new StreamReader(BoothPairingsFileName);
+
+                //Read all the lines from the file
+                List<string> lines = new List<string>();
+                while (!reader.EndOfStream)
+                {
+                    lines.Add(reader.ReadLine());
+                }
+
+                //Close the stream
+                reader.Close();
+
+                //Now parse the input
+                for (int i = 0; i < lines.Count; i++)
+                {
+                    string thisLine = lines[i];
+                    string[] splitString = thisLine.Split(new char[] { ',' }, 2);
+
+                    string booth_name = splitString[0].Trim();
+                    string com_port = splitString[1].Trim();
+
+                    //Add the booth pairing to our dictionary
+                    BoothPairings.TryAdd(com_port, booth_name);
+                }
+            }
+            catch
+            {
+                ErrorLoggingService.GetInstance().LogStringError("Unable to read booth pairings file!");
+            }
+            
+        }
 
         /// <summary>
         /// Reads the MotoTrak configuration file and populates properties of this class accordingly.

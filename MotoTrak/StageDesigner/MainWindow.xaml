@@ -164,11 +164,16 @@
         </TabControl>
 
         <Grid Height="800" Visibility="{Binding Path=NoStagesOpenMessageVisibility}">
-            <TextBlock HorizontalAlignment="Center" 
-                   VerticalAlignment="Center" 
-                   FontSize="24"
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock FontSize="24"
                    FontWeight="Bold"
                    Text="Looks like you have a blank slate.  Open a stage to edit it, or create a new one!" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Content="New stage" Click="NewStage_Click" Margin="30" Height="50" Width="120" />
+                    <Button Content="Open stage" Click="OpenStage_Click" Margin="30" Height="50" Width="120" />
+                </StackPanel>
+            </StackPanel>
+            
         </Grid>
         
 

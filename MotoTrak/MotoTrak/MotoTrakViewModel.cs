@@ -362,6 +362,18 @@ namespace MotoTrak
         }
 
         /// <summary>
+        /// Whether or not the "add note" button is enabled
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
+        public bool AddNoteButtonEnabled
+        {
+            get
+            {
+                return Model.IsSessionRunning;
+            }
+        }
+
+        /// <summary>
         /// Indicates whether the session is currently running or idle
         /// </summary>
         [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
@@ -452,6 +464,25 @@ namespace MotoTrak
         /// </summary>
         [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
         public Visibility ManualFeedButtonVisibility
+        {
+            get
+            {
+                if (IsSessionRunning)
+                {
+                    return Visibility.Visible;
+                }
+                else
+                {
+                    return Visibility.Collapsed;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Visibility of the add note button
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
+        public Visibility AddNoteButtonVisibility
         {
             get
             {

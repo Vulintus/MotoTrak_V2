@@ -22,7 +22,6 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="PythonBasicStageImplementation.py" />
     <Compile Include="PythonKnobStageImplementation.py">
       <SubType>Code</SubType>
     </Compile>
