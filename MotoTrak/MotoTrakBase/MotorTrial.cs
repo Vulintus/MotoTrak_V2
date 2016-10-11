@@ -278,7 +278,29 @@ namespace MotoTrakBase
                 _trial_events = value;
             }
         }
-        
+
+        #endregion
+
+        #region Static methods
+
+        /// <summary>
+        /// Creates a manual feed trial and returns it to the caller function
+        /// The trial has the result of MotorTrialResult.ManualFeed, and it has
+        /// a start and end time of the current time.
+        /// </summary>
+        /// <returns>A new manual feed trial</returns>
+        public static MotorTrial CreateManualFeed ()
+        {
+            MotorTrial feed = new MotorTrial()
+            {
+                Result = MotorTrialResult.ManualFeed,
+                StartTime = DateTime.Now,
+                EndTime = DateTime.Now
+            };
+
+            return feed;
+        }
+
         #endregion
     }
 }

@@ -44,3 +44,5 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MahApps.Me
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\System.Windows.Interactivity.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MahApps.Metro.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MahApps.Metro.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\SessionNotesView.g.cs
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\SessionNotesView.baml

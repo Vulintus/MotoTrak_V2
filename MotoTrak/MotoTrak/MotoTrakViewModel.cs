@@ -24,6 +24,7 @@ namespace MotoTrak
         private int _viewSelectedIndex = 0;
         private bool _stageChangeRequired = false;
         private Visibility _add_note_overlay_visibility = Visibility.Collapsed;
+        private Visibility _session_overview_notes_visibility = Visibility.Collapsed;
         private string _current_note_text = string.Empty;
 
         #endregion
@@ -529,6 +530,22 @@ namespace MotoTrak
         }
 
         /// <summary>
+        /// Visibility of the view that shows all session notes
+        /// </summary>
+        public Visibility SessionNotesViewVisibility
+        {
+            get
+            {
+                return _session_overview_notes_visibility;
+            }
+            set
+            {
+                _session_overview_notes_visibility = value;
+                NotifyPropertyChanged("SessionNotesViewVisibility");
+            }
+        }
+
+        /// <summary>
         /// The booth label
         /// </summary>
         [ReactToModelPropertyChanged(new string[] { "BoothLabel" })]
@@ -701,6 +718,9 @@ namespace MotoTrak
         {
             StageChangeRequired = true;
             Model.StopSession();
+
+            //Display the session notes to the user
+            SessionNotesViewVisibility = Visibility.Visible;
         }
 
         /// <summary>

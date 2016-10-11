@@ -194,6 +194,13 @@
             </StackPanel>
         </Grid>
 
+        <Grid Visibility="{Binding Path=SessionNotesViewVisibility, FallbackValue=Visible}"
+              Grid.Row="0"
+              Grid.RowSpan="3">
+            <local:SessionNotesView x:Name="MainWindowSessionNotesView" />
+        </Grid>
+        
+
     </Grid>
     
 </Window>

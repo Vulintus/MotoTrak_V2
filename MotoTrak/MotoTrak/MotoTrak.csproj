@@ -92,6 +92,10 @@
     </Compile>
     <Compile Include="PortSelectorViewModel.cs" />
     <Compile Include="MotoTrakViewModel.cs" />
+    <Compile Include="SessionNotesView.xaml.cs">
+      <DependentUpon>SessionNotesView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="SessionNotesViewModel.cs" />
     <Compile Include="USBDeviceViewModel.cs" />
     <Compile Include="ViewHelperMethods.cs" />
     <Page Include="MainWindow.xaml">
@@ -107,6 +111,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="PortSelectionUI.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SessionNotesView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

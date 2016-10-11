@@ -1230,6 +1230,12 @@ namespace MotoTrak
                     //Set up a new trial
                     TrialState = TrialRunState.TrialSetup;
 
+                    //Eliminate the current trial, if there was one
+                    CurrentTrial = null;
+
+                    //Create a new "feed" trial and save it to the session
+                    CurrentSession.Trials.Add(MotorTrial.CreateManualFeed());
+                    
                     break;
             }
         }
@@ -1300,6 +1306,9 @@ namespace MotoTrak
                     //This will allow the pull handle output to still be viewed on the window, but trials
                     //cannot be initiated.
                     TrialState = TrialRunState.Idle;
+
+                    //Eliminate the current trial, if there was one
+                    CurrentTrial = null;
 
                     break;
                 case SessionRunState.SessionUnpaused:

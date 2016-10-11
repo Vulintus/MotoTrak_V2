@@ -32,7 +32,7 @@ namespace MotoTrak
 
             //Show the dialog
             portSelectorWindow.ShowDialog();
-
+            
             //Get the result of the port selection window
             PortSelectorViewModel portSelectorResult = PortSelectorViewModel.GetInstance();
             if (portSelectorResult.ResultOK && portSelectorResult.AvailablePortCount > 0)
@@ -44,7 +44,10 @@ namespace MotoTrak
                     //Assign the win-forms plot
                     //viewModel.PlotViewModel.WinFormsPlot = WinFormsPlot;
                     //viewModel.PlotViewModel.InitializePlot();
-                    
+
+                    //Subscribe to events from the session notes view
+                    MainWindowSessionNotesView.CloseSessionNotes += MainWindowSessionNotesView_CloseSessionNotes;
+
                     //Initialize MotoTrak
                     viewModel.InitializeMotoTrak(portName);
                 }
@@ -55,7 +58,7 @@ namespace MotoTrak
                 this.Close();
             }
         }
-
+        
         private void StartButtonClick(object sender, RoutedEventArgs e)
         {
             MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
@@ -64,10 +67,19 @@ namespace MotoTrak
                 if (viewModel.IsSessionRunning)
                 {
                     viewModel.StopSession();
+
+                    SessionNotesViewModel vm = MainWindowSessionNotesView.DataContext as SessionNotesViewModel;
+                    if (vm != null)
+                    {
+                        vm.UpdateView();
+                    }
                 }
                 else
                 {
                     viewModel.StartSession();
+
+                    //Set the data context of the notes view
+                    MainWindowSessionNotesView.DataContext = new SessionNotesViewModel(MotoTrakModel.GetInstance().CurrentSession);
                 }
             }
         }
@@ -162,6 +174,15 @@ namespace MotoTrak
             if (viewModel != null)
             {
                 viewModel.CloseAddNotePanel(false);
+            }
+        }
+
+        private void MainWindowSessionNotesView_CloseSessionNotes(object sender, RoutedEventArgs e)
+        {
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
+            if (viewModel != null)
+            {
+                viewModel.SessionNotesViewVisibility = Visibility.Collapsed;
             }
         }
     }
