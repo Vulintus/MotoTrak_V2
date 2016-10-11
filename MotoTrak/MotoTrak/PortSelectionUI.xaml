@@ -36,7 +36,27 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <Button Content="OK" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="120" Height="40" Margin="5,0,0,5"
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Width="120" Height="40" Margin="5,0,0,5" Click="RefreshButtonClick" VerticalAlignment="Bottom">
+                <Button.Content>
+                    <Canvas>
+                        <Path Stroke="Green" StrokeThickness="3">
+                            <Path.Data>
+                                <PathGeometry>
+                                    <PathFigure StartPoint="10,0">
+                                        <ArcSegment IsLargeArc="True" SweepDirection="Clockwise" Size="10,10" Point="9,-5" />
+                                    </PathFigure>
+                                </PathGeometry>
+                            </Path.Data>
+                        </Path>
+                        <Polygon Points="10,-4 4,-5 11,-9" Stroke="Green" Fill="Green" />
+                    </Canvas>
+                </Button.Content>
+            </Button>
+            <Button Content="OK" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="120" Height="40" Margin="5,0,0,5"
+                    FontSize="18" FontWeight="Bold"
                 Click="OK_Button_Click" />
+        </StackPanel>
+        
     </Grid>
 </Window>

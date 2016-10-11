@@ -34,7 +34,7 @@ namespace MotoTrak
 
             //Get the result of the port selection window
             PortSelectorViewModel portSelectorResult = PortSelectorViewModel.GetInstance();
-            if (portSelectorResult.AvailablePortCount > 0)
+            if (portSelectorResult.ResultOK && portSelectorResult.AvailablePortCount > 0)
             {
                 string portName = portSelectorResult.AvailablePorts[portSelectorResult.SelectedPortIndex].Model.DeviceID;
                 MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
@@ -47,6 +47,11 @@ namespace MotoTrak
                     //Initialize MotoTrak
                     viewModel.InitializeMotoTrak(portName);
                 }
+            }
+            else
+            {
+                //If the user did not choose a port to connect to, go ahead and close the main window
+                this.Close();
             }
         }
 

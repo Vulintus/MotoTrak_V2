@@ -29,8 +29,23 @@ namespace MotoTrak
 
         private void OK_Button_Click(object sender, RoutedEventArgs e)
         {
+            PortSelectorViewModel vm = DataContext as PortSelectorViewModel;
+            if (vm != null)
+            {
+                vm.ResultOK = true;
+            }
+
             //Close the port selector window
             this.Close();
+        }
+
+        private void RefreshButtonClick(object sender, RoutedEventArgs e)
+        {
+            PortSelectorViewModel vm = DataContext as PortSelectorViewModel;
+            if (vm != null)
+            {
+                vm.RefreshPortListing();
+            }
         }
     }
 }
