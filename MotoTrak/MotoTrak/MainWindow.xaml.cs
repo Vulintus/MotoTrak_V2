@@ -1,4 +1,5 @@
-﻿using MotoTrakBase;
+﻿using MahApps.Metro.Controls;
+using MotoTrakBase;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -139,7 +140,29 @@ namespace MotoTrak
 
         private void AddNoteButtonClick (object sender, RoutedEventArgs e)
         {
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
+            if (viewModel != null)
+            {
+                viewModel.ShowAddNotePanel();
+            }
+        }
 
+        private void CancelAddNote(object sender, RoutedEventArgs e)
+        {
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
+            if (viewModel != null)
+            {
+                viewModel.CloseAddNotePanel(true);
+            }
+        }
+
+        private void SaveNewNoteClick(object sender, RoutedEventArgs e)
+        {
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
+            if (viewModel != null)
+            {
+                viewModel.CloseAddNotePanel(false);
+            }
         }
     }
 }

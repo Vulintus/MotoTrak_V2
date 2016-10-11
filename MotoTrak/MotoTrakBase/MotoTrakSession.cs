@@ -29,6 +29,7 @@ namespace MotoTrakBase
         private DateTime _end_time = DateTime.MinValue;
 
         private string _session_notes = string.Empty;
+        private List<Tuple<DateTime, string>> _timestamped_notes = new List<Tuple<DateTime, string>>();
 
         private List<Tuple<string, string>> _stream_descriptions = new List<Tuple<string, string>>();
         private List<Tuple<string, double>> _constant_value_parameters = new List<Tuple<string, double>>();
@@ -154,6 +155,22 @@ namespace MotoTrakBase
             {
                 _end_time = value;
                 NotifyPropertyChanged("EndTime");
+            }
+        }
+
+        /// <summary>
+        /// A list of notes made throughout the session with their timestamps
+        /// </summary>
+        public List<Tuple<DateTime, string>> TimestampedNotes
+        {
+            get
+            {
+                return _timestamped_notes;
+            }
+            set
+            {
+                _timestamped_notes = value;
+                NotifyPropertyChanged("TimestampedNotes");
             }
         }
 

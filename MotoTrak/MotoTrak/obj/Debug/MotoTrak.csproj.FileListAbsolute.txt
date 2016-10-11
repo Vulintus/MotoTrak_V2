@@ -40,3 +40,7 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Microsoft.
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Dynamitey.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Dynamitey.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Dynamitey.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MahApps.Metro.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\System.Windows.Interactivity.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MahApps.Metro.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MahApps.Metro.xml

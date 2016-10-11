@@ -3,6 +3,7 @@ using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -22,6 +23,8 @@ namespace MotoTrak
         
         private int _viewSelectedIndex = 0;
         private bool _stageChangeRequired = false;
+        private Visibility _add_note_overlay_visibility = Visibility.Collapsed;
+        private string _current_note_text = string.Empty;
 
         #endregion
 
@@ -510,6 +513,22 @@ namespace MotoTrak
         }
 
         /// <summary>
+        /// The visibility of the overlay that allows the user to add a note
+        /// </summary>
+        public Visibility AddNoteOverlayVisibility
+        {
+            get
+            {
+                return _add_note_overlay_visibility;
+            }
+            private set
+            {
+                _add_note_overlay_visibility = value;
+                NotifyPropertyChanged("AddNoteOverlayVisibility");
+            }
+        }
+
+        /// <summary>
         /// The booth label
         /// </summary>
         [ReactToModelPropertyChanged(new string[] { "BoothLabel" })]
@@ -640,6 +659,22 @@ namespace MotoTrak
             }
         }
 
+        /// <summary>
+        /// The text of the current note that the user is entering
+        /// </summary>
+        public string CurrentNoteText
+        {
+            get
+            {
+                return _current_note_text;
+            }
+            set
+            {
+                _current_note_text = value;
+                NotifyPropertyChanged("CurrentNoteText");
+            }
+        }
+
         #endregion
 
         #region Plotting properties
@@ -674,6 +709,38 @@ namespace MotoTrak
         public void StartSession ()
         {
             Model.StartSession();
+        }
+
+        /// <summary>
+        /// Shows the panel that allows the user to add a note
+        /// </summary>
+        public void ShowAddNotePanel ()
+        {
+            AddNoteOverlayVisibility = Visibility.Visible;
+        }
+
+        /// <summary>
+        /// Closes the panel that allows the user to add a note
+        /// </summary>
+        /// <param name="cancel">A boolean value indicating whether the note was canceled</param>
+        public void CloseAddNotePanel ( bool cancel )
+        {
+            //Close the overlay
+            AddNoteOverlayVisibility = Visibility.Collapsed;
+
+            //If the result was that the user wanted to save the note
+            if (!cancel)
+            {
+                if (Model != null && Model.CurrentSession != null)
+                {
+                    //Add the note to the list of notes in the session model
+                    Model.CurrentSession.TimestampedNotes.Add(new System.Tuple<System.DateTime, string>(DateTime.Now, CurrentNoteText));
+                    MotoTrakMessaging.GetInstance().AddMessage("User note saved at " + DateTime.Now.ToShortTimeString());
+                }
+            }
+
+            //Clear the note's text in the GUI
+            CurrentNoteText = string.Empty;
         }
 
         /// <summary>

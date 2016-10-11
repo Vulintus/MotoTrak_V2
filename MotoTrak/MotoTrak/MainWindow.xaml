@@ -6,6 +6,7 @@
         xmlns:oxy="http://oxyplot.org/wpf"
         xmlns:winformchart="clr-namespace:System.Windows.Forms.DataVisualization.Charting;assembly=System.Windows.Forms.DataVisualization"
         xmlns:local="clr-namespace:MotoTrak"
+        xmlns:metro="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d"
         Title="MotoTrak" MinHeight="490" Height="530" MinWidth="600" Width="600"
         Closed="Window_Closed">
@@ -161,6 +162,38 @@
                      SelectedIndex="{Binding Path=MessagesSelectedIndex, Mode=OneWay}" SelectionChanged="MessagesListBox_SelectionChanged" />
 
         </Grid>
-        
+
+        <Grid Name="AddMessageOverlay" 
+              Grid.Row="2" 
+              Height="140"  
+              Visibility="{Binding Path=AddNoteOverlayVisibility, FallbackValue=Visible}">
+            <Grid.Background>
+                <SolidColorBrush Color="Black" Opacity="0.6" />
+            </Grid.Background>
+            <StackPanel Orientation="Vertical">
+                <TextBlock FontSize="12" Foreground="White" Text="Enter a note:" Margin="5,0" />
+                <TextBox Name="NoteTextBox"
+                         AcceptsReturn="False"
+                         AcceptsTab="False"
+                         TextWrapping="Wrap"
+                         Margin="5"
+                         Height="75"
+                         Text="{Binding Path=CurrentNoteText}" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancel" 
+                            Width="120" 
+                            Margin="5,0" 
+                            Click="CancelAddNote"
+                            />
+                    <Button Content="Save note" 
+                            Width="120" 
+                            Margin="5,0" 
+                            Click="SaveNewNoteClick"
+                            />
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
     </Grid>
+    
 </Window>
