@@ -66,6 +66,7 @@ namespace MotoTrak
             SessionBegin,
             SessionRunning,
             SessionEnd,
+            SessionFinalizing,
             SessionNotRunning,
             SessionPaused,
             SessionUnpaused,
@@ -556,6 +557,11 @@ namespace MotoTrak
             SessionState = SessionRunState.SessionEnd;
         }
 
+        public void FinalizeSession ()
+        {
+            SessionState = SessionRunState.SessionFinalizing;   
+        }
+
         /// <summary>
         /// Pauses the session that is currently running
         /// </summary>
@@ -606,7 +612,7 @@ namespace MotoTrak
         private double _milliseconds_per_frame = 0;
         private int _device_analog_value = 0;
         private int _device_calibrated_value = 0;
-        private MotoTrakFileSave _file_save = null;
+        private MotoTrakFileSave PrimarySaveLocation = null;
 
         #endregion
 
@@ -1205,9 +1211,9 @@ namespace MotoTrak
                     CurrentSession.Trials.Add(CurrentTrial);
 
                     //Save the current trial to the save location
-                    if (_file_save != null)
+                    if (PrimarySaveLocation != null)
                     {
-                        _file_save.SaveTrial(CurrentTrial, Convert.ToUInt32(CurrentSession.Trials.Count));
+                        PrimarySaveLocation.SaveTrial(CurrentTrial, Convert.ToUInt32(CurrentSession.Trials.Count));
                     }
 
                     //Adjust the hit threshold for adaptive stages
@@ -1234,7 +1240,7 @@ namespace MotoTrak
                     CurrentTrial = null;
 
                     //Create a new "feed" trial and save it to the session
-                    CurrentSession.Trials.Add(MotorTrial.CreateManualFeed());
+                    CurrentSession.ManualFeeds.Add(DateTime.Now);
                     
                     break;
             }
@@ -1260,18 +1266,22 @@ namespace MotoTrak
                     SessionOverviewValues.Clear();
                     BackgroundPropertyChanged("SessionOverviewValues");
 
-                    //Open a file at the primary save path to save the data for this session
-                    _file_save = new MotoTrakFileSave(CurrentSession);
-                    bool success = _file_save.OpenFileStream();
-                    if (success)
+                    //Open a file at all necessary save locations to save data
+                    if (!string.IsNullOrEmpty(MotoTrakConfiguration.GetInstance().DataPath))
                     {
-                        _file_save.SaveSessionHeaders(CurrentSession);
+                        MotoTrakFileSave primary_data_path = new MotoTrakFileSave(CurrentSession, MotoTrakFileSave.SavePathType.PrimaryPath);
+                        bool primary_success = primary_data_path.OpenFileStream();
+                        if (primary_success)
+                        {
+                            primary_data_path.SaveSessionHeaders(CurrentSession);
+                            PrimarySaveLocation = primary_data_path;
+                        }
+                        else
+                        {
+                            MotoTrakMessaging.GetInstance().AddMessage("Unable to save to primary data path!");
+                        }
                     }
-                    else
-                    {
-                        MotoTrakMessaging.GetInstance().AddMessage("Unable to save to primary data path!");
-                    }
-                    
+ 
                     //Set the session state to be running
                     SessionState = SessionRunState.SessionRunning;
 
@@ -1282,12 +1292,6 @@ namespace MotoTrak
                 case SessionRunState.SessionEnd:
 
                     //Do any work to finish up a session here.
-
-                    //Close the file that we are saving data to
-                    if (_file_save != null)
-                    {
-                        _file_save.CloseFileStream();
-                    }
                     
                     //Set the end time of the current session
                     CurrentSession.EndTime = DateTime.Now;
@@ -1296,12 +1300,51 @@ namespace MotoTrak
                     TrialState = TrialRunState.Idle;
 
                     //Set the session state to "not running"
-                    SessionState = SessionRunState.SessionNotRunning;
+                    SessionState = SessionRunState.SessionFinalizing;
 
                     //If the final trial was a "pause" trial, close it out
-                    MotorTrial.ClosePauseTrial(CurrentSession.Trials.LastOrDefault());
+                    bool success = CurrentSession.ClosePause(DateTime.Now);
+                    if (success)
+                    {
+                        if (PrimarySaveLocation != null)
+                            PrimarySaveLocation.SaveEvent(MotoTrakFileSave.BlockType.PauseFinish, DateTime.Now);
+                    }
 
                     break;
+                case SessionRunState.SessionFinalizing:
+
+                    //In this state, the user has had a chance to enter in final notes before completely closing out and 
+                    //finalizing the session.  We will now save the remained of the data to the file before we set
+                    //the session state to be "not running".
+                    
+                    //Do some final file saving stuff
+                    if (PrimarySaveLocation != null)
+                    {
+                        PrimarySaveLocation.SaveOverallSessionNotes(CurrentSession.SessionNotes);
+                        PrimarySaveLocation.SaveEvent(MotoTrakFileSave.BlockType.SessionEnd, CurrentSession.EndTime);
+                        PrimarySaveLocation.CloseFileStream();
+                    }
+
+                    //Save the session to the secondary data path
+                    if (!string.IsNullOrEmpty(MotoTrakConfiguration.GetInstance().SecondaryDataPath))
+                    {
+                        MotoTrakFileSave secondary_data_path = new MotoTrakFileSave(CurrentSession, MotoTrakFileSave.SavePathType.SecondaryPath);
+                        bool secondary_data_path_success = secondary_data_path.OpenFileStream();
+                        if (secondary_data_path_success)
+                        {
+                            secondary_data_path.SaveEntireSession(CurrentSession);
+                        }
+                        else
+                        {
+                            MotoTrakMessaging.GetInstance().AddMessage("Unable to save to the secondary datapath!");
+                        }
+                    }
+
+                    //Set the session to not be running
+                    SessionState = SessionRunState.SessionNotRunning;
+
+                    break;
+
                 case SessionRunState.SessionPaused:
 
                     //In the case that the session is paused, the trial state will be set to "Idle".
@@ -1314,8 +1357,12 @@ namespace MotoTrak
                     CurrentTrial = null;
 
                     //Create a "pause" trial and add it to the current session.
-                    CurrentSession.Trials.Add(MotorTrial.CreatePauseTrial());
+                    CurrentSession.CreatePause(DateTime.Now);
 
+                    //Save the pause beginning
+                    if (PrimarySaveLocation != null)
+                        PrimarySaveLocation.SaveEvent(MotoTrakFileSave.BlockType.PauseStart, DateTime.Now);
+                    
                     break;
                 case SessionRunState.SessionUnpaused:
 
@@ -1327,7 +1374,11 @@ namespace MotoTrak
                     SessionState = SessionRunState.SessionRunning;
 
                     //Grab the pause trial that was created and set an end time for it
-                    MotorTrial.ClosePauseTrial(CurrentSession.Trials.LastOrDefault());
+                    CurrentSession.ClosePause(DateTime.Now);
+
+                    //Save the pause closure to the file
+                    if (PrimarySaveLocation != null)
+                        PrimarySaveLocation.SaveEvent(MotoTrakFileSave.BlockType.PauseFinish, DateTime.Now);
                     
                     break;
             }

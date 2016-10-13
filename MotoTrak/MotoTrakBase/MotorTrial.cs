@@ -280,55 +280,5 @@ namespace MotoTrakBase
         }
 
         #endregion
-
-        #region Static methods
-
-        /// <summary>
-        /// Creates a manual feed trial and returns it to the caller function
-        /// The trial has the result of MotorTrialResult.ManualFeed, and it has
-        /// a start and end time of the current time.
-        /// </summary>
-        /// <returns>A new manual feed trial</returns>
-        public static MotorTrial CreateManualFeed ()
-        {
-            MotorTrial feed = new MotorTrial()
-            {
-                Result = MotorTrialResult.ManualFeed,
-                StartTime = DateTime.Now,
-                EndTime = DateTime.Now
-            };
-
-            return feed;
-        }
-
-        /// <summary>
-        /// Creates a pause trial with a result of Pause and a start time as the current time.
-        /// </summary>
-        /// <returns></returns>
-        public static MotorTrial CreatePauseTrial ()
-        {
-            MotorTrial pause = new MotorTrial()
-            {
-                Result = MotorTrialResult.Pause,
-                StartTime = DateTime.Now
-            };
-
-            return pause;
-        }
-
-        /// <summary>
-        /// If the trial passed into this function is a pause trial, the end time of the trial will be set to 
-        /// the current time.
-        /// </summary>
-        /// <param name="t"></param>
-        public static void ClosePauseTrial (MotorTrial t)
-        {
-            if (t != null && t.Result == MotorTrialResult.Pause)
-            {
-                t.EndTime = DateTime.Now;
-            }
-        }
-
-        #endregion
     }
 }

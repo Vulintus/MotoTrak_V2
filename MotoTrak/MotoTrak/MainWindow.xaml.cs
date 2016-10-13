@@ -182,7 +182,7 @@ namespace MotoTrak
             MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
             if (viewModel != null)
             {
-                viewModel.SessionNotesViewVisibility = Visibility.Collapsed;
+                viewModel.FinalizeSession();
             }
         }
     }

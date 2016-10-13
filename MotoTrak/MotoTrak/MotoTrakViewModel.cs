@@ -723,6 +723,14 @@ namespace MotoTrak
             SessionNotesViewVisibility = Visibility.Visible;
         }
 
+        public void FinalizeSession ()
+        {
+            Model.FinalizeSession();
+
+            //Hide the session notes view from the user
+            SessionNotesViewVisibility = Visibility.Collapsed;
+        }
+
         /// <summary>
         /// Start a new session.
         /// </summary>

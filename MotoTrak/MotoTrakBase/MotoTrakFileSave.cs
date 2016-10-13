@@ -30,6 +30,17 @@ namespace MotoTrakBase
             SecondaryPath
         }
 
+        public enum BlockType
+        {
+            Trial = 0,
+            ManualFeed = 1,
+            PauseStart = 2,
+            PauseFinish = 3,
+            TimestampedNote = 4,
+            GeneralSessionNotes = 5,
+            SessionEnd = 6
+        }
+
         #endregion
 
         #region Private data members
@@ -217,6 +228,31 @@ namespace MotoTrakBase
                 {
                     SaveTrial(current_session.Trials[i], Convert.ToUInt32(i+1));
                 }
+
+                //Save each manual feed with its timestamp
+                for (int i = 0; i < current_session.ManualFeeds.Count; i++)
+                {
+                    SaveEvent(BlockType.ManualFeed, current_session.ManualFeeds[i]);
+                }
+
+                //Save each pause event with its two timestamps
+                for (int i = 0; i < current_session.Pauses.Count; i++)
+                {
+                    SaveEvent(BlockType.PauseStart, current_session.Pauses[i].Item1);
+                    SaveEvent(BlockType.PauseFinish, current_session.Pauses[i].Item2);
+                }
+
+                //Save each timestamped note
+                for (int i = 0; i < current_session.TimestampedNotes.Count; i++)
+                {
+                    SaveTimestampedNote(current_session.TimestampedNotes[i]);
+                }
+
+                //Save general session notes
+                SaveOverallSessionNotes(current_session.SessionNotes);
+
+                //Save the session end time
+                SaveEvent(BlockType.SessionEnd, current_session.EndTime);
             }
         }
 
@@ -262,34 +298,6 @@ namespace MotoTrakBase
 
                 //Save the device description
                 _binary_writer.Write(current_session.Device.DeviceName.ToCharArray());
-
-                //Save the number of characters found in the session notes
-                UInt16 n_notes = Convert.ToUInt16(current_session.SessionNotes.Length);
-                _binary_writer.Write(n_notes);
-
-                //Save the session notes
-                _binary_writer.Write(current_session.SessionNotes.ToCharArray());
-
-                //Save the number of timestamped notes that are in this session
-                UInt16 number_of_notes = Convert.ToUInt16(current_session.TimestampedNotes.Count);
-                _binary_writer.Write(number_of_notes);
-
-                //Save each timestamped note
-                foreach (var k in current_session.TimestampedNotes)
-                {
-                    double note_timestamp = MotorMath.ConvertDateTimeToMatlabDatenum(k.Item1);
-                    string note_text = k.Item2;
-
-                    //Write the timestamp as a 64-bit value
-                    _binary_writer.Write(note_timestamp);
-
-                    //Write the number of characters in the note
-                    UInt16 n_chars_in_note = Convert.ToUInt16(note_text.Length);
-                    _binary_writer.Write(n_chars_in_note);
-
-                    //Write the string itself
-                    _binary_writer.Write(note_text.ToCharArray());
-                }
 
                 //Save the number of coefficients used in the calibration function
                 N = Convert.ToByte(current_session.Device.Coefficients.Keys.Count);
@@ -365,6 +373,9 @@ namespace MotoTrakBase
         {
             if (_file_stream != null && _file_stream.CanWrite && _binary_writer != null && trial != null)
             {
+                //Write a number indicating that the following block will be a trial
+                _binary_writer.Write(Convert.ToInt32(MotoTrakFileSave.BlockType.Trial));
+
                 //Write the trial number out to the file
                 _binary_writer.Write(trial_number);
 
@@ -460,6 +471,68 @@ namespace MotoTrakBase
             }
         }
 
+        /// <summary>
+        /// Saves a timestamped note to the current file
+        /// </summary>
+        /// <param name="note">The tuple representing the timestamped note</param>
+        public void SaveTimestampedNote ( Tuple<DateTime, string> note )
+        {
+            if (_file_stream != null && _file_stream.CanWrite && _binary_writer != null && !string.IsNullOrEmpty(note.Item2))
+            {
+                //Write a value indicating a block of timestamped notes.
+                _binary_writer.Write(Convert.ToInt32(MotoTrakFileSave.BlockType.TimestampedNote));
+
+                //Write the timestamp of the note, as a 64-bit double
+                double note_timestamp = MotorMath.ConvertDateTimeToMatlabDatenum(note.Item1);
+                _binary_writer.Write(note_timestamp);
+
+                //Write the length of the note, in number of chars
+                UInt16 N = Convert.ToUInt16(note.Item2.Length);
+                _binary_writer.Write(N);
+
+                //Write the note itself
+                _binary_writer.Write(note.Item2.ToCharArray());
+            }
+        }
+
+        /// <summary>
+        /// Saves overall session notes to the current file handle
+        /// </summary>
+        /// <param name="session_notes">The string holding the general session notes</param>
+        public void SaveOverallSessionNotes ( string session_notes )
+        {
+            if (_file_stream != null && _file_stream.CanWrite && _binary_writer != null && !string.IsNullOrEmpty(session_notes))
+            {
+                //Write a value of indicating a block of general session notes.
+                _binary_writer.Write(Convert.ToInt32(MotoTrakFileSave.BlockType.GeneralSessionNotes));
+
+                //Write the length of the session notes in number of chars
+                UInt16 N = Convert.ToUInt16(session_notes.Length);
+                _binary_writer.Write(N);
+
+                //Write the note itself
+                _binary_writer.Write(session_notes.ToCharArray());
+            }
+        }
+
+        /// <summary>
+        /// Saves an event (such as a manual feed or a pause event) to the session file
+        /// </summary>
+        /// <param name="event_type">The type of event being saved</param>
+        /// <param name="event_timestamp">The timestamp at which the event takes place</param>
+        public void SaveEvent ( MotoTrakFileSave.BlockType event_type, DateTime event_timestamp )
+        {
+            if (_file_stream != null && _file_stream.CanWrite && _binary_writer != null)
+            {
+                //Write a value indicating the next block is a manual feed
+                _binary_writer.Write(Convert.ToInt32(event_type));
+
+                //Write a timestamp as a 64-bit double value
+                double matlab_timestamp = MotorMath.ConvertDateTimeToMatlabDatenum(event_timestamp);
+                _binary_writer.Write(matlab_timestamp);
+            }
+        }
+        
         #endregion
     }
 }

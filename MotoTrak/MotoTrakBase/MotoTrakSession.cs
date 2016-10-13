@@ -22,6 +22,8 @@ namespace MotoTrakBase
         private MotorDevice _device = new MotorDevice();
         private MotorStage _selected_stage = new MotorStage();
         private List<MotorTrial> _trials = new List<MotorTrial>();
+        private List<DateTime> _manual_feeds = new List<DateTime>();
+        private List<Tuple<DateTime, DateTime>> _pauses = new List<Tuple<DateTime, DateTime>>();
 
         private string _booth_label = string.Empty;
         private string _rat_name = string.Empty;
@@ -123,6 +125,38 @@ namespace MotoTrakBase
             {
                 _trials = value;
                 NotifyPropertyChanged("Trials");
+            }
+        }
+
+        /// <summary>
+        /// List containing timestamps of all manual feeds that occur during a session
+        /// </summary>
+        public List<DateTime> ManualFeeds
+        {
+            get
+            {
+                return _manual_feeds;
+            }
+            set
+            {
+                _manual_feeds = value;
+                NotifyPropertyChanged("ManualFeeds");
+            }
+        }
+
+        /// <summary>
+        /// List containing timestamps of all pauses (beginning and end) that occur during a session.
+        /// </summary>
+        public List<Tuple<DateTime, DateTime>> Pauses
+        {
+            get
+            {
+                return _pauses;
+            }
+            set
+            {
+                _pauses = value;
+                NotifyPropertyChanged("Pauses");
             }
         }
 
@@ -265,6 +299,51 @@ namespace MotoTrakBase
                 _variable_value_parameters = value;
                 NotifyPropertyChanged("VariableValueParameters");
             }
+        }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Creates a new pause tuple within the list of pauses for this session
+        /// </summary>
+        /// <param name="t">The time at which the pause begins</param>
+        public void CreatePause (DateTime t)
+        {
+            Tuple<DateTime, DateTime> new_pause = new Tuple<DateTime, DateTime>(t, DateTime.MinValue);
+            Pauses.Add(new_pause);
+        }
+
+        /// <summary>
+        /// Closes out the last pause tuple in the list for this session
+        /// </summary>
+        /// <param name="t">The timestamp at which the pause was finished</param>
+        public bool ClosePause (DateTime t)
+        {
+            if (Pauses != null)
+            {
+                Tuple<DateTime, DateTime> last_pause = Pauses.LastOrDefault();
+                if (last_pause != null)
+                {
+                    if (last_pause.Item2.Equals(DateTime.MinValue))
+                    {
+                        //Remove the last pause from the list
+                        Pauses.RemoveAt(Pauses.Count - 1);
+
+                        //Set the actual finish time of the pause
+                        Tuple<DateTime, DateTime> new_last_pause = new Tuple<DateTime, DateTime>(last_pause.Item1, DateTime.Now);
+
+                        //Insert the pause into the list
+                        Pauses.Add(new_last_pause);
+
+                        //Return a true value, indicating that a pause was closed
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         #endregion
