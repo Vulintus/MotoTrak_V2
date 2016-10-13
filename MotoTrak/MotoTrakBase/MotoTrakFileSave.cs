@@ -234,11 +234,7 @@ namespace MotoTrakBase
                 //Next, save the session start time (as an 8-byte double, in Matlab datecode format)
                 double session_start_time = MotorMath.ConvertDateTimeToMatlabDatenum(current_session.StartTime);
                 _binary_writer.Write(session_start_time);
-
-                //Next, save the session end time (as an 8-bute double, in Matlab datecode format)
-                double session_end_time = MotorMath.ConvertDateTimeToMatlabDatenum(current_session.EndTime);
-                _binary_writer.Write(session_end_time);
-
+                
                 //Save the number of characters in the rat's name
                 Byte N = Convert.ToByte(current_session.RatName.Length);
                 _binary_writer.Write(N);
@@ -273,6 +269,27 @@ namespace MotoTrakBase
 
                 //Save the session notes
                 _binary_writer.Write(current_session.SessionNotes.ToCharArray());
+
+                //Save the number of timestamped notes that are in this session
+                UInt16 number_of_notes = Convert.ToUInt16(current_session.TimestampedNotes.Count);
+                _binary_writer.Write(number_of_notes);
+
+                //Save each timestamped note
+                foreach (var k in current_session.TimestampedNotes)
+                {
+                    double note_timestamp = MotorMath.ConvertDateTimeToMatlabDatenum(k.Item1);
+                    string note_text = k.Item2;
+
+                    //Write the timestamp as a 64-bit value
+                    _binary_writer.Write(note_timestamp);
+
+                    //Write the number of characters in the note
+                    UInt16 n_chars_in_note = Convert.ToUInt16(note_text.Length);
+                    _binary_writer.Write(n_chars_in_note);
+
+                    //Write the string itself
+                    _binary_writer.Write(note_text.ToCharArray());
+                }
 
                 //Save the number of coefficients used in the calibration function
                 N = Convert.ToByte(current_session.Device.Coefficients.Keys.Count);

@@ -14,7 +14,7 @@ namespace MotoTrakBase
         /// </summary>
         /// <param name="description">String description of a data stream type</param>
         /// <returns>data stream type</returns>
-        public static MotorBoardDataStreamType ConvertToMotorStageAdaptiveThresholdType(string description)
+        public static MotorBoardDataStreamType ConvertToMotorBoardDataStreamType(string description)
         {
             var type = typeof(MotorBoardDataStreamType);
 

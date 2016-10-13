@@ -54,7 +54,7 @@ namespace MotoTrakBase
         /// <param name="type">A MotorDeviceType that defines the kind of device used.</param>
         /// <param name="index">The device index.  This is mainly to satisfy old versions of the motor board with multiple device ports. This can
         /// typically be set to 0, unless it is needed.</param>
-        public MotorDevice(MotorDeviceType type, int index)
+        public MotorDevice(MotorDeviceType type, int index = 0)
         {
             DeviceType = type;
             DeviceIndex = index;

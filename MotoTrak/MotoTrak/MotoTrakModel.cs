@@ -1298,6 +1298,9 @@ namespace MotoTrak
                     //Set the session state to "not running"
                     SessionState = SessionRunState.SessionNotRunning;
 
+                    //If the final trial was a "pause" trial, close it out
+                    MotorTrial.ClosePauseTrial(CurrentSession.Trials.LastOrDefault());
+
                     break;
                 case SessionRunState.SessionPaused:
 
@@ -1310,6 +1313,9 @@ namespace MotoTrak
                     //Eliminate the current trial, if there was one
                     CurrentTrial = null;
 
+                    //Create a "pause" trial and add it to the current session.
+                    CurrentSession.Trials.Add(MotorTrial.CreatePauseTrial());
+
                     break;
                 case SessionRunState.SessionUnpaused:
 
@@ -1320,6 +1326,9 @@ namespace MotoTrak
                     //Now set the session state to be running
                     SessionState = SessionRunState.SessionRunning;
 
+                    //Grab the pause trial that was created and set an end time for it
+                    MotorTrial.ClosePauseTrial(CurrentSession.Trials.LastOrDefault());
+                    
                     break;
             }
         }

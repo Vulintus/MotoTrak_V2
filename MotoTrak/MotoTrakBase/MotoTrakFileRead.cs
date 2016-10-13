@@ -65,6 +65,21 @@ namespace MotoTrakBase
             {
                 //Read in the MotoTrak file header
                 ReadMotoTrakFileHeader(session, reader);
+
+                //Read in each trial
+                while (reader.BaseStream.Position <= reader.BaseStream.Length)
+                {
+                    try
+                    {
+                        MotorTrial new_trial = new MotorTrial();
+                        ReadMotoTrakFileTrial(session, new_trial, reader);
+                        session.Trials.Add(new_trial);
+                    }
+                    catch
+                    {
+                        MotoTrakMessaging.GetInstance().AddMessage("Unable to read trial!");
+                    }
+                }
             }
             catch
             {
@@ -79,15 +94,223 @@ namespace MotoTrakBase
 
         private static void ReadMotoTrakFileHeader (MotoTrakSession session, BinaryReader reader)
         {
+            if (reader != null && session != null)
+            {
+                //First, read the file version
+                SByte file_version = reader.ReadSByte();
 
+                if (file_version == -5)
+                {
+                    //Next, read the session start time
+                    double session_start_time = reader.ReadDouble();
+                    session.StartTime = MotorMath.ConvertMatlabDatenumToDateTime(session_start_time);
+
+                    //Next, read in the number of characters in the rat's name
+                    Byte N = reader.ReadByte();
+
+                    //Next, read in the rat's name
+                    session.RatName = new string(reader.ReadChars(N));
+
+                    //Read in the number of characters in the booth title
+                    N = reader.ReadByte();
+
+                    //Next, read in the booth title
+                    session.BoothLabel = new string(reader.ReadChars(N));
+
+                    //Next, read in the number of characters in the stage name
+                    N = reader.ReadByte();
+
+                    //Next, read in the stage name
+                    string stage_name = new string(reader.ReadChars(N));
+
+                    //Create a new stage object within the session
+                    session.SelectedStage = new MotorStage();
+                    session.SelectedStage.StageName = stage_name;
+
+                    //Read in the number of characters in the device description
+                    N = reader.ReadByte();
+
+                    //Read in the device description
+                    string device_description = new string(reader.ReadChars(N));
+
+                    //Create a device within the session
+                    session.Device = new MotorDevice(MotorDeviceTypeConverter.ConvertToMotorDeviceType(device_description));
+
+                    //Read in the number of characters saved in the session notes
+                    UInt16 n_chars = reader.ReadUInt16();
+
+                    //Read in the session notes
+                    session.SessionNotes = new string(reader.ReadChars(n_chars));
+
+                    //Read in the number of timestamped session notes that are included in this session file
+                    UInt16 n_timestamped_notes = reader.ReadUInt16();
+
+                    //Read in each timestamped note
+                    for (UInt16 i = 0; i < n_timestamped_notes; i++)
+                    {
+                        //Read in the note's timestamp
+                        double note_timestamp_matlab = reader.ReadDouble();
+                        DateTime note_timestamp = MotorMath.ConvertMatlabDatenumToDateTime(note_timestamp_matlab);
+
+                        //Read in the number of characters contained in this note
+                        n_chars = reader.ReadUInt16();
+
+                        //Read in the characters for this note
+                        string note_content = new string(reader.ReadChars(n_chars));
+
+                        //Create the timestamped note tuple
+                        Tuple<DateTime, string> new_timestamped_note = new Tuple<DateTime, string>(note_timestamp, note_content);
+
+                        //Add it to the session's timestamped notes
+                        session.TimestampedNotes.Add(new_timestamped_note);
+                    }
+
+                    //Read in the number of coefficients used in the calibration function
+                    N = reader.ReadByte();
+
+                    //Read in each coefficient
+                    for (Byte i = 0; i < N; i++)
+                    {
+                        float coeff = reader.ReadSingle();
+
+                        //Set the coefficient in the device
+                        session.Device.Coefficients[i] = coeff;
+                    }
+
+                    //Read in the number of streams used in this session
+                    N = reader.ReadByte();
+
+                    //Read in the metadata from each stream
+                    for (Byte i = 0; i < N; i++)
+                    {
+                        //Read in the stream description
+                        Byte n_char_description = reader.ReadByte();
+                        string stream_desc = new string(reader.ReadChars(n_char_description));
+
+                        //Read in the stream units
+                        Byte n_char_units = reader.ReadByte();
+                        string stream_units = new string(reader.ReadChars(n_char_units));
+
+                        //Add the data stream to the session
+                        session.SelectedStage.DataStreamTypes.Add(MotorBoardDataStreamTypeConverter.ConvertToMotorBoardDataStreamType(stream_desc));
+                    }
+
+                    //Read in the number of stage parameters that exist
+                    UInt32 n_params = reader.ReadUInt32();
+
+                    //Read in each stage parameter
+                    for (UInt32 i = 0; i < n_params; i++)
+                    {
+                        //Read in the number of characters in the name of each stage parameter
+                        N = reader.ReadByte();
+
+                        //Read in the parameter name itself
+                        string param_name = new string(reader.ReadChars(N));
+
+                        //Create a new MotorStageParameter object
+                        MotorStageParameter k = new MotorStageParameter();
+                        k.ParameterName = param_name;
+
+                        //Add the parameter to the stage
+                        session.SelectedStage.StageParameters.TryAdd(param_name, k);
+                    }
+                }
+            }
         }
 
-        private static void ReadMotoTrakFileTrial ()
+        private static void ReadMotoTrakFileTrial (MotoTrakSession session, MotorTrial trial, BinaryReader reader)
         {
+            if (trial != null && reader != null)
+            {
+                //Read in the trial number
+                UInt32 trial_number = reader.ReadUInt32();
 
+                //Read the start time of the trial
+                double start_time = reader.ReadDouble();
+                trial.StartTime = MotorMath.ConvertMatlabDatenumToDateTime(start_time);
+
+                //Read the trial result
+                Byte result_code = reader.ReadByte();
+                trial.Result = MotorTrialResultConverter.ConvertResultCodeToEnumeratedType(result_code);
+
+                //Read the trial end time (for pause trials)
+                if (trial.Result == MotorTrialResult.Pause)
+                {
+                    double end_time = reader.ReadDouble();
+                    trial.EndTime = MotorMath.ConvertMatlabDatenumToDateTime(end_time);
+                }
+
+                //Read in the hit window duration
+                trial.HitWindowDurationInSeconds = reader.ReadSingle();
+
+                //Read in the pre-trial duration
+                trial.PreTrialSamplingPeriodInSeconds = reader.ReadSingle();
+
+                //Read in the post-trial duration
+                trial.PostTrialSamplingPeriodInSeconds = reader.ReadSingle();
+
+                //Read in the post-trial timeout
+                trial.PostTrialTimeOutInSeconds = reader.ReadSingle();
+
+                //Read in the manipulandum position
+                trial.DevicePosition = reader.ReadSingle();
+
+                //Read in the number of variable parameters that exist for this trial
+                Byte N = reader.ReadByte();
+
+                //Read in each parameter
+                for (Byte i = 0; i < N; i++)
+                {
+                    //Read in the value
+                    float variable_param_value = reader.ReadSingle();
+
+                    //Add the value to the trial
+                    string stage_parameter_name = session.SelectedStage.StageParameters.Keys.ToList()[i];
+                    trial.VariableParameters[stage_parameter_name] = variable_param_value;
+                }
+
+                //Read in the number of hits that occurred during this trial
+                N = reader.ReadByte();
+
+                //Read in the timestamp for each hit
+                for (Byte i = 0; i < N; i++)
+                {
+                    double hit_time_matlab = reader.ReadDouble();
+                    DateTime hit_time = MotorMath.ConvertMatlabDatenumToDateTime(hit_time_matlab);
+                    trial.HitTimes.Add(hit_time);
+                }
+
+                //Save the number of output trigger events
+                N = reader.ReadByte();
+
+                //Read in the timestamp for each output trigger
+                for (Byte i = 0; i < N; i++)
+                {
+                    double output_trigger_timestamp_matlab = reader.ReadDouble();
+                    DateTime output_trigger_timestamp = MotorMath.ConvertMatlabDatenumToDateTime(output_trigger_timestamp_matlab);
+                    trial.OutputTriggers.Add(output_trigger_timestamp);
+                }
+
+                //Read in the number of samples in the signal
+                UInt32 n_samples = reader.ReadUInt32();
+
+                //Read in the signal
+                trial.TrialData = new List<List<double>>();
+                for (int i = 0; i < session.SelectedStage.TotalDataStreams; i++)
+                {
+                    //Add a new list of doubles for this stream of data
+                    trial.TrialData.Add(new List<double>());
+
+                    //Read in this stream of data
+                    for (UInt32 x = 0; x < n_samples; x++)
+                    {
+                        float data_point = reader.ReadSingle();
+                        trial.TrialData[i].Add(data_point);
+                    }
+                }
+            }
         }
-
-
+        
         private static MotoTrakSession ReadArdyMotorVersion2File (byte[] file_bytes)
         {
             //Create a session object which will be returned to the caller
