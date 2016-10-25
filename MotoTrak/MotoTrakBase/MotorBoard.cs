@@ -605,7 +605,8 @@ namespace MotoTrakBase
         /// <param name="pos">The position to which the autopositioner should move the device</param>
         public void Autopositioner ( double pos )
         {
-            //empty for now
+            int position = Convert.ToInt32(Math.Round(pos));
+            this.LongCommand("0nn", 0, position);
         }
 
         /// <summary>

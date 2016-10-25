@@ -98,13 +98,16 @@ namespace MotoTrak
         private string _current_booth_label = string.Empty;
 
         private List<MotorStage> _all_stages = new List<MotorStage>();
-
+        private List<MotoTrakSession> _recent_mototrak_sessions = new List<MotoTrakSession>();
+        
         private SessionRunState _session_state = SessionRunState.SessionNotRunning;
         private TrialRunState _trial_state = TrialRunState.Idle;
 
         private bool _trigger_manual_feed = false;
+        private bool _restart_background_thread = false;
 
         private BackgroundWorker _background_thread = null;
+        private BackgroundWorker _history_loader = null;
 
         #endregion
 
@@ -430,6 +433,22 @@ namespace MotoTrak
             }
         }
 
+        /// <summary>
+        /// The list of recent behavior sessions for the current rat and stage
+        /// This list is populated by a background thread
+        /// </summary>
+        public List<MotoTrakSession> RecentBehaviorSessions
+        {
+            get
+            {
+                return _recent_mototrak_sessions;
+            }
+            set
+            {
+                _recent_mototrak_sessions = value;
+                //NotifyPropertyChanged("RecentBehaviorSessions");
+            }
+        }
 
         #endregion
 
@@ -513,6 +532,9 @@ namespace MotoTrak
                 //Tell the Arduino board to stream data at the sampling rate defined in the default stage
                 SetStreamingParameters();
 
+                //Welcome the user to MotoTrak
+                MotoTrakMessaging.GetInstance().AddMessage("Welcome to MotoTrak!");
+
                 //Start a background worker which will continue looping and reading in data.
                 _background_thread = new BackgroundWorker();
                 _background_thread.WorkerSupportsCancellation = true;
@@ -526,6 +548,23 @@ namespace MotoTrak
             {
                 //If there are no available stages for this device
                 CurrentSession.SelectedStage = null;
+            }
+        }
+
+        /// <summary>
+        /// Causes the stream to stop and then restart.
+        /// This is used when stage selections are made because streaming properties may differe
+        /// depending on the stage that is selected.
+        /// </summary>
+        public void RestartStreaming ()
+        {
+            //Set a flag indicating that streaming should be restarted after the background thread finishes.
+            _restart_background_thread = true;
+
+            //Cancel the background thread that is reading data from the MotoTrak controller board.
+            if (_background_thread != null)
+            {
+                _background_thread.CancelAsync();
             }
         }
 
@@ -557,6 +596,9 @@ namespace MotoTrak
             SessionState = SessionRunState.SessionEnd;
         }
 
+        /// <summary>
+        /// Finalizes a session after the user has entered notes for the session.
+        /// </summary>
         public void FinalizeSession ()
         {
             SessionState = SessionRunState.SessionFinalizing;   
@@ -600,6 +642,32 @@ namespace MotoTrak
             IsTriggerManualFeed = true;
         }
 
+        /// <summary>
+        /// This function loads a rat's recent MotoTrak behavior history.
+        /// </summary>
+        public void LoadRecentHistory ()
+        {
+            if (CurrentSession != null && CurrentSession.SelectedStage != null)
+            {
+                if (_history_loader == null || !_history_loader.IsBusy)
+                {
+                    _history_loader = new BackgroundWorker();
+                    _history_loader.WorkerReportsProgress = true;
+                    _history_loader.WorkerSupportsCancellation = true;
+                    _history_loader.DoWork += delegate
+                    {
+                        RecentBehaviorSessions = MotoTrakFileRead.ReadHistory(CurrentSession.RatName, CurrentSession.SelectedStage.StageName);
+                        _history_loader.ReportProgress(0);
+                    };
+                    _history_loader.ProgressChanged += delegate
+                    {
+                        NotifyPropertyChanged("RecentBehaviorSessions");
+                    };
+                    _history_loader.RunWorkerAsync();
+                }
+            }
+        }
+
         #endregion
 
         #region Private properties edited by the background worker thread
@@ -620,7 +688,7 @@ namespace MotoTrak
 
         /// <summary>
         /// This method is called by the background worker thread whenever it is cancelled.  This will occur whenever the MotoTrak window
-        /// is closed, because that is the only time the thread would ever be cancelled.
+        /// is closed, or when a stage selection is made.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -630,6 +698,20 @@ namespace MotoTrak
             {
                 MotoTrakMessaging.GetInstance().AddMessage("The MotoTrak background thread shut down unexpectedly. This is a fatal error, and you must restart MotoTrak. Details of the error have been saved the error data file.");
                 ErrorLoggingService.GetInstance().LogExceptionError(e.Error);
+            }
+
+            //If the flag has been set indicating that we need to restart the background thread, do so
+            //This flag will be set upon the user selecting a new stage.
+            if (_restart_background_thread)
+            {
+                //Reset the flag
+                _restart_background_thread = false;
+
+                //Restart the background worker
+                if (_background_thread != null)
+                {
+                    _background_thread.RunWorkerAsync();
+                }
             }
         }
 
@@ -673,6 +755,9 @@ namespace MotoTrak
         {
             //Set how much time we want to spend on each processing frame
             int expected_millis_per_frame = 30;
+
+            //Clear the serial buffer
+            ControllerBoard.ClearStream();
 
             //Begin periodic streaming from the Arduino board
             ControllerBoard.EnableStreaming(1);
@@ -722,10 +807,7 @@ namespace MotoTrak
             /*
              * Now we will move on from declaring variables...
              */
-
-            //Welcome the user to MotoTrak
-            MotoTrakMessaging.GetInstance().AddMessage("Welcome to MotoTrak!");
-
+             
             //Set up a stopwatch timer to track frame rate
             Stopwatch stop_watch = new Stopwatch();
             stop_watch.Start();
@@ -889,6 +971,12 @@ namespace MotoTrak
                 }
                 
             }
+
+            //Disable streaming
+            ControllerBoard.EnableStreaming(0);
+
+            //Clear the stream
+            ControllerBoard.ClearStream();
 
             //If we reach this point in the code, it means that user has decided to close the MotoTrak window.  This next line of code
             //tells anyone who is listening that the background worker is being cancelled.
@@ -1298,10 +1386,7 @@ namespace MotoTrak
 
                     //Set the trial state to idle
                     TrialState = TrialRunState.Idle;
-
-                    //Set the session state to "not running"
-                    SessionState = SessionRunState.SessionFinalizing;
-
+                    
                     //If the final trial was a "pause" trial, close it out
                     bool success = CurrentSession.ClosePause(DateTime.Now);
                     if (success)

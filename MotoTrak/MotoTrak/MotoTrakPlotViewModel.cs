@@ -187,134 +187,312 @@ namespace MotoTrak
 
         #endregion
 
-        #region Private methods
-
-        public void ScaleYAxis ()
-        {
-            //Figure out the proper scale
-            if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
-            {
-                List<double> values = new List<double>();
-                values.Add(0); //Make sure the baseline of 0 is in the values array
-                var keys = Model.CurrentSession.SelectedStage.StageParameters.Keys;
-
-                foreach (var k in keys)
-                {
-                    var sp = Model.CurrentSession.SelectedStage.StageParameters[k];
-
-                    //Now check to see if this stage parameter is a "plotted" parameter
-                    var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
-                    if (stage_impl != null)
-                    {
-                        var tuple_indicators = stage_impl.RequiredStageParameters[k];
-                        bool plot_this_annotation = tuple_indicators.Item3;
-                        if (!plot_this_annotation)
-                        {
-                            //If the stage implementation says to not create an annotation for this specific parameter,
-                            //then we will tell the loop to continue with its next iteration.
-                            //Otherwise, the code below this if-statement will execute and an annotation will be created.
-                            continue;
-                        }
-                    }
-
-                    values.Add(sp.MinimumValue);
-                    values.Add(sp.MaximumValue);
-                    values.Add(sp.InitialValue);
-                    values.Add(sp.CurrentValue);
-                }
-
-                var ymin = MotorMath.NanMin(values);
-                var ymax = MotorMath.NanMax(values);
-                var yrange = Math.Abs(ymax - ymin) * 1.2;  //Multiply the range by 120% to extend it a bit
-
-                //Get the y-axis object
-                var y_axis = Plot.Axes.Where(x => x.Position == AxisPosition.Left).FirstOrDefault();
-                if (y_axis != null)
-                {
-                    y_axis.MinimumRange = yrange;
-                }
-            }
-            
-        }
+        #region Basic setup and selection methods used
 
         /// <summary>
-        /// Scales the x-axis to the appropriate size for a trial
+        /// InitializePlot instantiates axes for the plot.  This must be called
+        /// at the beginning of the program and is necessary for any plotting to occur.
         /// </summary>
-        public void ScaleXAxis ()
-        {
-            //Figure out the proper scale
-            if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
-            {
-                //Get the x-axis object
-                var x_axis = Plot.Axes.Where(x => x.Position == AxisPosition.Bottom).FirstOrDefault();
-                if (x_axis != null)
-                {
-                    x_axis.MinimumRange = Model.CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial;
-                }
-            }
-        }
-
         private void InitializePlot()
         {
-            //Grab the stream description from the model
-            //This will be a tuple.
-            //Item1 = description of stream
-            //Item2 = units of stream
-            //var stream_description = Model.CurrentSession.StreamDescriptions[this.StreamIndex];
-
-            //Set the title on the plot model
-            //Plot.Title = stream_description.Item1;
-
-            //Create a y-axis for this plot
+            //Create a y-axis for the plot
             LinearAxis y_axis = new LinearAxis();
             y_axis.Position = AxisPosition.Left;
-            //y_axis.Minimum = -5;
-            //y_axis.Maximum = 180;
 
-            //Set the y-axis title to be the units for the stream
-            //y_axis.Title = stream_description.Item2;
-
-            //Create an x-axis for this plot
+            //Create an x-axis for the plot
             LinearAxis x_axis = new LinearAxis();
             x_axis.Position = AxisPosition.Bottom;
-            x_axis.Minimum = 0;
-            x_axis.MinimumRange = 500;
-
+            
             //Add the axes to the plot model
             Plot.Axes.Clear();
             Plot.Axes.Add(y_axis);
             Plot.Axes.Add(x_axis);
-
-            //Add an area series to the plot model
-            AreaSeries plot_data = new AreaSeries();
-            Plot.Series.Clear();
-            Plot.Series.Add(plot_data);
-
-            //Invalidate the plot
-            Plot.InvalidatePlot(true);
         }
         
+        /// <summary>
+        /// SelectPlot is called any time the plot in MotoTrak is changed by the user.
+        /// This method then calls the setup code for the respective plot and then
+        /// draws the plot itself.
+        /// </summary>
         private void SelectPlot ()
         {
-            if (StreamIndex < Model.MonitoredSignal.Count)
+            if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
             {
-                var k = GetPlotSeries(SeriesType.AreaSeries);
-                DrawStreamedData();
-                DrawTrialAnnotations();
-                AddTrialEventAnnotations();
-            }
-            else if (StreamIndex == Model.MonitoredSignal.Count)
-            {
-                DrawSessionOverviewPlot();
-            }
-            else
-            {
+                if (StreamIndex < Model.CurrentSession.SelectedStage.DataStreamTypes.Count)
+                {
+                    //Set up the plot for streaming signal data
+                    SetupStreamedDataPlot();
 
+                    //Draw the streaming signal data
+                    DrawStreamedData();
+
+                    //Draw any annotations that need to be drawn for trials
+                    DrawTrialAnnotations();
+
+                    //Add annotations that are due to events occuring during a trial
+                    AddTrialEventAnnotations();
+                }
+                else if (StreamIndex == Model.CurrentSession.SelectedStage.DataStreamTypes.Count)
+                {
+                    //Set up the session overview plot.
+                    SetupSessionOverviewPlot();
+
+                    //Plot the datapoints for the session overview
+                    DrawSessionOverviewPlot();
+                }
+                else if (StreamIndex == Model.CurrentSession.SelectedStage.DataStreamTypes.Count + 1)
+                {
+                    //This is the recent performance history plot
+                    DrawRecentPerformancePlot();
+                }
+                else
+                {
+
+                }
+            }
+        }
+
+        #endregion
+
+        #region Methods for drawing performance data from recent MotoTrak sessions
+
+        private void DrawRecentPerformancePlot ()
+        {
+            Plot.Series.Clear();
+
+            LineSeries total_trial_series = new LineSeries();
+            LineSeries total_successful_trial_series = new LineSeries();
+
+            List<MotoTrakSession> recent_sessions = MotoTrakModel.GetInstance().RecentBehaviorSessions;
+            int x = 0;
+            int max_y = 0;
+            if (recent_sessions != null)
+            {
+                foreach (var s in recent_sessions)
+                {
+                    //Fetch the total trial count and the successful trial count from each previous session that is loaded into memory
+                    int total_trials = s.Trials.Count;
+                    int successful_trials = s.Trials.Where(t => t.Result == MotorTrialResult.Hit).ToList().Count;
+
+                    //Add these points to the line series
+                    total_trial_series.Points.Add(new DataPoint(x+1, total_trials));
+                    total_successful_trial_series.Points.Add(new DataPoint(x+1, successful_trials));
+
+                    //Update the maximal y value
+                    max_y = Math.Max(max_y, total_trials);
+
+                    //Increment the x-value for the series
+                    x++;
+                }
+            }
+
+            //Name each series
+            total_trial_series.Title = "Total trials";
+            total_trial_series.RenderInLegend = true;
+
+            total_successful_trial_series.Title = "Total successful trials";
+            total_successful_trial_series.RenderInLegend = true;
+
+            //Set the color of each line
+            total_trial_series.Color = OxyColor.FromRgb(0, 0, 255);
+            total_successful_trial_series.Color = OxyColor.FromRgb(0, 180, 0);
+
+            //Add the series to the plot
+            Plot.Series.Add(total_trial_series);
+            Plot.Series.Add(total_successful_trial_series);
+
+            //Scale the x-axis correctly
+            LinearAxis x_axis = Plot.Axes.FirstOrDefault(y => y.Position == AxisPosition.Bottom) as LinearAxis;
+            if (x_axis != null)
+            {
+                x_axis.Minimum = 0;
+                x_axis.Maximum = x;
+                x_axis.MaximumRange = x+1;
+                x_axis.MinimumRange = x+1;
+            }
+
+            //Scale the y-axis correctly
+            LinearAxis y_axis = Plot.Axes.FirstOrDefault(y => y.Position == AxisPosition.Left) as LinearAxis;
+            if (y_axis != null)
+            {
+                y_axis.Minimum = 0;
+                y_axis.Maximum = max_y;
+                y_axis.MinimumRange = max_y+1;
+                y_axis.MaximumRange = max_y+1;
+            }
+
+            //Make sure to show the legend
+            Plot.IsLegendVisible = true;
+            Plot.LegendPlacement = LegendPlacement.Inside;
+            Plot.LegendPosition = LegendPosition.TopRight;
+            
+            //Refresh the plot
+            Plot.InvalidatePlot(true);
+        }
+
+        #endregion
+
+        #region Session overview plot functions
+
+        private void DrawSessionOverviewPlot()
+        {
+            if (StreamIndex == Model.MonitoredSignal.Count)
+            {
+                //Get the points that need to be plotted
+                var datapoints = Model.SessionOverviewValues.Select(x => new ScatterPoint(x.Item1, x.Item2)).ToList();
+
+                var successful_trials = Model.SessionOverviewValues.Where(t => t.Item3 == true).ToList();
+                var successful_datapoints = successful_trials.Select(x => new ScatterPoint(x.Item1, x.Item2)).ToList();
+
+                var failed_trials = Model.SessionOverviewValues.Where(t => t.Item3 == false).ToList();
+                var failed_datapoints = failed_trials.Select(x => new ScatterPoint(x.Item1, x.Item2)).ToList();
+                
+                //Set the x-axis limit
+                LinearAxis x_axis = Plot.Axes.FirstOrDefault(x => x.Position == AxisPosition.Bottom) as LinearAxis;
+                if (x_axis != null)
+                {
+                    //Set the x-axis limits to encompass how many trials exist
+                    x_axis.Minimum = 0;
+                    x_axis.MinimumRange = 10;
+                    x_axis.Maximum = Math.Max(Model.CurrentSession.Trials.Count + 1, x_axis.MinimumRange);
+                    x_axis.MaximumRange = Model.CurrentSession.Trials.Count + 1;
+                }
+
+                //Grab all of the scatter plot series
+                List<ScatterSeries> s = Plot.Series.Select(x => x as ScatterSeries).ToList();
+
+                //Add the new datapoints to each series
+                s[0].Points.AddRange(successful_datapoints);
+                s[1].Points.AddRange(failed_datapoints);
+
+                //Invalidate the plot so it is updated on screen
+                Plot.InvalidatePlot(true);
             }
         }
         
-        
-        private void AddTrialEventAnnotations ()
+        private void SetupSessionOverviewPlot ()
+        {
+            //Clear the current set of series on the plot
+            Plot.Series.Clear();
+            
+            //Create a scatter plot series that will be used for successful trials
+            //This series is green in color
+            var scatter1 = new ScatterSeries()
+            {
+                MarkerType = MarkerType.Triangle,
+                MarkerStroke = OxyColor.FromRgb(0, 255, 0),
+                MarkerFill = OxyColor.FromRgb(128, 255, 128)
+            };
+
+            //Create another scatter plot series that will be used for failed trials
+            //This series is red in color
+            var scatter2 = new ScatterSeries()
+            {
+                MarkerType = MarkerType.Triangle,
+                MarkerStroke = OxyColor.FromRgb(255, 0, 0),
+                MarkerFill = OxyColor.FromRgb(255, 128, 128)
+            };
+
+            //Add both series to the plot
+            Plot.Series.Add(scatter1);
+            Plot.Series.Add(scatter2);
+
+            //Set the x-axis and y-axis limits for the session overview plot
+            LinearAxis x_axis = Plot.Axes.FirstOrDefault(x => x.Position == AxisPosition.Bottom) as LinearAxis;
+            LinearAxis y_axis = Plot.Axes.FirstOrDefault(x => x.Position == AxisPosition.Left) as LinearAxis;
+            if (x_axis != null && y_axis != null)
+            {
+                var model = MotoTrakModel.GetInstance();
+                if (model.CurrentSession != null)
+                {
+                    //Set the x-axis limits to encompass how many trials exist
+                    x_axis.Minimum = 0;
+                    x_axis.MinimumRange = 10;
+                    x_axis.Maximum = Math.Max(model.CurrentSession.Trials.Count + 1, x_axis.MinimumRange);
+                    x_axis.MaximumRange = model.CurrentSession.Trials.Count + 1;
+
+                    //Remove y-axis limits
+                    y_axis.Minimum = double.NaN;
+                    y_axis.MinimumRange = double.NaN;
+                    y_axis.Maximum = double.NaN;
+                    y_axis.MaximumRange = double.NaN;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Plot functions for streaming signal data
+
+        /// <summary>
+        /// This method is called when the user selects any of the "streaming signals" from the dropdown box to view in the plot.
+        /// It sets up the plot in such a manner that they can easily view the signals both during a trial and not during a trial.
+        /// </summary>
+        private void SetupStreamedDataPlot ()
+        {
+            //Clear whatever series are currently on the plot
+            Plot.Series.Clear();
+
+            //Turn off the legend
+            Plot.IsLegendVisible = false;
+
+            //Add a new Area series for the signal
+            Plot.Series.Add(new AreaSeries());
+
+            //Get the current MotoTrak model
+            var model = MotoTrakModel.GetInstance();
+
+            //Set the x-axis and y-axis properties based on the selected stage for the current session
+            if (model.CurrentSession != null && model.CurrentSession.SelectedStage != null)
+            {
+                //Set up the y-axis properties
+                var y_axis = Plot.Axes.FirstOrDefault(x => x.Position == AxisPosition.Left) as LinearAxis;
+
+                //Set up the x-axis properties
+                var x_axis = Plot.Axes.FirstOrDefault(x => x.Position == AxisPosition.Bottom) as LinearAxis;
+                x_axis.Minimum = 0;
+                x_axis.Maximum = Model.CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial;
+                x_axis.MinimumRange = x_axis.Maximum;
+                x_axis.MaximumRange = x_axis.Maximum;
+            }
+
+            //Invalidate the plot so that it is refreshed
+            Plot.InvalidatePlot(true);
+        }
+
+        /// <summary>
+        /// This method plots the streaming signal data.
+        /// </summary>
+        private void DrawStreamedData()
+        {
+            if (StreamIndex >= 0 && StreamIndex < Model.MonitoredSignal.Count)
+            {
+                //Copy over the data from the stream that is currently being displayed
+                var datapoints = Model.MonitoredSignal[StreamIndex].Select((y_val, x_val) =>
+                    new DataPoint(x_val + 1, y_val)).ToList();
+                
+                //Grab the first AreaSeries that is on the plot
+                var s = Plot.Series.FirstOrDefault() as AreaSeries;
+                if (s != null)
+                {
+                    //Clear the points in the dataset
+                    s.Points.Clear();
+
+                    //Add the new set of datapoints
+                    s.Points.AddRange(datapoints);
+                }
+            }
+
+            //Invalidate the plot so it is updated on screen
+            Plot.InvalidatePlot(true);
+        }
+
+        /// <summary>
+        /// This method is called during a trial.
+        /// It adds annotations to the plot that represent events that have occured during the trial itself,
+        /// such as a "hit" or any other event the user would like to see represented in the trial plot.
+        /// </summary>
+        private void AddTrialEventAnnotations()
         {
             while (!Model.TrialEventsQueue.IsEmpty)
             {
@@ -359,8 +537,12 @@ namespace MotoTrak
                 }
             }
         }
-        
-        private void DrawTrialAnnotations ()
+
+        /// <summary>
+        /// This function is called when a trial is initiated.
+        /// It adds simple annotations to the plot, such as lines around the hit window of the trial.
+        /// </summary>
+        private void DrawTrialAnnotations()
         {
             if (Model.CurrentTrial != null)
             {
@@ -454,150 +636,82 @@ namespace MotoTrak
                 Plot.InvalidatePlot(true);
             }
         }
-        
-        private void DrawStreamedData ()
+
+        /// <summary>
+        /// This method scales the y-axis of the streaming signal plot so that it is within the appropriate
+        /// range to show the data being presented.
+        /// </summary>
+        public void ScaleYAxis()
         {
-            if (StreamIndex >= 0 && StreamIndex < Model.MonitoredSignal.Count)
+            //Figure out the proper scale
+            if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
             {
-                //Copy over the data from the stream that is currently being displayed
-                var datapoints = Model.MonitoredSignal[StreamIndex].Select((y_val, x_val) =>
-                    new DataPoint(x_val + 1, y_val)).ToList();
+                List<double> values = new List<double>();
+                values.Add(0); //Make sure the baseline of 0 is in the values array
+                var keys = Model.CurrentSession.SelectedStage.StageParameters.Keys;
 
-                //Set the x-axis limit
-                LinearAxis x_axis = Plot.Axes.FirstOrDefault(x => x.Position == AxisPosition.Bottom) as LinearAxis;
-                if (x_axis != null)
+                foreach (var k in keys)
                 {
-                    x_axis.MinimumRange = 500;
-                }
+                    var sp = Model.CurrentSession.SelectedStage.StageParameters[k];
 
-                //Grab the first AreaSeries that is on the plot
-                var s = GetPlotSeries(SeriesType.AreaSeries) as AreaSeries;
-                if (s != null)
-                {
-                    //Clear the points in the dataset
-                    s.Points.Clear();
-
-                    //Add the new set of datapoints
-                    s.Points.AddRange(datapoints);
-                }
-            }
-
-            //Invalidate the plot so it is updated on screen
-            Plot.InvalidatePlot(true);
-        }
-        
-        private void DrawSessionOverviewPlot()
-        {
-            if (StreamIndex == Model.MonitoredSignal.Count)
-            {
-                //Get the points that need to be plotted
-                var datapoints = Model.SessionOverviewValues.Select(x => new ScatterPoint(x.Item1, x.Item2)).ToList();
-
-                var successful_trials = Model.SessionOverviewValues.Where(t => t.Item3 == true).ToList();
-                var successful_datapoints = successful_trials.Select(x => new ScatterPoint(x.Item1, x.Item2)).ToList();
-
-                var failed_trials = Model.SessionOverviewValues.Where(t => t.Item3 == false).ToList();
-                var failed_datapoints = failed_trials.Select(x => new ScatterPoint(x.Item1, x.Item2)).ToList();
-
-                //Set the x-axis limit
-                LinearAxis x_axis = Plot.Axes.FirstOrDefault(x => x.Position == AxisPosition.Bottom) as LinearAxis;
-                if (x_axis != null)
-                {
-                    x_axis.MinimumRange = 10;
-                }
-
-                List<ScatterSeries> s = SetupSessionOverviewPlot();
-                s[0].Points.AddRange(successful_datapoints);
-                s[1].Points.AddRange(failed_datapoints);
-
-                //Invalidate the plot so it is updated on screen
-                Plot.InvalidatePlot(true);
-            }
-        }
-        
-        private List<ScatterSeries> SetupSessionOverviewPlot ()
-        {
-            bool create_series = false;
-
-            if (Plot.Series.Count >= 2)
-            {
-                if (!(Plot.Series[0] is ScatterSeries) || !(Plot.Series[1] is ScatterSeries))
-                {
-                    create_series = true;
-                }
-            }
-            else
-            {
-                create_series = true;
-            }
-
-            if (create_series)
-            {
-                Plot.Series.Clear();
-
-                var scatter1 = new ScatterSeries()
-                {
-                    MarkerType = MarkerType.Triangle,
-                    MarkerStroke = OxyColor.FromRgb(0, 255, 0),
-                    MarkerFill = OxyColor.FromRgb(128, 255, 128)
-                };
-
-                var scatter2 = new ScatterSeries()
-                {
-                    MarkerType = MarkerType.Triangle,
-                    MarkerStroke = OxyColor.FromRgb(255, 0, 0),
-                    MarkerFill = OxyColor.FromRgb(255, 128, 128)
-                };
-
-                Plot.Series.Add(scatter1);
-                Plot.Series.Add(scatter2);
-            }
-
-            return new List<ScatterSeries>() { Plot.Series[0] as ScatterSeries, Plot.Series[1] as ScatterSeries };
-        }
-        
-        private Series GetPlotSeries ( SeriesType series_type )
-        {
-            var first_series = Plot.Series.FirstOrDefault();
-
-            switch (series_type)
-            {
-                case SeriesType.AreaSeries:
-
-                    if (first_series is AreaSeries)
+                    //Now check to see if this stage parameter is a "plotted" parameter
+                    var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
+                    if (stage_impl != null)
                     {
-                        return first_series;
-                    }
-                    else
-                    {
-                        Plot.Series.Clear();
-                        Plot.Series.Add(new AreaSeries());
-                        return Plot.Series.FirstOrDefault();
-                    }
-                    
-                case SeriesType.ScatterSeries:
-                    
-                    if (first_series is ScatterSeries)
-                    {
-                        return first_series;
-                    }
-                    else
-                    {
-                        var scatter = new ScatterSeries()
+                        var tuple_indicators = stage_impl.RequiredStageParameters[k];
+                        bool plot_this_annotation = tuple_indicators.Item3;
+                        if (!plot_this_annotation)
                         {
-                            MarkerType = MarkerType.Triangle,
-                            MarkerStroke = OxyColor.FromRgb(255, 0, 0),
-                            MarkerFill = OxyColor.FromRgb(255, 128, 128)
-                        };
-                        
-                        Plot.Series.Clear();
-                        Plot.Series.Add(scatter);
-                        return Plot.Series.FirstOrDefault();
+                            //If the stage implementation says to not create an annotation for this specific parameter,
+                            //then we will tell the loop to continue with its next iteration.
+                            //Otherwise, the code below this if-statement will execute and an annotation will be created.
+                            continue;
+                        }
                     }
-                    
-            }
 
-            return first_series;
+                    values.Add(sp.MinimumValue);
+                    values.Add(sp.MaximumValue);
+                    values.Add(sp.InitialValue);
+                    values.Add(sp.CurrentValue);
+                }
+
+                var ymin = MotorMath.NanMin(values);
+                var ymax = MotorMath.NanMax(values);
+                var yrange = Math.Abs(ymax - ymin) * 1.2;  //Multiply the range by 120% to extend it a bit
+
+                //Get the y-axis object
+                var y_axis = Plot.Axes.Where(x => x.Position == AxisPosition.Left).FirstOrDefault();
+                if (y_axis != null)
+                {
+                    //Set the minimum range of the y-axis object
+                    //We do NOT set the maximum range in this instance (we want the maximum to be able to scale upwards
+                    //in case the data has very large values).
+                    y_axis.MinimumRange = yrange;
+                }
+            }
+        }
+
+        /// <summary>
+        /// This method scales the x-axis of the streaming signal data plot so it shows the appropriate
+        /// number of data points for a trial.
+        /// </summary>
+        public void ScaleXAxis()
+        {
+            //Figure out the proper scale
+            if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
+            {
+                //Get the x-axis object
+                var x_axis = Plot.Axes.Where(x => x.Position == AxisPosition.Bottom).FirstOrDefault();
+                if (x_axis != null)
+                {
+                    //Set the range of the x-axis
+                    x_axis.MinimumRange = Model.CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial;
+                    x_axis.MaximumRange = x_axis.MinimumRange;
+
+                    //Invalidate the plot to update the range
+                    Plot.InvalidatePlot(true);
+                }
+            }
         }
 
         #endregion

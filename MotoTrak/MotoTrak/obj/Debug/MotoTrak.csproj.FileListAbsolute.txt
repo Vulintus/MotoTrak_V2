@@ -11,15 +11,12 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MotoTrak.p
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MotoTrakBase.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\OxyPlot.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\OxyPlot.Wpf.dll
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\OxyPlot.Xps.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MotoTrakUtilities.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MotoTrakBase.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\OxyPlot.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\OxyPlot.xml
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\OxyPlot.Wpf.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\OxyPlot.Wpf.xml
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\OxyPlot.Xps.pdb
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\OxyPlot.Xps.xml
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MotoTrakUtilities.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\MainWindow.baml
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\MotoTrak.g.resources
@@ -27,8 +24,6 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\MotoTrak.P
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\MotoTrak.csproj.GenerateResource.Cache
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\MotoTrak.exe
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\MotoTrak.pdb
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\PortSelectionUI.g.cs
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\PortSelectionUI.baml
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Microsoft.Scripting.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\IronPython.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\Microsoft.Dynamic.dll
@@ -46,3 +41,5 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MahApps.Me
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MahApps.Metro.xml
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\SessionNotesView.g.cs
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Debug\SessionNotesView.baml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MotoTrakBoothLauncher.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Debug\MotoTrakBoothLauncher.pdb

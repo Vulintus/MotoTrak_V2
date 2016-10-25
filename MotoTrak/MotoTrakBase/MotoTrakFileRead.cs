@@ -14,6 +14,76 @@ namespace MotoTrakBase
     public static class MotoTrakFileRead
     {
         /// <summary>
+        /// This function is intended to read in all sessions the the specified rat has performed
+        /// on the specified stage.  Its primary intended use is to load recent performance data
+        /// for a rat.  It loads the data based on the primary data path specified in the MotoTrak
+        /// configuration file.
+        /// </summary>
+        /// <param name="rat_name">The rat to load data for</param>
+        /// <param name="stage_name">The stage to load data for</param>
+        /// <returns>All MotoTrak sessions found for the specified rat and stage</returns>
+        public static List<MotoTrakSession> ReadHistory (string rat_name, string stage_name)
+        {
+            //Create the list that we will return to the caller
+            List<MotoTrakSession> session_history = new List<MotoTrakSession>();
+
+            //Get the full path where we will search for files to load
+            string full_path = MotoTrakFileRead.ResolveFullPath(rat_name, stage_name);
+
+            //Load all MotoTrak sessions found in the path
+            DirectoryInfo folder_info = new DirectoryInfo(full_path);
+
+            if (folder_info.Exists)
+            {
+                //Get the list of all the files that exist at the path
+                List<FileInfo> all_file_info = folder_info.EnumerateFiles("*.MotoTrak").ToList();
+
+                //Load each file
+                foreach (var session_file in all_file_info)
+                {
+                    MotoTrakSession new_session = MotoTrakFileRead.ReadFile(session_file.FullName);
+                    if (new_session != null)
+                    {
+                        session_history.Add(new_session);
+                    }
+                }
+            }
+            
+            //Return the list of loaded sessions to the caller.
+            return session_history;
+        }
+
+        /// <summary>
+        /// This function is meant to resolve a "load path" (or even a save path)
+        /// when a rat and stage name are specified.  This is the path at which data
+        /// can be found for this rat.  The path returned is based on the primary
+        /// save location in the MotoTrak configuration file.
+        /// </summary>
+        /// <param name="rat_name">The rat name</param>
+        /// <param name="stage_name">The stage name</param>
+        /// <returns>The fully resolved path where data may be found</returns>
+        public static string ResolveFullPath (string rat_name, string stage_name)
+        {
+            //Get the base path where files are saved
+            string base_path = MotoTrakConfiguration.GetInstance().DataPath;
+            
+            //Initially set the full path to equal the base path
+            string full_path = base_path;
+
+            //If the base path doesn't end with a back-slash, then add one to the end of the full path
+            if (!base_path.EndsWith(@"\"))
+            {
+                full_path = base_path + @"\";
+            }
+
+            //Now append the rat folder and stage folder to the full path
+            full_path += rat_name + @"\" + stage_name + @"\";
+            
+            //Return the full path to load files from
+            return full_path;
+        }
+
+        /// <summary>
         /// This function reads a MotoTrak session.
         /// NO EFFORT has been made to make this function compatible with ArdyMotor version 1.0 files.
         /// However, all ArdyMotor version 2.0 files should be compatible with this function.
@@ -28,7 +98,7 @@ namespace MotoTrakBase
 
                 //Determine the file version
                 SByte version = (sbyte)file_bytes[0];
-                if (version < 0)
+                if (version > -5)
                 {
                     return ReadArdyMotorVersion2File(file_bytes);
                 }
@@ -67,17 +137,15 @@ namespace MotoTrakBase
                 ReadMotoTrakFileHeader(session, reader);
 
                 //Read in each trial
-                while (reader.BaseStream.Position <= reader.BaseStream.Length)
+                while (reader.BaseStream.Position < reader.BaseStream.Length)
                 {
                     try
                     {
-                        MotorTrial new_trial = new MotorTrial();
-                        ReadMotoTrakFileTrial(session, new_trial, reader);
-                        session.Trials.Add(new_trial);
+                        ReadMotoTrakFileEvent(session, reader);
                     }
                     catch
                     {
-                        MotoTrakMessaging.GetInstance().AddMessage("Unable to read trial!");
+                        MotoTrakMessaging.GetInstance().AddMessage("Unable to read MotoTrak file event!");
                     }
                 }
             }
@@ -135,36 +203,7 @@ namespace MotoTrakBase
 
                     //Create a device within the session
                     session.Device = new MotorDevice(MotorDeviceTypeConverter.ConvertToMotorDeviceType(device_description));
-
-                    //Read in the number of characters saved in the session notes
-                    UInt16 n_chars = reader.ReadUInt16();
-
-                    //Read in the session notes
-                    session.SessionNotes = new string(reader.ReadChars(n_chars));
-
-                    //Read in the number of timestamped session notes that are included in this session file
-                    UInt16 n_timestamped_notes = reader.ReadUInt16();
-
-                    //Read in each timestamped note
-                    for (UInt16 i = 0; i < n_timestamped_notes; i++)
-                    {
-                        //Read in the note's timestamp
-                        double note_timestamp_matlab = reader.ReadDouble();
-                        DateTime note_timestamp = MotorMath.ConvertMatlabDatenumToDateTime(note_timestamp_matlab);
-
-                        //Read in the number of characters contained in this note
-                        n_chars = reader.ReadUInt16();
-
-                        //Read in the characters for this note
-                        string note_content = new string(reader.ReadChars(n_chars));
-
-                        //Create the timestamped note tuple
-                        Tuple<DateTime, string> new_timestamped_note = new Tuple<DateTime, string>(note_timestamp, note_content);
-
-                        //Add it to the session's timestamped notes
-                        session.TimestampedNotes.Add(new_timestamped_note);
-                    }
-
+                    
                     //Read in the number of coefficients used in the calibration function
                     N = reader.ReadByte();
 
@@ -181,6 +220,7 @@ namespace MotoTrakBase
                     N = reader.ReadByte();
 
                     //Read in the metadata from each stream
+                    session.SelectedStage.DataStreamTypes = new List<MotorBoardDataStreamType>();
                     for (Byte i = 0; i < N; i++)
                     {
                         //Read in the stream description
@@ -311,6 +351,82 @@ namespace MotoTrakBase
             }
         }
         
+        private static void ReadMotoTrakFileEvent (MotoTrakSession session, BinaryReader reader)
+        {
+            //Get the event type
+            MotoTrakFileSave.BlockType event_type = (MotoTrakFileSave.BlockType)reader.ReadInt32();
+
+            switch (event_type)
+            {
+                case MotoTrakFileSave.BlockType.Trial:
+
+                    MotorTrial new_trial = new MotorTrial();
+                    ReadMotoTrakFileTrial(session, new_trial, reader);
+                    session.Trials.Add(new_trial);
+
+                    break;
+                case MotoTrakFileSave.BlockType.ManualFeed:
+
+                    double manual_feed_timestamp_matlab = reader.ReadDouble();
+                    DateTime manual_feed_timestamp = MotorMath.ConvertMatlabDatenumToDateTime(manual_feed_timestamp_matlab);
+                    session.ManualFeeds.Add(manual_feed_timestamp);
+
+                    break;
+                case MotoTrakFileSave.BlockType.PauseStart:
+
+                    double pause_start_timestamp_matlab = reader.ReadDouble();
+                    DateTime pause_start_timestamp = MotorMath.ConvertMatlabDatenumToDateTime(pause_start_timestamp_matlab);
+                    session.Pauses.Add(new Tuple<DateTime, DateTime>(pause_start_timestamp, pause_start_timestamp));
+
+                    break;
+                case MotoTrakFileSave.BlockType.PauseFinish:
+
+                    double pause_finish_timestamp_matlab = reader.ReadDouble();
+                    DateTime pause_finish_timestamp = MotorMath.ConvertMatlabDatenumToDateTime(pause_finish_timestamp_matlab);
+                    Tuple<DateTime, DateTime> last_pause = session.Pauses.LastOrDefault();
+                    if (last_pause != null)
+                    {
+                        session.Pauses.RemoveAt(session.Pauses.Count - 1);
+                        Tuple<DateTime, DateTime> new_finished_pause = new Tuple<DateTime, DateTime>(last_pause.Item1, pause_finish_timestamp);
+                        session.Pauses.Add(new_finished_pause);
+                    }
+
+                    break;
+                case MotoTrakFileSave.BlockType.SessionEnd:
+
+                    double session_end_timestamp_matlab = reader.ReadDouble();
+                    DateTime session_end_timestamp = MotorMath.ConvertMatlabDatenumToDateTime(session_end_timestamp_matlab);
+                    session.EndTime = session_end_timestamp;
+
+                    break;
+                case MotoTrakFileSave.BlockType.TimestampedNote:
+
+                    double note_timestamp_matlab = reader.ReadDouble();
+                    DateTime note_timestamp = MotorMath.ConvertMatlabDatenumToDateTime(note_timestamp_matlab);
+
+                    UInt16 note_length = reader.ReadUInt16();
+
+                    char[] note_content = reader.ReadChars(note_length);
+                    string note_content_string = new string(note_content);
+
+                    session.TimestampedNotes.Add(new Tuple<DateTime, string>(note_timestamp, note_content_string));
+
+                    break;
+                case MotoTrakFileSave.BlockType.GeneralSessionNotes:
+
+                    UInt16 session_note_length = reader.ReadUInt16();
+
+                    char[] session_note_content = reader.ReadChars(session_note_length);
+                    string session_note_content_string = new string(session_note_content);
+
+                    session.SessionNotes = session_note_content_string;
+                    
+                    break;
+                default:
+                    break;
+            }
+        }
+
         private static MotoTrakSession ReadArdyMotorVersion2File (byte[] file_bytes)
         {
             //Create a session object which will be returned to the caller

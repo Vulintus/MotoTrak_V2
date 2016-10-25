@@ -39,3 +39,9 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Release\MotoTrak
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Release\MotoTrak.csproj.GenerateResource.Cache
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Release\MotoTrak.exe
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Release\MotoTrak.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Release\MahApps.Metro.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Release\System.Windows.Interactivity.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Release\MahApps.Metro.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\bin\Release\MahApps.Metro.xml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Release\SessionNotesView.g.cs
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\obj\Release\SessionNotesView.baml

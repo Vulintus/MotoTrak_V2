@@ -44,15 +44,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="OxyPlot, Version=1.0.0.0, Culture=neutral, PublicKeyToken=638079a8f0bd61e9, processorArchitecture=MSIL">
-      <HintPath>..\packages\OxyPlot.Core.1.0.0-unstable2100\lib\net45\OxyPlot.dll</HintPath>
+      <HintPath>..\packages\OxyPlot.Core.1.0.0\lib\net45\OxyPlot.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="OxyPlot.Wpf, Version=1.0.0.0, Culture=neutral, PublicKeyToken=75e952ba404cdbb0, processorArchitecture=MSIL">
-      <HintPath>..\packages\OxyPlot.Wpf.1.0.0-unstable2100\lib\net45\OxyPlot.Wpf.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="OxyPlot.Xps, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OxyPlot.Wpf.1.0.0-unstable2100\lib\net45\OxyPlot.Xps.dll</HintPath>
+      <HintPath>..\packages\OxyPlot.Wpf.1.0.0\lib\net45\OxyPlot.Wpf.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -87,16 +83,11 @@
     <Compile Include="MotoTrakModel.cs" />
     <Compile Include="MotoTrakPlotViewModel.cs" />
     <Compile Include="MotoTrakPlotViewModel_WinForms.cs" />
-    <Compile Include="PortSelectionUI.xaml.cs">
-      <DependentUpon>PortSelectionUI.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="PortSelectorViewModel.cs" />
     <Compile Include="MotoTrakViewModel.cs" />
     <Compile Include="SessionNotesView.xaml.cs">
       <DependentUpon>SessionNotesView.xaml</DependentUpon>
     </Compile>
     <Compile Include="SessionNotesViewModel.cs" />
-    <Compile Include="USBDeviceViewModel.cs" />
     <Compile Include="ViewHelperMethods.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -110,10 +101,6 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="PortSelectionUI.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="SessionNotesView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -151,6 +138,10 @@
     <ProjectReference Include="..\MotoTrakBase\MotoTrakBase.csproj">
       <Project>{e2a22dfd-4af2-4d75-bd72-0cd083865047}</Project>
       <Name>MotoTrakBase</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MotoTrakBoothLauncher\MotoTrakBoothLauncher.csproj">
+      <Project>{4601dc8f-ec86-455a-baf7-bc966d8b588c}</Project>
+      <Name>MotoTrakBoothLauncher</Name>
     </ProjectReference>
     <ProjectReference Include="..\MotoTrakUtilities\MotoTrakUtilities.csproj">
       <Project>{9FA143AC-97AA-4662-9CA7-1C0887A833B4}</Project>

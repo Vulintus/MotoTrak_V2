@@ -27,3 +27,6 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Release\Sta
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Release\StageDesigner.csproj.GenerateResource.Cache
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Release\StageDesigner.exe
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Release\StageDesigner.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Release\StageParameterControl.g.cs
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Release\GeneratedInternalTypeHelper.g.cs
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Release\StageParameterControl.baml

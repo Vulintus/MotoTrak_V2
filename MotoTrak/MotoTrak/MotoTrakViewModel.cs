@@ -242,6 +242,12 @@ namespace MotoTrak
                     //Finally, let's change the selected stage itself
                     Model.CurrentSession.SelectedStage = new_stage;
 
+                    //Load the rat's recent history based on the newly selected stage
+                    Model.LoadRecentHistory();
+
+                    //Restart streaming based on the new stage's streaming properties
+                    Model.RestartStreaming();
+
                     //Change the scale of the X-axis and Y-axis for the plot based on the newly selected stage.
                     if (PlotViewModel != null)
                     {
@@ -598,6 +604,9 @@ namespace MotoTrak
                 {
                     string rat_name = value;
                     Model.CurrentSession.RatName = ViewHelperMethods.CleanInput(rat_name.Trim()).ToUpper();
+
+                    //Load the rat's recent history based on its name
+                    Model.LoadRecentHistory();
                 }
             }
         }
@@ -723,6 +732,10 @@ namespace MotoTrak
             SessionNotesViewVisibility = Visibility.Visible;
         }
 
+        /// <summary>
+        /// Finalizes a MotoTrak session.  This session is called after the user has both
+        /// ended the session AND entered notes for the session.
+        /// </summary>
         public void FinalizeSession ()
         {
             Model.FinalizeSession();

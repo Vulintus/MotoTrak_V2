@@ -1,5 +1,6 @@
 ﻿using MahApps.Metro.Controls;
 using MotoTrakBase;
+using MotoTrakBoothLauncher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +33,7 @@ namespace MotoTrak
 
             //Show the dialog
             portSelectorWindow.ShowDialog();
-            
+
             //Get the result of the port selection window
             PortSelectorViewModel portSelectorResult = PortSelectorViewModel.GetInstance();
             if (portSelectorResult.ResultOK && portSelectorResult.AvailablePortCount > 0)

@@ -18,6 +18,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Matlab Code\MotoTrakFileRead.m = Matlab Code\MotoTrakFileRead.m
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MotoTrakCalibration", "MotoTrakCalibration\MotoTrakCalibration.csproj", "{A6D0D236-72FB-4431-ACA4-66CA11476F95}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MotoTrakBoothLauncher", "MotoTrakBoothLauncher\MotoTrakBoothLauncher.csproj", "{4601DC8F-EC86-455A-BAF7-BC966D8B588C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,6 +46,14 @@ Global
 		{4BCFB388-85E6-4692-9BCA-73D2638E5DF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4BCFB388-85E6-4692-9BCA-73D2638E5DF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4BCFB388-85E6-4692-9BCA-73D2638E5DF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6D0D236-72FB-4431-ACA4-66CA11476F95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6D0D236-72FB-4431-ACA4-66CA11476F95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6D0D236-72FB-4431-ACA4-66CA11476F95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6D0D236-72FB-4431-ACA4-66CA11476F95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4601DC8F-EC86-455A-BAF7-BC966D8B588C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4601DC8F-EC86-455A-BAF7-BC966D8B588C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4601DC8F-EC86-455A-BAF7-BC966D8B588C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4601DC8F-EC86-455A-BAF7-BC966D8B588C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
