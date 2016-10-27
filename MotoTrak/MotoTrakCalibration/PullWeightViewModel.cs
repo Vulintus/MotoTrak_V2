@@ -16,6 +16,7 @@ namespace MotoTrakCalibration
     {
         #region Private data members
 
+        private PullCalibrationModel _calibration_model = PullCalibrationModel.GetInstance();
         private PullWeightModel _model = null;
         private SimpleCommand _weightSkipButtonCommand;
         private SimpleCommand _weightAmountCommand;
@@ -30,8 +31,11 @@ namespace MotoTrakCalibration
         public PullWeightViewModel (PullWeightModel model)
         {
             Model = model;
-        }
 
+            //Listen for changes on the calibration model
+            _calibration_model.PropertyChanged += _calibration_model_PropertyChanged;
+        }
+        
         #endregion
 
         #region Public members
@@ -89,14 +93,21 @@ namespace MotoTrakCalibration
         {
             get
             {
-                bool is_voice = Model.IsVoice;
-                if (!is_voice)
+                if (_calibration_model.IsRunningCalibration)
                 {
-                    return new SolidColorBrush(Colors.Red);
+                    return new SolidColorBrush(Color.FromArgb(0xFF, 0xAD, 0xAD, 0xAD));
                 }
                 else
                 {
-                    return new SolidColorBrush(Colors.Green);
+                    bool is_voice = Model.IsVoice;
+                    if (!is_voice)
+                    {
+                        return new SolidColorBrush(Colors.Red);
+                    }
+                    else
+                    {
+                        return new SolidColorBrush(Colors.Green);
+                    }
                 }
             }
         }
@@ -146,6 +157,18 @@ namespace MotoTrakCalibration
         public void RunWeightCalibration ()
         {
 
+        }
+
+        #endregion
+
+        #region Method that listens for changes on the calibration model
+
+        private void _calibration_model_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName.Equals("IsRunningCalibration"))
+            {
+                NotifyPropertyChanged("SkipButtonColor");
+            }
         }
 
         #endregion

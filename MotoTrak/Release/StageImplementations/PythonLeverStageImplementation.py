@@ -22,14 +22,20 @@ from MotoTrakBase import MotorDeviceType
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
 
-class PythonBasicStageImplementation (IMotorStageImplementation):
+class PythonLeverStageImplementation (IMotorStageImplementation):
+
+    #Variables needed for this task to operate
+    inter_press_interval = 0
 
     #Declare string parameters for this stage
-    RecommendedDevice = MotorDeviceType.Unknown
-    TaskName = "Unknown"
-    TaskDescription = "This is a basic stage implementation."
-    Hit_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.HitThreshold, "Unknown", True)
-    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.InitiationThreshold, "Unknown", True)
+    RecommendedDevice = MotorDeviceType.Lever
+    TaskName = "Lever Task"
+    TaskDescription = "This stage implementation is for the Lever Task, a classic task in which animals must press on a lever either once or multiple times to receive a reward."
+
+    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.InitiationThreshold, "degrees", True)    
+    Lever_Full_Press_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Full Press", "degrees", True)    
+    Lever_Release_Point_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Release Point", "degrees", True)    
+    Hit_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.HitThreshold, "presses", False)
     
     def TransformSignals(self, new_data_from_controller, stage, device):
         result = List[List[System.Double]]()
@@ -48,9 +54,9 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
         return_value = -1
 
         #Look to see if the Initiation Threshold key exists
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Initiation_Threshold_Parameter.Item1):
+        if stage.StageParameters.ContainsKey(PythonLeverStageImplementation.Initiation_Threshold_Parameter.Item1):
             #Get the stage's initiation threshold
-            init_thresh = stage.StageParameters[PythonBasicStageImplementation.Initiation_Threshold_Parameter.Item1].CurrentValue
+            init_thresh = stage.StageParameters[PythonLeverStageImplementation.Initiation_Threshold_Parameter.Item1].CurrentValue
 
             #Get the data stream itself
             stream_data = signal[1]
@@ -67,6 +73,10 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
                 maximal_value = stream_data_to_use.Max()
 
                 if maximal_value >= init_thresh:
+                    #Reset the inter-press-interval for the upcoming trial
+                    PythonLeverStageImplementation.inter_press_interval = 0
+
+                    #Set the return value
                     return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
                 
         return return_value
@@ -76,22 +86,48 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
         result = List[Tuple[MotorTrialEventType, System.Int32]]()
 
         #Only proceed if a hit threshold has been defined for this stage
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
+        if stage.StageParameters.ContainsKey(PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1):
             #Get the stream data from the device
             stream_data = trial.TrialData[1]
             
             #Check to see if the hit threshold has been exceeded
-            current_hit_thresh = stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
+            current_hit_thresh = stage.StageParameters[PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
 
             #Check to see if the stream data has exceeded the current hit threshold
             try:
-                indices_of_hits = Enumerable.Range(0, stream_data.Count) \
-                    .Where(lambda index: stream_data[index] >= current_hit_thresh and \
-                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
-                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).ToList()
+                #For the lever task, the hit threshold is in units of "presses", while the signal is in units of "degrees"
+                #We must analyze the signal to determine how many "presses" have occurred
 
-                if indices_of_hits is not None and indices_of_hits.Count > 0:
-                    result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, indices_of_hits[0]))
+                #Let's keep a press count, as well as indices of each press, and a current state.
+                press_count = 0
+                indices_of_presses = List[System.Int32]()
+                press_state = 0;   #0 = released, 1 = pressed
+
+                #Now iterate over the signal
+                for i in range(0, stream_data.Count):
+                    #Only look at samples within the hit window
+                    if (i >= stage.TotalRecordedSamplesBeforeHitWindow) and (i < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow)):
+                        #If the lever is currently released, check to see if it has been pressed
+                        if (press_state is 0):
+                            if (stream_data[i] > stage.StageParameters[PythonLeverStageImplementation.Lever_Full_Press_Parameter.Item1].CurrentValue):
+                                press_count = press_count + 1
+                                indices_of_presses.Add(i)
+                                press_state = 1
+                        elif (press_state is 1):
+                            #Otherwise, if the lever is pressed, check to see if it has been fully released
+                            if (stream_data[i] <= stage.StageParameters[PythonLeverStageImplementation.Lever_Release_Point_Parameter.Item1].CurrentValue):
+                                press_state = 0
+
+                #If 2 hits have been detected, add a result to return to the caller
+                if (press_count >= stage.StageParameters[PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue):
+                    #Create a successful trial result
+                    result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, indices_of_presses[indices_of_presses.Count-1]))
+
+                    #Calculate the inter-press interval for this trial
+                    indices_between_presses = MotorMath.DiffInt(indices_of_presses)
+                    avg_indices_bw_presses = indices_between_presses.Average();
+                    PythonLeverStageImplementation.inter_press_interval = avg_indices_bw_presses * stage.SamplePeriodInMilliseconds
+
             except ValueError:
                 pass
 
@@ -104,9 +140,6 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
         for evt in trial_events:
             event_type = evt.EventType
             if event_type is MotorTrialEventType.SuccessfulTrial:
-                #Indicate to the program that we have handled this event
-                evt.Handled = True
-
                 #If a successful trial happened, then feed the animal
                 new_action = MotorTrialAction()
                 new_action.ActionType = MotorTrialActionType.TriggerFeeder
@@ -131,37 +164,12 @@ class PythonBasicStageImplementation (IMotorStageImplementation):
             msg += "HIT"
         else:
             msg += "MISS"
+        msg += ", " + str(PythonLeverStageImplementation.inter_press_interval) + " ms"
         return msg
 
     def CalculateYValueForSessionOverviewPlot(self, trial, stage):
-        #Adjust the hit threshold if necessary
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
-            #Grab the device signal for this trial
-            stream_data = trial.TrialData[1]
+        return PythonLeverStageImplementation.inter_press_interval
 
-            #Find the maximal force of the current trial
-            max_force = stream_data.Where(lambda val, index: \
-                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
-                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max()
-
-            return max_force
-
-        return System.Double.NaN
-
-    def AdjustDynamicStageParameters(self, all_trials, current_trial, stage):
-        #Adjust the hit threshold
-        if stage.StageParameters.ContainsKey(PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1):
-            #Grab the device signal for this trial
-            stream_data = current_trial.TrialData[1]
-        
-            #Find the maximal force from the current trial
-            max_force = stream_data.Where(lambda val, index: \
-                (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
-                (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max()
-
-            #Retain the maximal force of the most recent 10 trials
-            stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1].History.Enqueue(max_force)
-            stage.StageParameters[PythonBasicStageImplementation.Hit_Threshold_Parameter.Item1].CalculateAndSetBoundedCurrentValue()
-            
+    def AdjustDynamicStageParameters(self, all_trials, current_trial, stage):        
         return
 

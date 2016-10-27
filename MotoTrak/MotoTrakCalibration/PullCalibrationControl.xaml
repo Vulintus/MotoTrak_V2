@@ -40,7 +40,7 @@
                 <!-- The group box that shows all of the weights that can be used for calibrating the pull handle -->
                 <GroupBox Header="Test Weights" FontSize="20" FontWeight="Bold">
                     <ItemsControl ItemsSource="{Binding Path=WeightOptions}" 
-                                  IsEnabled="{Binding Path=AreWeightOptionsEnabled}">
+                                  IsEnabled="{Binding Path=IsNotRunningCalibration}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -67,6 +67,7 @@
                         FontSize="20"
                         FontWeight="Bold"
                         Margin="0,2"
+                        IsEnabled="{Binding Path=IsNotRunningCalibration}"
                         Command="{Binding Path=CountdownToggleCommand}"
                         Content="{Binding Path=CountdownStatus, FallbackValue=Countdown On}"
                         Foreground="{Binding Path=CountdownStatusColor}" />
@@ -81,12 +82,14 @@
                         FontSize="20"
                         FontWeight="Bold"
                         Margin="0,2"
+                        IsEnabled="{Binding Path=IsNotRunningCalibration}"
                         Command="{Binding Path=ResetToPreviousCommand}"
                         Content="Reset to previous" />
                 <Button Name="SaveCalibrationButton"
                         FontSize="20"
                         FontWeight="Bold"
                         Margin="0,2"
+                        IsEnabled="{Binding Path=IsNotRunningCalibration}"
                         Command="{Binding Path=SaveCalibrationCommand}"
                         Content="Save calibration" />
 

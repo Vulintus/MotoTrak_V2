@@ -18,6 +18,8 @@ from MotoTrakBase import MotorStageAdaptiveThresholdType
 from MotoTrakBase import MotoTrak_V1_CommonParameters
 from MotoTrakBase import MotorTrialEventType
 from MotoTrakBase import MotorDeviceType
+from MotoTrakBase import MotoTrakAutopositioner
+from MotoTrakBase import MotorStageParameter
 
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
@@ -26,6 +28,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
 
     #Variables needed for this task to operate
     inter_press_interval = 0
+    Autopositioner_Trial_Interval = 10
 
     #Declare string parameters for this stage
     RecommendedDevice = MotorDeviceType.Lever
@@ -171,5 +174,24 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         return PythonLeverStageImplementation.inter_press_interval
 
     def AdjustDynamicStageParameters(self, all_trials, current_trial, stage):        
+
+        #Adjust the hit window duration if necessary.  This is adjusted according to the isi of recent trials
+        if stage.HitWindowInSeconds.ParameterType == MotorStageParameter.StageParameterType.Variable:
+            isi_to_add = inter_press_interval
+            if inter_press_interval is 0:
+                isi_to_add = stage.HitWindowInSeconds.CurrentValue * 1000
+            stage.History.Enqueue(isi_to_add)
+            stage.History.CalculateAndSetBoundedCurrentValue()
+            
+        #Adjust the position of the auto-positioner, according to the stage settings
+        if stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
+            hit_count = all_trials.Select(lambda t: t.Result == MotorTrialResult.Hit).Count()
+            hit_count_modulus = hit_count % PythonLeverStageImplementation.Autopositioner_Trial_Interval
+            if hit_count > 0 and hit_count_modulus is 0:
+                stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
+                if stage.Position.CurrentValue is -0.5 or stage.Position.CurrentValue is 0:
+                    stage.Position.CurrentValue = 0.5
+                MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+
         return
 

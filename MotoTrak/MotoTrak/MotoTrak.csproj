@@ -34,6 +34,18 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Real Release|AnyCPU'">
+    <OutputPath>..\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <AllowedReferenceRelatedFileExtensions>.pdb</AllowedReferenceRelatedFileExtensions>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Dynamitey, Version=1.0.2.0, Culture=neutral, PublicKeyToken=cbf53ea3aeb972c6, processorArchitecture=MSIL">
       <HintPath>..\packages\Dynamitey.1.0.2.0\lib\net40\Dynamitey.dll</HintPath>
@@ -150,10 +162,16 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(SolutionDir)MotoTrakPythonCode\PythonPullStageImplementation.py $(TargetDir)StageImplementations\
-copy $(SolutionDir)MotoTrakPythonCode\PythonLeverStageImplementation.py $(TargetDir)StageImplementations\
-copy $(SolutionDir)MotoTrakPythonCode\PythonKnobStageImplementation.py $(TargetDir)StageImplementations\
-copy $(SolutionDir)MotoTrakPythonCode\PythonSustainedPullStageImplementation.py $(TargetDir)StageImplementations\</PostBuildEvent>
+    <PostBuildEvent>if "$(ConfigurationName)"=="Real Release" goto :release
+ELSE goto :exit
+
+:release
+xcopy "$(SolutionDir)MotoTrakPythonCode\*.py" "$(SolutionDir)Release\StageImplementations\"
+xcopy "$(SolutionDir)Matlab Code\*.m" "$(SolutionDir)Release\Matlab Code\"
+xcopy "$(SolutionDir)Stages\*.MotorStage" "$(SolutionDir)Release\Stages\"
+del "$(TargetDir)*.exe.config"
+
+:exit</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

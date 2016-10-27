@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace MotoTrakCalibration
 {
@@ -18,9 +19,14 @@ namespace MotoTrakCalibration
     {
         #region Private data members
 
-        PullCalibrationModel _model = null;
-        PlotModel _calibration_plot_model = new PlotModel();
-        PlotModel _loadcell_plot_model = new PlotModel();
+        private PullCalibrationModel _model = null;
+        private PlotModel _calibration_plot_model = new PlotModel();
+        private PlotModel _loadcell_plot_model = new PlotModel();
+
+        private SimpleCommand _countdown_toggle_command;
+        private SimpleCommand _run_voice_guide_command;
+        private SimpleCommand _reset_to_previous_command;
+        private SimpleCommand _save_calibration_command;
 
         #endregion
 
@@ -34,6 +40,7 @@ namespace MotoTrakCalibration
         {
             //Set the model object
             Model = model;
+            Model.PropertyChanged += OnPullCalibrationModelPropertyChanged;
 
             //Initialize plots
             InitializeLoadCellPlot();
@@ -42,9 +49,9 @@ namespace MotoTrakCalibration
             //Listen to events from the device stream
             DeviceStreamModel.GetInstance().PropertyChanged += OnDeviceStreamUpdated;
         }
-
-        #endregion
         
+        #endregion
+
         #region Private Methods
 
         private void InitializeLoadCellPlot ()
@@ -319,6 +326,193 @@ namespace MotoTrakCalibration
             get
             {
                 return Model.TestWeights.Select(x => new PullWeightViewModel(x)).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Whether the countdown is being used for the calibration program
+        /// </summary>
+        public string CountdownStatus
+        {
+            get
+            {
+                if (Model.IsCountdownOn)
+                {
+                    return "Countdown On";
+                }
+                else
+                {
+                    return "Countdown Off";
+                }
+            }
+        }
+
+        /// <summary>
+        /// The color of the countdown status text
+        /// </summary>
+        public SolidColorBrush CountdownStatusColor
+        {
+            get
+            {
+                if (Model.IsRunningCalibration)
+                {
+                    return new SolidColorBrush(Color.FromArgb(0xFF, 0xAD, 0xAD, 0xAD));
+                }
+                else
+                {
+                    if (Model.IsCountdownOn)
+                    {
+                        return new SolidColorBrush(Colors.Green);
+                    }
+                    else
+                    {
+                        return new SolidColorBrush(Colors.Red);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// The content of the voice guide button
+        /// </summary>
+        public string RunVoiceGuideStatus
+        {
+            get
+            {
+                if (!Model.IsRunningCalibration)
+                {
+                    return "Run voice guide";
+                }
+                else
+                {
+                    return "Cancel calibration";
+                }
+            }
+        }
+
+        /// <summary>
+        /// The color of the "run voice guide" button content
+        /// </summary>
+        public SolidColorBrush RunVoiceGuideStatusColor
+        {
+            get
+            {
+                if (!Model.IsRunningCalibration)
+                {
+                    return new SolidColorBrush(Colors.Black);
+                }
+                else
+                {
+                    return new SolidColorBrush(Colors.Red);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether the calibration program is currently not running
+        /// </summary>
+        public bool IsNotRunningCalibration
+        {
+            get
+            {
+                return !Model.IsRunningCalibration;
+            }
+        }
+
+        #endregion
+
+        #region Commands
+
+        /// <summary>
+        /// The command to toggle voice countdown
+        /// </summary>
+        public SimpleCommand CountdownToggleCommand
+        {
+            get
+            {
+                return _countdown_toggle_command ?? (_countdown_toggle_command = new SimpleCommand(() => ToggleCountdown(), true));
+            }
+        }
+
+        /// <summary>
+        /// The command to run the voice guide and calibrate the pull handle
+        /// </summary>
+        public SimpleCommand RunVoiceGuideCommand
+        {
+            get
+            {
+                return _run_voice_guide_command ?? (_run_voice_guide_command = new SimpleCommand(() => RunVoiceGuide(), true));
+            }
+        }
+
+        /// <summary>
+        /// The command to reset the calibration to its previous state
+        /// </summary>
+        public SimpleCommand ResetToPreviousCommand
+        {
+            get
+            {
+                return _reset_to_previous_command ?? (_reset_to_previous_command = new SimpleCommand(() => ResetToPrevious(), true));
+            }
+        }
+
+        /// <summary>
+        /// The command to save the current calibration values to the motor board
+        /// </summary>
+        public SimpleCommand SaveCalibrationCommand
+        {
+            get
+            {
+                return _save_calibration_command ?? (_save_calibration_command = new SimpleCommand(() => SaveCalibration(), true));
+            }
+        }
+
+
+        #endregion
+
+        #region Private methods for commands
+
+        private void ToggleCountdown ()
+        {
+            Model.IsCountdownOn = !Model.IsCountdownOn;
+            NotifyPropertyChanged("CountdownStatus");
+            NotifyPropertyChanged("CountdownStatusColor");
+        }
+
+        private void RunVoiceGuide ()
+        {
+            if (Model.IsRunningCalibration)
+            {
+                Model.CancelCalibration();
+            }
+            else
+            {
+                Model.RunCalibration();
+            }
+        }
+
+        private void ResetToPrevious ()
+        {
+
+        }
+
+        private void SaveCalibration ()
+        {
+
+        }
+
+        #endregion
+
+        #region Method to respond to property changed events from the model
+        
+        private void OnPullCalibrationModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName.Equals("IsRunningCalibration"))
+            {
+                NotifyPropertyChanged("IsNotRunningCalibration");
+                NotifyPropertyChanged("RunVoiceGuideStatus");
+                NotifyPropertyChanged("RunVoiceGuideStatusColor");
+                NotifyPropertyChanged("CountdownStatusColor");
             }
         }
 

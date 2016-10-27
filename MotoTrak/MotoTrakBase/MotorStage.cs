@@ -446,19 +446,40 @@ namespace MotoTrakBase
         public static List<MotorStage> RetrieveAllStages ()
         {
             MotoTrakConfiguration config = MotoTrakConfiguration.GetInstance();
-            string stagePath = config.StagePath;
-            
+
+            List<MotorStage> stages = new List<MotorStage>();
+
             if (config.ConfigurationVersion == 1)
             {
-                //If the configuration version is "1" (all previous versions of MotoTrak), then load in the Google Sheets document that defines stages.
-                Uri google_sheets_url = new Uri(stagePath);
-                List<MotorStage> stages = RetrieveAllStages_V1(google_sheets_url);
-
-                return stages;
+                if (!string.IsNullOrEmpty(config.StageLocalPath))
+                {
+                    //If we are loading stages from a local source...
+                    try
+                    {
+                        stages = RetrieveAllLocalStages(config.StageLocalPath);
+                    }
+                    catch (Exception e)
+                    {
+                        ErrorLoggingService.GetInstance().LogExceptionError(e);
+                    }
+                }
+                else if (!string.IsNullOrEmpty(config.StageWebPath))
+                {
+                    //Otherwise, if we are loading stages from a web source...
+                    try
+                    {
+                        Uri google_sheets_url = new Uri(config.StageWebPath);
+                        stages = RetrieveAllStages_V1(google_sheets_url);
+                    }
+                    catch (Exception e)
+                    {
+                        ErrorLoggingService.GetInstance().LogExceptionError(e);
+                    }
+                }
             }
 
             //If no proper way to load stages was used, then let's just return an empty list of stages.
-            return new List<MotorStage>();
+            return stages;
         }
 
         /// <summary>
@@ -517,6 +538,12 @@ namespace MotoTrakBase
                 //Save the stage output trigger type
                 writer.WriteLine("Stage Output Trigger: " +
                     MotorStageStimulationTypeConverter.ConvertToDescription(stage.OutputTriggerType));
+
+                //Write the stage device name
+                writer.WriteLine("Stage Device: " + MotorDeviceTypeConverter.ConvertToDescription(stage.DeviceType));
+
+                //Write the sampling period of the stage (units of ms)
+                writer.WriteLine("Stage Sampling Rate: " + stage.SamplePeriodInMilliseconds.ToString());
 
                 //Save the pre-trial sampling duration
                 writer.WriteLine("Stage Parameter: " + MotorStage.FormMotorStageParameter(stage.PreTrialSamplingPeriodInSeconds, true));
@@ -647,6 +674,19 @@ namespace MotoTrakBase
                         else if (parameter.Equals("Stage Output Trigger"))
                         {
                             stage.OutputTriggerType = MotorStageStimulationTypeConverter.ConvertToMotorStageStimulationType(parameter_string_parts[1].Trim());
+                        }
+                        else if (parameter.Equals("Stage Device"))
+                        {
+                            stage.DeviceType = MotorDeviceTypeConverter.ConvertToMotorDeviceType(parameter_string_parts[1].Trim());
+                        }
+                        else if (parameter.Equals("Stage Sampling Rate"))
+                        {
+                            int sampling_rate = 0;
+                            bool success = Int32.TryParse(parameter_string_parts[1].Trim(), out sampling_rate);
+                            if (success)
+                            {
+                                stage.SamplePeriodInMilliseconds = sampling_rate;
+                            }
                         }
                         else if (parameter.Equals("Stage Parameter"))
                         {
@@ -856,8 +896,8 @@ namespace MotoTrakBase
 
                                 //Set the parameters for this stage
                                 stage.StageParameters.Clear();
-                                stage.StageParameters["Full Press"] = new MotorStageParameter() { CurrentValue = 11, InitialValue = 11 };
-                                stage.StageParameters["Release Point"] = new MotorStageParameter() { CurrentValue = 9, InitialValue = 9 };
+                                stage.StageParameters["Full Press"] = new MotorStageParameter() { CurrentValue = 9.75, InitialValue = 9.75 };
+                                stage.StageParameters["Release Point"] = new MotorStageParameter() { CurrentValue = 6.5, InitialValue = 6.5 };
                                 stage.StageParameters["Initiation Threshold"] = new MotorStageParameter() { CurrentValue = 3, InitialValue = 3 };
                                 stage.StageParameters["Hit Threshold"] = hit_thresh;
 
@@ -894,6 +934,38 @@ namespace MotoTrakBase
             }
 
             return stages;
+        }
+
+        /// <summary>
+        /// Retrieves all motor stages on the local disk at the specified location
+        /// </summary>
+        /// <param name="path">The path where stages are located</param>
+        /// <returns>A list of MotoTrak stages</returns>
+        private static List<MotorStage> RetrieveAllLocalStages (string path)
+        {
+            List<MotorStage> result = new List<MotorStage>();
+
+            //First, list all stage files that are found
+            DirectoryInfo dir_info = new DirectoryInfo(path);
+
+            //If the directory exists
+            if (dir_info.Exists)
+            {
+                //Find all files in the directory that are MotorStage files
+                var file_list = dir_info.EnumerateFiles("*.MotorStage");
+
+                //Attempt to load each file as a stage
+                foreach (var f in file_list)
+                {
+                    MotorStage new_stage = MotorStage.LoadStageFromFile(f.FullName);
+
+                    //Add the new stage to the resulting list of stages
+                    result.Add(new_stage);
+                }
+            }
+
+            //Return the list of stages to the caller
+            return result;
         }
 
         /// <summary>

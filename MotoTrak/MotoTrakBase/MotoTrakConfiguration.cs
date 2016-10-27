@@ -45,6 +45,7 @@ namespace MotoTrakBase
         private string BoothPairingsFileName = "mototrak_booth_pairings.config";
         private string ConfigurationFileName = "mototrak.config";
         private string StageImplementationsPath = "StageImplementations";
+        private string DefaultLocalStagePath = "Stages";
 
         #endregion
 
@@ -55,9 +56,11 @@ namespace MotoTrakBase
 
         public int ConfigurationVersion { get; set; }
         public string VariantName { get; set; }
-        public string StagePath { get; set; }
+        public string StageWebPath { get; set; }
+        public string StageLocalPath { get; set; }
         public string DataPath { get; set; }
         public string SecondaryDataPath { get; set; }
+        public bool DebuggingMode = false;
         
         #endregion
 
@@ -140,6 +143,15 @@ namespace MotoTrakBase
             {
                 bool isConfigVersionSet = false;
 
+                //Check to see if the configuration file exists
+                FileInfo config_file_info = new FileInfo(ConfigurationFileName);
+
+                //Generate a default configuration file if one does not exist
+                if (!config_file_info.Exists)
+                {
+                    GenerateDefaultConfigurationFile();
+                }
+
                 //Open the configuration file using a stream reader.
                 StreamReader reader = new StreamReader(ConfigurationFileName);
 
@@ -173,7 +185,11 @@ namespace MotoTrakBase
                     }
                     else if (key.Equals("STAGE URL"))
                     {
-                        StagePath = value;
+                        StageWebPath = value;
+                    }
+                    else if (key.Equals("STAGE FOLDER"))
+                    {
+                        StageLocalPath = value;
                     }
                     else if (key.Equals("MAIN DATA LOCATION"))
                     {
@@ -182,6 +198,17 @@ namespace MotoTrakBase
                     else if (key.Equals("SECONDARY DATA LOCATION"))
                     {
                         SecondaryDataPath = value;
+                    }
+                    else if (key.Equals("DEBUG"))
+                    {
+                        if (value.Equals("True", StringComparison.OrdinalIgnoreCase))
+                        {
+                            DebuggingMode = true;
+                        }
+                        else
+                        {
+                            DebuggingMode = false;
+                        }
                     }
                 }
 
@@ -194,6 +221,27 @@ namespace MotoTrakBase
             {
                 MotoTrakMessaging m = MotoTrakMessaging.GetInstance();
                 m.AddMessage("Unable to read MotoTrak configuration file!");
+            }
+        }
+
+        /// <summary>
+        /// Generates a default configuration file if one does not exist
+        /// </summary>
+        public void GenerateDefaultConfigurationFile ()
+        {
+            try
+            {
+                StreamWriter writer = new StreamWriter(ConfigurationFileName);
+
+                writer.WriteLine("CONFIGURATION VERSION: 1");
+                writer.WriteLine("STAGE URL: " + DefaultLocalStagePath);
+                writer.WriteLine(@"MAIN DATA LOCATION: C:\MotoTrak Files\");
+
+                writer.Close();
+            }
+            catch (Exception e)
+            {
+                ErrorLoggingService.GetInstance().LogExceptionError(e);
             }
         }
 

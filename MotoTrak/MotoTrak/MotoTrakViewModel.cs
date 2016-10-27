@@ -227,32 +227,35 @@ namespace MotoTrak
                     StageChangeRequired = false;
 
                     //Now let's change the default view being displayed to the user
-                    var new_stage = Model.AvailableStages[value];
-                    try
+                    if (Model.AvailableStages.Count > 0 && value < Model.AvailableStages.Count)
                     {
-                        //Set the selected plot view to be the index of the device stream by default
-                        ViewSelectedIndex = new_stage.DataStreamTypes.IndexOf(MotorBoardDataStreamType.DeviceValue);
-                    }
-                    catch
-                    {
-                        //If there was an error for any reason, set the default plot view to be the 0th stream index
-                        ViewSelectedIndex = 0;
-                    }
+                        var new_stage = Model.AvailableStages[value];
+                        try
+                        {
+                            //Set the selected plot view to be the index of the device stream by default
+                            ViewSelectedIndex = new_stage.DataStreamTypes.IndexOf(MotorBoardDataStreamType.DeviceValue);
+                        }
+                        catch
+                        {
+                            //If there was an error for any reason, set the default plot view to be the 0th stream index
+                            ViewSelectedIndex = 0;
+                        }
 
-                    //Finally, let's change the selected stage itself
-                    Model.CurrentSession.SelectedStage = new_stage;
+                        //Finally, let's change the selected stage itself
+                        Model.CurrentSession.SelectedStage = new_stage;
 
-                    //Load the rat's recent history based on the newly selected stage
-                    Model.LoadRecentHistory();
+                        //Load the rat's recent history based on the newly selected stage
+                        Model.LoadRecentHistory();
 
-                    //Restart streaming based on the new stage's streaming properties
-                    Model.RestartStreaming();
+                        //Restart streaming based on the new stage's streaming properties
+                        Model.RestartStreaming();
 
-                    //Change the scale of the X-axis and Y-axis for the plot based on the newly selected stage.
-                    if (PlotViewModel != null)
-                    {
-                        PlotViewModel.ScaleYAxis();
-                        PlotViewModel.ScaleXAxis();
+                        //Change the scale of the X-axis and Y-axis for the plot based on the newly selected stage.
+                        if (PlotViewModel != null)
+                        {
+                            PlotViewModel.ScaleYAxis();
+                            PlotViewModel.ScaleXAxis();
+                        }
                     }
                 }
             }
@@ -514,8 +517,14 @@ namespace MotoTrak
         {
             get
             {
-                return Visibility.Visible;
-                //return Visibility.Collapsed;
+                if (MotoTrakConfiguration.GetInstance().DebuggingMode)
+                {
+                    return Visibility.Visible;
+                }
+                else
+                {
+                    return Visibility.Collapsed;
+                }
             }
         }
 

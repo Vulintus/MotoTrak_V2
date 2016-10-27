@@ -12,6 +12,7 @@
     <OutputPath>.</OutputPath>
     <Name>MotoTrakPythonCode</Name>
     <RootNamespace>MotoTrakPythonCode</RootNamespace>
+    <PublishUrl>.</PublishUrl>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,6 +24,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="PythonKnobStageImplementation.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PythonKnob_NO_WEIGHT_StageImplementation.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PythonLeverStageImplementation.py">
@@ -50,6 +54,11 @@
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Real Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+    <OutputPath>bin\Real Release\</OutputPath>
   </PropertyGroup>
   <Import Condition="Exists($(PtvsTargetsFile))" Project="$(PtvsTargetsFile)" />
   <Import Condition="!Exists($(PtvsTargetsFile))" Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />

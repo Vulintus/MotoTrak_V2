@@ -18,11 +18,16 @@ from MotoTrakBase import MotorStageAdaptiveThresholdType
 from MotoTrakBase import MotoTrak_V1_CommonParameters
 from MotoTrakBase import MotorTrialEventType
 from MotoTrakBase import MotorDeviceType
+from MotoTrakBase import MotoTrakAutopositioner
+from MotoTrakBase import MotorStageParameter
 
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
 
 class PythonPullStageImplementation (IMotorStageImplementation):
+
+    #Variables used by this task
+    Autopositioner_Trial_Interval = 10
 
     #Declare string parameters for this stage
     RecommendedDevice = MotorDeviceType.Pull
@@ -175,6 +180,14 @@ class PythonPullStageImplementation (IMotorStageImplementation):
             #Retain the maximal force of the most recent 10 trials
             stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].History.Enqueue(max_force)
             stage.StageParameters[PythonPullStageImplementation.Hit_Threshold_Parameter.Item1].CalculateAndSetBoundedCurrentValue()
-            
+
+        #Adjust the position of the auto-positioner, according to the stage settings
+        if stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
+            hit_count = all_trials.Select(lambda t: t.Result == MotorTrialResult.Hit).Count()
+            hit_count_modulus = hit_count % PythonPullStageImplementation.Autopositioner_Trial_Interval
+            if hit_count > 0 and hit_count_modulus is 0:
+                stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
+                MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+                
         return
 

@@ -200,21 +200,22 @@ namespace MotoTrakBase
 
                     //Read in the device description
                     string device_description = new string(reader.ReadChars(N));
-
-                    //Create a device within the session
-                    session.Device = new MotorDevice(MotorDeviceTypeConverter.ConvertToMotorDeviceType(device_description));
                     
                     //Read in the number of coefficients used in the calibration function
                     N = reader.ReadByte();
 
                     //Read in each coefficient
+                    Dictionary<int, double> coeffs = new Dictionary<int, double>();
                     for (Byte i = 0; i < N; i++)
                     {
                         float coeff = reader.ReadSingle();
 
                         //Set the coefficient in the device
-                        session.Device.Coefficients[i] = coeff;
+                        coeffs[i] = coeff;
                     }
+
+                    //Create a device within the session
+                    session.Device = new MotorDevice(MotorDeviceTypeConverter.ConvertToMotorDeviceType(device_description), 0, coeffs);
 
                     //Read in the number of streams used in this session
                     N = reader.ReadByte();

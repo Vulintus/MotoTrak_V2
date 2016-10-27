@@ -210,3 +210,159 @@ END OF NEW ERROR
 
 Error while attempting to load Python stage implementations!
 Unable to read booth pairings file!
+NEW ERROR DETECTED
+2016-10-27:13:31:48
+Stack trace:    at IronPython.Runtime.Operations.PythonOps.GetVariable(CodeContext context, String name, Boolean isGlobal, Boolean lightThrow)
+   at IronPython.Runtime.Operations.PythonOps.GetGlobal(CodeContext context, String name)
+   at <unnamed>$3.AdjustDynamicStageParameters$54(PythonFunction $function, Object self, Object all_trials, Object current_trial, Object stage) in StageImplementations\PythonPullStageImplementation.py:line 190
+   at IronPython.Runtime.FunctionCaller`4.Call4(CallSite site, CodeContext context, Object func, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute6[T0,T1,T2,T3,T4,T5,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute4[T0,T1,T2,T3,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid4[T0,T1,T2,T3](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberAction(CallSite& callsite, Type binderType, Int32 knownType, LazyBinder binder, InvokeMemberName name, Boolean staticContext, Type context, String[] argNames, Object target, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper.cs:line 178
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberActionCallSite(Object target, InvokeMemberName name, Object[] args, String[] tArgNames, Type tContext, Boolean tStaticContext, CallSite& callSite) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper-Regular.cs:line 635
+   at Dynamitey.Dynamic.InvokeMemberAction(Object target, String_OR_InvokeMemberName name, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Dynamic.cs:line 391
+   at CallSite.Target(Closure , CallSite , Type , Object , String , List`1 , MotorTrial , MotorStage )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid6[T0,T1,T2,T3,T4,T5](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at MotoTrakBase.PythonStageImplementation.AdjustDynamicStageParameters(List`1 all_trials, MotorTrial current_trial, MotorStage stage) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 188
+   at MotoTrak.MotoTrakModel.HandleTrialState(Int32 device_signal_index, Int32 number_of_new_data_points, Int32 buffer_size, List`1 stream_data_transformed, List`1 transposed_new_data, List`1 transformed_new_data) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 1308
+   at MotoTrak.MotoTrakModel.HandleStreaming(Object sender, DoWorkEventArgs e) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 930
+   at System.ComponentModel.BackgroundWorker.OnDoWork(DoWorkEventArgs e)
+   at System.ComponentModel.BackgroundWorker.WorkerThreadStart(Object argument)
+Outermost exception message: global name 'MotorStageParameter' is not defined
+Innermost exception message: global name 'MotorStageParameter' is not defined
+Function name: GetVariable
+END OF NEW ERROR
+
+NEW ERROR DETECTED
+2016-10-27:15:42:46
+Stack trace:    at CallSite.Target(Closure , CallSite , Object , Int32 )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute2[T0,T1,TRet](CallSite site, T0 arg0, T1 arg1)
+   at <unnamed>$1.AdjustDynamicStageParameters$20(PythonFunction $function, Object self, Object all_trials, Object trial_signal, Object stage) in StageImplementations\PythonKnobStageImplementation.py:line 189
+   at IronPython.Runtime.FunctionCaller`4.Call4(CallSite site, CodeContext context, Object func, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute6[T0,T1,T2,T3,T4,T5,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute4[T0,T1,T2,T3,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid4[T0,T1,T2,T3](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberAction(CallSite& callsite, Type binderType, Int32 knownType, LazyBinder binder, InvokeMemberName name, Boolean staticContext, Type context, String[] argNames, Object target, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper.cs:line 178
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberActionCallSite(Object target, InvokeMemberName name, Object[] args, String[] tArgNames, Type tContext, Boolean tStaticContext, CallSite& callSite) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper-Regular.cs:line 635
+   at Dynamitey.Dynamic.InvokeMemberAction(Object target, String_OR_InvokeMemberName name, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Dynamic.cs:line 391
+   at CallSite.Target(Closure , CallSite , Type , Object , String , List`1 , MotorTrial , MotorStage )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid6[T0,T1,T2,T3,T4,T5](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at MotoTrakBase.PythonStageImplementation.AdjustDynamicStageParameters(List`1 all_trials, MotorTrial current_trial, MotorStage stage) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 188
+   at MotoTrak.MotoTrakModel.HandleTrialState(Int32 device_signal_index, Int32 number_of_new_data_points, Int32 buffer_size, List`1 stream_data_transformed, List`1 transposed_new_data, List`1 transformed_new_data) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 1308
+   at MotoTrak.MotoTrakModel.HandleStreaming(Object sender, DoWorkEventArgs e) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 930
+   at System.ComponentModel.BackgroundWorker.OnDoWork(DoWorkEventArgs e)
+   at System.ComponentModel.BackgroundWorker.WorkerThreadStart(Object argument)
+Outermost exception message: 'MotorTrial' object is not subscriptable
+Innermost exception message: 'MotorTrial' object is not subscriptable
+Function name: CallSite.Target
+END OF NEW ERROR
+
+NEW ERROR DETECTED
+2016-10-27:15:50:44
+Stack trace:    at CallSite.Target(Closure , CallSite , Object , Int32 )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute2[T0,T1,TRet](CallSite site, T0 arg0, T1 arg1)
+   at <unnamed>$1.AdjustDynamicStageParameters$22(PythonFunction $function, Object self, Object all_trials, Object trial_signal, Object stage) in StageImplementations\PythonKnobStageImplementation.py:line 190
+   at IronPython.Runtime.FunctionCaller`4.Call4(CallSite site, CodeContext context, Object func, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute6[T0,T1,T2,T3,T4,T5,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute4[T0,T1,T2,T3,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid4[T0,T1,T2,T3](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberAction(CallSite& callsite, Type binderType, Int32 knownType, LazyBinder binder, InvokeMemberName name, Boolean staticContext, Type context, String[] argNames, Object target, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper.cs:line 178
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberActionCallSite(Object target, InvokeMemberName name, Object[] args, String[] tArgNames, Type tContext, Boolean tStaticContext, CallSite& callSite) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper-Regular.cs:line 635
+   at Dynamitey.Dynamic.InvokeMemberAction(Object target, String_OR_InvokeMemberName name, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Dynamic.cs:line 391
+   at CallSite.Target(Closure , CallSite , Type , Object , String , List`1 , MotorTrial , MotorStage )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid6[T0,T1,T2,T3,T4,T5](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at MotoTrakBase.PythonStageImplementation.AdjustDynamicStageParameters(List`1 all_trials, MotorTrial current_trial, MotorStage stage) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 188
+   at MotoTrak.MotoTrakModel.HandleTrialState(Int32 device_signal_index, Int32 number_of_new_data_points, Int32 buffer_size, List`1 stream_data_transformed, List`1 transposed_new_data, List`1 transformed_new_data) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 1308
+   at MotoTrak.MotoTrakModel.HandleStreaming(Object sender, DoWorkEventArgs e) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 930
+   at System.ComponentModel.BackgroundWorker.OnDoWork(DoWorkEventArgs e)
+   at System.ComponentModel.BackgroundWorker.WorkerThreadStart(Object argument)
+Outermost exception message: 'MotorTrial' object is not subscriptable
+Innermost exception message: 'MotorTrial' object is not subscriptable
+Function name: CallSite.Target
+END OF NEW ERROR
+
+NEW ERROR DETECTED
+2016-10-27:15:53:37
+Stack trace:    at CallSite.Target(Closure , CallSite , Object , Int32 )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute2[T0,T1,TRet](CallSite site, T0 arg0, T1 arg1)
+   at <unnamed>$1.AdjustDynamicStageParameters$22(PythonFunction $function, Object self, Object all_trials, Object trial_signal, Object stage) in StageImplementations\PythonKnobStageImplementation.py:line 190
+   at IronPython.Runtime.FunctionCaller`4.Call4(CallSite site, CodeContext context, Object func, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute6[T0,T1,T2,T3,T4,T5,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute4[T0,T1,T2,T3,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid4[T0,T1,T2,T3](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberAction(CallSite& callsite, Type binderType, Int32 knownType, LazyBinder binder, InvokeMemberName name, Boolean staticContext, Type context, String[] argNames, Object target, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper.cs:line 178
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberActionCallSite(Object target, InvokeMemberName name, Object[] args, String[] tArgNames, Type tContext, Boolean tStaticContext, CallSite& callSite) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper-Regular.cs:line 635
+   at Dynamitey.Dynamic.InvokeMemberAction(Object target, String_OR_InvokeMemberName name, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Dynamic.cs:line 391
+   at CallSite.Target(Closure , CallSite , Type , Object , String , List`1 , MotorTrial , MotorStage )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid6[T0,T1,T2,T3,T4,T5](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at MotoTrakBase.PythonStageImplementation.AdjustDynamicStageParameters(List`1 all_trials, MotorTrial current_trial, MotorStage stage) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 188
+   at MotoTrak.MotoTrakModel.HandleTrialState(Int32 device_signal_index, Int32 number_of_new_data_points, Int32 buffer_size, List`1 stream_data_transformed, List`1 transposed_new_data, List`1 transformed_new_data) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 1308
+   at MotoTrak.MotoTrakModel.HandleStreaming(Object sender, DoWorkEventArgs e) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 930
+   at System.ComponentModel.BackgroundWorker.OnDoWork(DoWorkEventArgs e)
+   at System.ComponentModel.BackgroundWorker.WorkerThreadStart(Object argument)
+Outermost exception message: 'MotorTrial' object is not subscriptable
+Innermost exception message: 'MotorTrial' object is not subscriptable
+Function name: CallSite.Target
+END OF NEW ERROR
+
+NEW ERROR DETECTED
+2016-10-27:16:01:18
+Stack trace:    at CallSite.Target(Closure , CallSite , Object , Int32 )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute2[T0,T1,TRet](CallSite site, T0 arg0, T1 arg1)
+   at <unnamed>$1.AdjustDynamicStageParameters$22(PythonFunction $function, Object self, Object all_trials, Object trial_signal, Object stage) in StageImplementations\PythonKnobStageImplementation.py:line 190
+   at IronPython.Runtime.FunctionCaller`4.Call4(CallSite site, CodeContext context, Object func, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute6[T0,T1,T2,T3,T4,T5,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute4[T0,T1,T2,T3,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid4[T0,T1,T2,T3](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberAction(CallSite& callsite, Type binderType, Int32 knownType, LazyBinder binder, InvokeMemberName name, Boolean staticContext, Type context, String[] argNames, Object target, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper.cs:line 178
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberActionCallSite(Object target, InvokeMemberName name, Object[] args, String[] tArgNames, Type tContext, Boolean tStaticContext, CallSite& callSite) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper-Regular.cs:line 635
+   at Dynamitey.Dynamic.InvokeMemberAction(Object target, String_OR_InvokeMemberName name, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Dynamic.cs:line 391
+   at CallSite.Target(Closure , CallSite , Type , Object , String , List`1 , MotorTrial , MotorStage )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid6[T0,T1,T2,T3,T4,T5](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at MotoTrakBase.PythonStageImplementation.AdjustDynamicStageParameters(List`1 all_trials, MotorTrial current_trial, MotorStage stage) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 188
+   at MotoTrak.MotoTrakModel.HandleTrialState(Int32 device_signal_index, Int32 number_of_new_data_points, Int32 buffer_size, List`1 stream_data_transformed, List`1 transposed_new_data, List`1 transformed_new_data) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 1308
+   at MotoTrak.MotoTrakModel.HandleStreaming(Object sender, DoWorkEventArgs e) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 930
+   at System.ComponentModel.BackgroundWorker.OnDoWork(DoWorkEventArgs e)
+   at System.ComponentModel.BackgroundWorker.WorkerThreadStart(Object argument)
+Outermost exception message: 'MotorTrial' object is not subscriptable
+Innermost exception message: 'MotorTrial' object is not subscriptable
+Function name: CallSite.Target
+END OF NEW ERROR
+
+NEW ERROR DETECTED
+2016-10-27:16:23:32
+Stack trace:    at CallSite.Target(Closure , CallSite , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute2[T0,T1,TRet](CallSite site, T0 arg0, T1 arg1)
+   at <unnamed>$2.AdjustDynamicStageParameters$44(PythonFunction $function, Object self, Object all_trials, Object current_trial, Object stage) in StageImplementations\PythonKnob_NO_WEIGHT_StageImplementation.py:line 197
+   at IronPython.Runtime.FunctionCaller`4.Call4(CallSite site, CodeContext context, Object func, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute6[T0,T1,T2,T3,T4,T5,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecute4[T0,T1,T2,T3,TRet](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at CallSite.Target(Closure , CallSite , Object , Object , Object , Object )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid4[T0,T1,T2,T3](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3)
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberAction(CallSite& callsite, Type binderType, Int32 knownType, LazyBinder binder, InvokeMemberName name, Boolean staticContext, Type context, String[] argNames, Object target, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper.cs:line 178
+   at Dynamitey.Internal.Optimization.InvokeHelper.InvokeMemberActionCallSite(Object target, InvokeMemberName name, Object[] args, String[] tArgNames, Type tContext, Boolean tStaticContext, CallSite& callSite) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Internal\Optimization\InvokeHelper-Regular.cs:line 635
+   at Dynamitey.Dynamic.InvokeMemberAction(Object target, String_OR_InvokeMemberName name, Object[] args) in c:\Users\jayt\Documents\Visual Studio 2012\Projects\Dynamitey\Dynamitey\Dynamic.cs:line 391
+   at CallSite.Target(Closure , CallSite , Type , Object , String , List`1 , MotorTrial , MotorStage )
+   at System.Dynamic.UpdateDelegates.UpdateAndExecuteVoid6[T0,T1,T2,T3,T4,T5](CallSite site, T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+   at MotoTrakBase.PythonStageImplementation.AdjustDynamicStageParameters(List`1 all_trials, MotorTrial current_trial, MotorStage stage) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\PythonStageImplementation.cs:line 188
+   at MotoTrak.MotoTrakModel.HandleTrialState(Int32 device_signal_index, Int32 number_of_new_data_points, Int32 buffer_size, List`1 stream_data_transformed, List`1 transposed_new_data, List`1 transformed_new_data) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 1308
+   at MotoTrak.MotoTrakModel.HandleStreaming(Object sender, DoWorkEventArgs e) in C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrak\MotoTrakModel.cs:line 930
+   at System.ComponentModel.BackgroundWorker.OnDoWork(DoWorkEventArgs e)
+   at System.ComponentModel.BackgroundWorker.WorkerThreadStart(Object argument)
+Outermost exception message: expected int, got float
+Innermost exception message: expected int, got float
+Function name: CallSite.Target
+END OF NEW ERROR
+
