@@ -7,12 +7,12 @@
         mc:Ignorable="d"
         Title="Please select a MotoTrak controller" 
         SizeToContent="Height" 
+        ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"  
-        MinHeight="300" 
-        Height="Auto" 
         Width="350">
-    <Grid>
-        <ListBox ItemsSource="{Binding Path=AvailablePorts}" SelectedIndex="{Binding Path=SelectedPortIndex}">
+    <StackPanel Orientation="Vertical">
+        <ListBox ItemsSource="{Binding Path=AvailablePorts}" SelectedIndex="{Binding Path=SelectedPortIndex}" Margin="10"
+                 BorderThickness="0">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Vertical">
@@ -36,7 +36,7 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
             <Button Width="120" Height="40" Margin="5,0,0,5" Click="RefreshButtonClick" VerticalAlignment="Bottom">
                 <Button.Content>
                     <Canvas>
@@ -58,5 +58,5 @@
                 Click="OK_Button_Click" />
         </StackPanel>
 
-    </Grid>
+    </StackPanel>
 </Window>

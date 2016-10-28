@@ -109,7 +109,8 @@ class PythonKnob_NO_WEIGHT_StageImplementation (IMotorStageImplementation):
         trial_events = trial.TrialEvents.Where(lambda x: x.Handled is False)
         for evt in trial_events:
             event_type = evt.EventType
-            if event_type is MotorTrialEventType.SuccessfulTrial:
+            evt.Handled = True
+            if event_type.value__ is MotorTrialEventType.SuccessfulTrial.value__:
                 #If a successful trial happened, then feed the animal
                 new_action = MotorTrialAction()
                 new_action.ActionType = MotorTrialActionType.TriggerFeeder

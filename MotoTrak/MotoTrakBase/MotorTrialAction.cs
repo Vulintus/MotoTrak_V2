@@ -123,6 +123,8 @@ namespace MotoTrakBase
         {
             if (DateTime.Now >= ActionTime)
             {
+                Completed = true;
+
                 switch (this.ActionType)
                 {
                     case MotorTrialActionType.AdjustAutopositionerPosition:
@@ -156,9 +158,7 @@ namespace MotoTrakBase
                         MotorBoard.GetInstance().TriggerFeeder();
 
                         break;
-                }
-
-                Completed = true;
+                }                
             }
         }
 

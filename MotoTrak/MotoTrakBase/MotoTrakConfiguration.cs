@@ -46,6 +46,8 @@ namespace MotoTrakBase
         private string ConfigurationFileName = "mototrak.config";
         private string StageImplementationsPath = "StageImplementations";
         private string DefaultLocalStagePath = "Stages";
+        private string CompanyName = "Vulintus";
+        private string MotoTrakAppName = "MotoTrak";
 
         #endregion
 
@@ -61,7 +63,18 @@ namespace MotoTrakBase
         public string DataPath { get; set; }
         public string SecondaryDataPath { get; set; }
         public bool DebuggingMode = false;
-        
+
+        #endregion
+
+        #region Private methods
+
+        private string GetLocalApplicationDataFolder ()
+        {
+            var path_name = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            path_name = path_name + @"\" + CompanyName + @"\" + MotoTrakAppName + @"\";
+            return path_name;
+        }
+
         #endregion
 
         #region Methods
@@ -73,8 +86,10 @@ namespace MotoTrakBase
         {
             try
             {
+                string booth_pairings_file_name = GetLocalApplicationDataFolder() + BoothPairingsFileName;
+
                 //Open a stream to write to the file
-                StreamWriter writer = new StreamWriter(BoothPairingsFileName);
+                StreamWriter writer = new StreamWriter(booth_pairings_file_name);
 
                 //Write each booth pairing to the file
                 foreach (var kvp in BoothPairings)
@@ -99,13 +114,15 @@ namespace MotoTrakBase
         /// </summary>
         public void ReadBoothPairings ()
         {
-            FileInfo booth_pairings_file_info = new FileInfo(BoothPairingsFileName);
+            string booth_pairings_file_name = GetLocalApplicationDataFolder() + BoothPairingsFileName;
+
+            FileInfo booth_pairings_file_info = new FileInfo(booth_pairings_file_name);
             if (booth_pairings_file_info.Exists)
             {
                 //Open a stream to read the booth pairings configuration file
                 try
                 {
-                    StreamReader reader = new StreamReader(BoothPairingsFileName);
+                    StreamReader reader = new StreamReader(booth_pairings_file_name);
 
                     //Read all the lines from the file
                     List<string> lines = new List<string>();
@@ -142,12 +159,14 @@ namespace MotoTrakBase
         /// </summary>
         public void ReadConfigurationFile ()
         {
+            string configuration_file_name = GetLocalApplicationDataFolder() + ConfigurationFileName;
+
             try
             {
                 bool isConfigVersionSet = false;
 
                 //Check to see if the configuration file exists
-                FileInfo config_file_info = new FileInfo(ConfigurationFileName);
+                FileInfo config_file_info = new FileInfo(configuration_file_name);
 
                 //Generate a default configuration file if one does not exist
                 if (!config_file_info.Exists)
@@ -156,7 +175,7 @@ namespace MotoTrakBase
                 }
 
                 //Open the configuration file using a stream reader.
-                StreamReader reader = new StreamReader(ConfigurationFileName);
+                StreamReader reader = new StreamReader(configuration_file_name);
 
                 //Read all the lines from the configuration file, and then close the file.
                 List<string> lines = new List<string>();
@@ -232,9 +251,11 @@ namespace MotoTrakBase
         /// </summary>
         public void GenerateDefaultConfigurationFile ()
         {
+            string configuration_file_name = GetLocalApplicationDataFolder() + ConfigurationFileName;
+
             try
             {
-                StreamWriter writer = new StreamWriter(ConfigurationFileName);
+                StreamWriter writer = new StreamWriter(configuration_file_name);
 
                 writer.WriteLine("CONFIGURATION VERSION: 1");
                 writer.WriteLine("STAGE FOLDER: " + DefaultLocalStagePath);

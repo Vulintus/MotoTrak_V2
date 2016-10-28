@@ -78,6 +78,7 @@ namespace MotoTrakBoothLauncher
             get
             {
                 var device_viewmodels = _available_port_list.Select(x => new USBDeviceViewModel(x)).ToList();
+                device_viewmodels.Sort((x, y) => x.BoothName.CompareTo(y.BoothName));
                 return device_viewmodels;
             }
         }
