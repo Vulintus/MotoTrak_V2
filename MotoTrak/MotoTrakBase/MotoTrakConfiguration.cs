@@ -72,6 +72,15 @@ namespace MotoTrakBase
         {
             var path_name = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             path_name = path_name + @"\" + CompanyName + @"\" + MotoTrakAppName + @"\";
+
+            //Create the path if necessary
+            DirectoryInfo dir_info = new DirectoryInfo(path_name);
+            if (!dir_info.Exists)
+            {
+                dir_info.Create();
+            }
+
+            //Return the path to the caller
             return path_name;
         }
 
