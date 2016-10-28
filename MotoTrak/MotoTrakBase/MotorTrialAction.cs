@@ -154,6 +154,11 @@ namespace MotoTrakBase
                         break;
                     case MotorTrialActionType.TriggerFeeder:
 
+                        if (MotoTrakConfiguration.GetInstance().DebuggingMode)
+                        {
+                            MotoTrakMessaging.GetInstance().AddMessage("DEBUG: Feeder triggered");
+                        }
+
                         //Perform the feed
                         MotorBoard.GetInstance().TriggerFeeder();
 
