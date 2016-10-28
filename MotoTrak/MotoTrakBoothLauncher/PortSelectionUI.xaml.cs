@@ -22,7 +22,7 @@ namespace MotoTrakBoothLauncher
         public PortSelectionUI()
         {
             InitializeComponent();
-
+            
             PortSelectorViewModel viewModel = PortSelectorViewModel.GetInstance();
             DataContext = viewModel;
         }

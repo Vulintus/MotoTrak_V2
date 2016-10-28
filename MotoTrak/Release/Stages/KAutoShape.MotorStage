@@ -1,8 +1,9 @@
 Stage File Version: 1
 Stage Name: KAutoShape
 Stage Description: Automatic shaping on the knob task
-Stage Implementation: PythonKnobStageImplementation.py
+Stage Implementation: PythonKnob_NO_WEIGHT_StageImplementation.py
 Stage Output Trigger: OFF
+Stage Device: Knob
 Stage Parameter: Pre-Trial Duration, seconds, Fixed, Undefined, 1, NaN, NaN, NaN
 Stage Parameter: Hit Window Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
 Stage Parameter: Post-Trial Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN

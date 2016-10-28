@@ -1,0 +1,8 @@
+Starting main window
+About to show dialog
+Getter of AvailablePorts
+Getter of SelectedPortIndex
+Getter of BoothName
+Getter of ConnectionBadVisibility
+Getter of IsDeviceBusy
+Attempting to open port COM4

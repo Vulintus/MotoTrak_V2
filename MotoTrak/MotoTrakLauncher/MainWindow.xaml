@@ -1,0 +1,18 @@
+﻿<Window x:Class="MotoTrakLauncher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MotoTrakLauncher"
+        mc:Ignorable="d"
+        Title="MotoTrak" Height="350" Width="400">
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            <Button Name="RunSession" Click="RunSession_Click" Content="Run session" Margin="5,5" Height="50" FontSize="24" FontWeight="Bold" />
+            <Button Name="Calibrate" Click="Calibrate_Click" Content="Calibrate booth" Margin="5,5" Height="50" FontSize="24" FontWeight="Bold" />
+            <Button Name="StageDesigner" Click="StageDesigner_Click" Content="Create or edit stage" Margin="5,5" Height="50" FontSize="24" FontWeight="Bold" />
+            <Button Name="Analysis" Click="Analysis_Click" Content="Analyze data" Margin="5,5" Height="50" FontSize="24" FontWeight="Bold" />
+            <Button Name="ExitButton" Click="ExitButton_Click" Content="Exit" Margin="5,5" Height="50" FontSize="24" FontWeight="Bold" />
+        </StackPanel>
+    </Grid>
+</Window>

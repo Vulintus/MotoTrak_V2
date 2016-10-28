@@ -99,39 +99,42 @@ namespace MotoTrakBase
         /// </summary>
         public void ReadBoothPairings ()
         {
-            //Open a stream to read the booth pairings configuration file
-            try
+            FileInfo booth_pairings_file_info = new FileInfo(BoothPairingsFileName);
+            if (booth_pairings_file_info.Exists)
             {
-                StreamReader reader = new StreamReader(BoothPairingsFileName);
-
-                //Read all the lines from the file
-                List<string> lines = new List<string>();
-                while (!reader.EndOfStream)
+                //Open a stream to read the booth pairings configuration file
+                try
                 {
-                    lines.Add(reader.ReadLine());
+                    StreamReader reader = new StreamReader(BoothPairingsFileName);
+
+                    //Read all the lines from the file
+                    List<string> lines = new List<string>();
+                    while (!reader.EndOfStream)
+                    {
+                        lines.Add(reader.ReadLine());
+                    }
+
+                    //Close the stream
+                    reader.Close();
+
+                    //Now parse the input
+                    for (int i = 0; i < lines.Count; i++)
+                    {
+                        string thisLine = lines[i];
+                        string[] splitString = thisLine.Split(new char[] { ',' }, 2);
+
+                        string booth_name = splitString[0].Trim();
+                        string com_port = splitString[1].Trim();
+
+                        //Add the booth pairing to our dictionary
+                        BoothPairings.TryAdd(com_port, booth_name);
+                    }
                 }
-
-                //Close the stream
-                reader.Close();
-
-                //Now parse the input
-                for (int i = 0; i < lines.Count; i++)
+                catch
                 {
-                    string thisLine = lines[i];
-                    string[] splitString = thisLine.Split(new char[] { ',' }, 2);
-
-                    string booth_name = splitString[0].Trim();
-                    string com_port = splitString[1].Trim();
-
-                    //Add the booth pairing to our dictionary
-                    BoothPairings.TryAdd(com_port, booth_name);
+                    ErrorLoggingService.GetInstance().LogStringError("Unable to read booth pairings file!");
                 }
             }
-            catch
-            {
-                ErrorLoggingService.GetInstance().LogStringError("Unable to read booth pairings file!");
-            }
-            
         }
 
         /// <summary>
@@ -234,7 +237,7 @@ namespace MotoTrakBase
                 StreamWriter writer = new StreamWriter(ConfigurationFileName);
 
                 writer.WriteLine("CONFIGURATION VERSION: 1");
-                writer.WriteLine("STAGE URL: " + DefaultLocalStagePath);
+                writer.WriteLine("STAGE FOLDER: " + DefaultLocalStagePath);
                 writer.WriteLine(@"MAIN DATA LOCATION: C:\MotoTrak Files\");
 
                 writer.Close();

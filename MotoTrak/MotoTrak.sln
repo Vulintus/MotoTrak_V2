@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MotoTrakCalibration", "Moto
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MotoTrakBoothLauncher", "MotoTrakBoothLauncher\MotoTrakBoothLauncher.csproj", "{4601DC8F-EC86-455A-BAF7-BC966D8B588C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MotoTrakLauncher", "MotoTrakLauncher\MotoTrakLauncher.csproj", "{6FBD6C76-369E-446D-A944-3EA10B100D6C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -68,6 +70,12 @@ Global
 		{4601DC8F-EC86-455A-BAF7-BC966D8B588C}.Real Release|Any CPU.Build.0 = Real Release|Any CPU
 		{4601DC8F-EC86-455A-BAF7-BC966D8B588C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4601DC8F-EC86-455A-BAF7-BC966D8B588C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FBD6C76-369E-446D-A944-3EA10B100D6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FBD6C76-369E-446D-A944-3EA10B100D6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FBD6C76-369E-446D-A944-3EA10B100D6C}.Real Release|Any CPU.ActiveCfg = Real Release|Any CPU
+		{6FBD6C76-369E-446D-A944-3EA10B100D6C}.Real Release|Any CPU.Build.0 = Real Release|Any CPU
+		{6FBD6C76-369E-446D-A944-3EA10B100D6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FBD6C76-369E-446D-A944-3EA10B100D6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -3,6 +3,7 @@ Stage Name: KTrain
 Stage Description: Knob training
 Stage Implementation: PythonKnobStageImplementation.py
 Stage Output Trigger: OFF
+Stage Device: Knob
 Stage Parameter: Pre-Trial Duration, seconds, Fixed, Undefined, 1, NaN, NaN, NaN
 Stage Parameter: Hit Window Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
 Stage Parameter: Post-Trial Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN

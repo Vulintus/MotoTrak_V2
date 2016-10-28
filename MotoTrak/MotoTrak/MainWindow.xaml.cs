@@ -30,12 +30,12 @@ namespace MotoTrak
             
             //Create a window to allow the user to select a port
             PortSelectionUI portSelectorWindow = new PortSelectionUI();
-
-            //Show the dialog
+            
             portSelectorWindow.ShowDialog();
 
             //Get the result of the port selection window
             PortSelectorViewModel portSelectorResult = PortSelectorViewModel.GetInstance();
+            
             if (portSelectorResult.ResultOK && portSelectorResult.AvailablePortCount > 0)
             {
                 string portName = portSelectorResult.AvailablePorts[portSelectorResult.SelectedPortIndex].Model.DeviceID;

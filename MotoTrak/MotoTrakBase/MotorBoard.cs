@@ -945,7 +945,7 @@ namespace MotoTrakBase
             //Query all connected devices
             var searcher = new ManagementObjectSearcher(@"SELECT * FROM WIN32_SerialPort");
             var collection = searcher.Get();
-
+            
             //Grab the information we need
             foreach (var device in collection)
             {
@@ -960,10 +960,10 @@ namespace MotoTrakBase
                     devices.Add(d);
                 }
             }
-
+            
             //Dispose of the collection of queried devices
             collection.Dispose();
-
+            
             //Return the list of devices that were found
             return devices;
         }

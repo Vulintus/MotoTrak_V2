@@ -28,7 +28,7 @@ namespace MotoTrakBoothLauncher
         {
             //Read in the booth pairings before instantiating this view model
             MotoTrakConfiguration.GetInstance().ReadBoothPairings();
-
+            
             //Query the devices
             HardQueryOfDevices();
         }

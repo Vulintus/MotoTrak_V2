@@ -3,6 +3,7 @@ Stage Name: LAutoShape
 Stage Description: Automatic shaping for animals
 Stage Implementation: PythonLeverStageImplementation.py
 Stage Output Trigger: OFF
+Stage Device: Lever
 Stage Parameter: Pre-Trial Duration, seconds, Fixed, Undefined, 1, NaN, NaN, NaN
 Stage Parameter: Hit Window Duration, seconds, Variable, 50th percentile, 2, 0.5, 2, 10
 Stage Parameter: Post-Trial Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
