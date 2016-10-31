@@ -68,7 +68,7 @@ namespace MotoTrakBase
 
         #region Private methods
 
-        private string GetLocalApplicationDataFolder ()
+        public string GetLocalApplicationDataFolder ()
         {
             var path_name = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             path_name = path_name + @"\" + CompanyName + @"\" + MotoTrakAppName + @"\";

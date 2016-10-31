@@ -38,6 +38,11 @@ namespace MotoTrakBase
         private string _error_log_file = "errors.txt";
         private object _error_log_lock = new object();
 
+        private string GetErrorLogFileString()
+        {
+            return MotoTrakConfiguration.GetInstance().GetLocalApplicationDataFolder() + @"\" + _error_log_file;
+        }
+
         #endregion
 
         #region Method to log errors
@@ -51,7 +56,7 @@ namespace MotoTrakBase
             {
                 try
                 {
-                    StreamWriter writer = new StreamWriter(_error_log_file, true);
+                    StreamWriter writer = new StreamWriter(GetErrorLogFileString(), true);
                     string timestamp = DateTime.Now.ToString("yyyy-MM-dd:HH:mm:ss");
                     string stacktrace = e.StackTrace;
                     string outermost_exception = e.Message;
@@ -92,7 +97,7 @@ namespace MotoTrakBase
             {
                 try
                 {
-                    StreamWriter writer = new StreamWriter(_error_log_file, true);
+                    StreamWriter writer = new StreamWriter(GetErrorLogFileString(), true);
                     writer.WriteLine(msg);
                     writer.Close();
                 }
