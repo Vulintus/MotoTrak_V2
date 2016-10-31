@@ -4,7 +4,7 @@
 #include <idp.iss>
 
 #define MyAppName "MotoTrak"
-#define MyAppVersion "2.0.2 Alpha"
+#define MyAppVersion "2.0.4 Alpha"
 #define MyAppPublisher "Vulintus"
 #define MyAppURL "http://www.vulintus.com"
 #define MyAppExeName "MotoTrakLauncher.exe"
@@ -25,7 +25,7 @@ DefaultDirName={pf}\{#MyAppPublisher}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Installer
-OutputBaseFilename=MotoTrak_Setup_V2_0_2_Alpha_20161028
+OutputBaseFilename=MotoTrak_Setup_V2_0_4_Alpha_20161028
 Compression=lzma
 SolidCompression=yes
 

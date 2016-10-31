@@ -1105,7 +1105,7 @@ namespace MotoTrak
                     //Trial success does NOT immediately move us to the next state.  ONLY TIME.
                     
                     //Add the new raw data to the trial object to be saved to disk later.
-                    for (int i = 0; i < CurrentTrial.TrialData.Count; i++)
+                    for (int i = 0; i < CurrentTrial.TrialData.Count && i < transformed_new_data.Count; i++)
                     {
                         CurrentTrial.TrialData[i].AddRange(transformed_new_data[i]);
                     }
@@ -1242,7 +1242,7 @@ namespace MotoTrak
                         //Change the session state to end this trial.
                         TrialState = TrialRunState.TrialEnd;
                     }
-
+                    
                     //Report progress on this trial to the main UI thread
                     CopyDataToMonitoredSignal(CurrentTrial.TrialData);
 
