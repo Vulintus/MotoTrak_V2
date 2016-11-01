@@ -35,6 +35,9 @@ class PythonSustainedPullStageImplementation (IMotorStageImplementation):
     Minimum_Force_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Minimum Force", "grams", True)
     Hold_Duration_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Hold Duration", "milliseconds", False)
     
+    def AdjustBeginningStageParameters(self, recent_behavior_sessions, current_session_stage):
+        return
+
     def TransformSignals(self, new_data_from_controller, stage, device):
         result = List[List[System.Double]]()
         for i in range(0, new_data_from_controller.Count):
@@ -180,3 +183,5 @@ class PythonSustainedPullStageImplementation (IMotorStageImplementation):
             
         return
 
+    def CreateEndOfSessionMessage(self, current_session):
+        return List[System.String]()

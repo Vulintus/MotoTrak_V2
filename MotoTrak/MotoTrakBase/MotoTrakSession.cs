@@ -306,6 +306,26 @@ namespace MotoTrakBase
         #region Methods
 
         /// <summary>
+        /// Clears a sessions of its trials, messages, manual feeds, pauses, and times.
+        /// Does NOT clear stage and device information from a session.
+        /// </summary>
+        public void ClearSession ()
+        {
+            //Clear the list of trials, manual feeds, and pauses
+            Trials = Enumerable.Empty<MotorTrial>().ToList();
+            ManualFeeds = Enumerable.Empty<DateTime>().ToList();
+            Pauses = Enumerable.Empty<Tuple<DateTime, DateTime>>().ToList();
+
+            //Clear the notes and the timestamped notes
+            SessionNotes = string.Empty;
+            TimestampedNotes = Enumerable.Empty<Tuple<DateTime, string>>().ToList();
+
+            //Clear the start and end times of the session
+            StartTime = DateTime.MinValue;
+            EndTime = DateTime.MinValue;
+        }
+
+        /// <summary>
         /// Creates a new pause tuple within the list of pauses for this session
         /// </summary>
         /// <param name="t">The time at which the pause begins</param>

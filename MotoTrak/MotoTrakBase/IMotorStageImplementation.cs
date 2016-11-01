@@ -12,6 +12,14 @@ namespace MotoTrakBase
     public interface IMotorStageImplementation
     {
         /// <summary>
+        /// This function takes in data from recent previous behavior sessions and sets some stage parameters based on what happened
+        /// during those sessions.
+        /// </summary>
+        /// <param name="recent_behavior_sessions">A list of recent behavior sessions</param>
+        /// <param name="current_session_stage">The selected stage for the current session that is about to begin</param>
+        void AdjustBeginningStageParameters(List<MotoTrakSession> recent_behavior_sessions, MotorStage current_session_stage);
+        
+        /// <summary>
         /// This function takes in new data from the MotoTrak controller board and performs transforms on the data
         /// </summary>
         /// <param name="buffer"></param>
@@ -90,5 +98,12 @@ namespace MotoTrakBase
         /// <param name="all_trials">All trials from the session up until the current point in time</param>
         /// <param name="stage">The stage that is currently being run</param>
         void AdjustDynamicStageParameters(List<MotorTrial> all_trials, MotorTrial current_trial, MotorStage stage);
+
+        /// <summary>
+        /// This function allows the stage implementation to create a message that will be displayed to the user at the
+        /// end of a session.  It returns a list of strings, and each string in the list is a separate message.
+        /// </summary>
+        /// <param name="current_session">The current session that just finished running</param>
+        List<string> CreateEndOfSessionMessage(MotoTrakSession current_session);
     }
 }

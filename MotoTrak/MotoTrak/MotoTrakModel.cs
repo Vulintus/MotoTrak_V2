@@ -66,6 +66,7 @@ namespace MotoTrak
             SessionBegin,
             SessionRunning,
             SessionEnd,
+            SessionWaitingForFinalization,
             SessionFinalizing,
             SessionNotRunning,
             SessionPaused,
@@ -1341,9 +1342,9 @@ namespace MotoTrak
             {
                 case SessionRunState.SessionBegin:
 
-                    //Create an empty list of trials for the new session.
-                    CurrentSession.Trials = Enumerable.Empty<MotorTrial>().ToList();
-
+                    //Clear the current session in preparation of beginning a new session.
+                    CurrentSession.ClearSession();
+                    
                     //Set that start time of the new session
                     CurrentSession.StartTime = DateTime.Now;
 
@@ -1380,6 +1381,25 @@ namespace MotoTrak
                 case SessionRunState.SessionEnd:
 
                     //Do any work to finish up a session here.
+
+                    //Display an end-of-session message to the user
+                    try
+                    {
+                        //Get messages that the stage implementation generates
+                        List<string> messages = CurrentSession.SelectedStage.StageImplementation.CreateEndOfSessionMessage(CurrentSession);
+
+                        //Display each message
+                        foreach (string msg in messages)
+                        {
+                            MotoTrakMessaging.GetInstance().AddMessage(msg);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        //Log any errors that occur during the end-of-session message-generation process, as well as notify that user
+                        MotoTrakMessaging.GetInstance().AddMessage("Unable to generate end-of-session message.");
+                        ErrorLoggingService.GetInstance().LogExceptionError(e);
+                    }
                     
                     //Set the end time of the current session
                     CurrentSession.EndTime = DateTime.Now;
@@ -1394,6 +1414,9 @@ namespace MotoTrak
                         if (PrimarySaveLocation != null)
                             PrimarySaveLocation.SaveEvent(MotoTrakFileSave.BlockType.PauseFinish, DateTime.Now);
                     }
+
+                    //Set the session state to wait for the finalization step
+                    SessionState = SessionRunState.SessionWaitingForFinalization;
 
                     break;
                 case SessionRunState.SessionFinalizing:

@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
@@ -115,7 +117,18 @@ namespace MotoTrak
 
         private void MessagesListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            MessagesListBox.ScrollIntoView(MessagesListBox.SelectedItem);
+            if (MessagesListBox.Items != null && MessagesListBox.Items.Count > 0)
+            {
+                //MessagesListBox.ScrollIntoView(MessagesListBox.Items[MessagesListBox.Items.Count - 1]);
+                ListBoxAutomationPeer svAutomation = (ListBoxAutomationPeer)ScrollViewerAutomationPeer.CreatePeerForElement(MessagesListBox);
+
+                IScrollProvider scrollInterface = (IScrollProvider)svAutomation.GetPattern(PatternInterface.Scroll);
+                System.Windows.Automation.ScrollAmount scrollVertical = System.Windows.Automation.ScrollAmount.LargeIncrement;
+                System.Windows.Automation.ScrollAmount scrollHorizontal = System.Windows.Automation.ScrollAmount.NoAmount;
+                //If the vertical scroller is not available, the operation cannot be performed, which will raise an exception. 
+                if (scrollInterface.VerticallyScrollable)
+                    scrollInterface.Scroll(scrollHorizontal, scrollVertical);
+            }
         }
 
         private void ResetBaselineButtonClick(object sender, RoutedEventArgs e)
@@ -184,6 +197,15 @@ namespace MotoTrak
             if (viewModel != null)
             {
                 viewModel.FinalizeSession();
+            }
+        }
+
+        private void StageSelectionComboBox_DropDownClosed(object sender, EventArgs e)
+        {
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
+            if (viewModel != null)
+            {
+                viewModel.SetStageSelection();
             }
         }
     }

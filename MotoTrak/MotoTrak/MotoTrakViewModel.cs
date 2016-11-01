@@ -63,7 +63,7 @@ namespace MotoTrak
         /// Whether or not it is required for the user to select a new stage before being allowed
         /// to initiate a new session.
         /// </summary>
-        private bool StageChangeRequired
+        public bool StageChangeRequired
         {
             get
             {
@@ -720,6 +720,15 @@ namespace MotoTrak
         #endregion
 
         #region Methods
+
+        public void SetStageSelection ()
+        {
+            if (Model != null && Model.CurrentSession != null)
+            {
+                StageChangeRequired = false;
+                Model.CurrentSession.SelectedStage = Model.CurrentSession.SelectedStage;
+            }
+        }
 
         /// <summary>
         /// Pause or unpause the current session that is running

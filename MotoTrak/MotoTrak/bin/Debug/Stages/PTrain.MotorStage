@@ -1,0 +1,14 @@
+Stage File Version: 1
+Stage Name: PTrain
+Stage Description: Pre-lesion training for animals
+Stage Implementation: PythonPullStageImplementation.py
+Stage Output Trigger: OFF
+Stage Device: Pull
+Stage Sampling Rate: 10
+Stage Parameter: Pre-Trial Duration, seconds, Fixed, Undefined, 1, NaN, NaN, NaN
+Stage Parameter: Hit Window Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Post-Trial Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Post-Trial Timeout Period, seconds, Fixed, Undefined, 0, NaN, NaN, NaN
+Stage Parameter: Device Position, centimeters, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Hit Threshold, grams, Variable, 50th percentile, 120, 10, 120, 10
+Stage Parameter: Initiation Threshold, grams, Fixed, Undefined, 10, NaN, NaN, NaN

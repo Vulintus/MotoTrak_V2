@@ -144,6 +144,12 @@ namespace MotoTrakBase
 
         #region Implementation of IMotorStageImplementation
 
+        public void AdjustBeginningStageParameters(List<MotoTrakSession> recent_behavior_sessions, MotorStage current_session_stage)
+        {
+            Dynamic.InvokeMemberAction(_pythonStageImplementationInstance, "AdjustBeginningStageParameters",
+                recent_behavior_sessions, current_session_stage);
+        }
+
         public List<List<double>> TransformSignals(List<List<int>> new_data_from_controller, MotorStage stage, MotorDevice device)
         {
             return Dynamic.InvokeMember(_pythonStageImplementationInstance, "TransformSignals", new_data_from_controller, stage, device);
@@ -187,7 +193,12 @@ namespace MotoTrakBase
         {
             Dynamic.InvokeMemberAction(_pythonStageImplementationInstance, "AdjustDynamicStageParameters", all_trials, current_trial, stage);
         }
-        
+
+        public List<string> CreateEndOfSessionMessage(MotoTrakSession current_session)
+        {
+            return Dynamic.InvokeMember(_pythonStageImplementationInstance, "CreateEndOfSessionMessage", current_session);
+        }
+
         #endregion
     }
 }

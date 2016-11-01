@@ -226,6 +226,9 @@ namespace MotoTrakUtilities
         /// <returns>The median of the numbers in the array</returns>
         public static double Median(List<double> numbers)
         {
+            if (numbers.Count == 0)
+                return double.NaN;
+
             int numberCount = numbers.Count();
             int halfIndex = numbers.Count() / 2;
             var sortedNumbers = numbers.OrderBy(n => n);
