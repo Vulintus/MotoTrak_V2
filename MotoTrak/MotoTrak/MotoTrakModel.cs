@@ -71,6 +71,7 @@ namespace MotoTrak
             SessionNotRunning,
             SessionPaused,
             SessionUnpaused,
+            SessionRunPreSteps,
         }
 
         /// <summary>
@@ -581,6 +582,14 @@ namespace MotoTrak
             }
         }
         
+        /// <summary>
+        /// Runs a set of steps to prepare for a new session before it starts
+        /// </summary>
+        public void RunSessionPreparationSteps ()
+        {
+            SessionState = SessionRunState.SessionRunPreSteps;
+        }
+
         /// <summary>
         /// Starts a new MotoTrak session.
         /// </summary>
@@ -1340,6 +1349,24 @@ namespace MotoTrak
             //Act on any changes to the session state
             switch (SessionState)
             {
+                case SessionRunState.SessionRunPreSteps:
+
+                    //Handle any prep steps before the session starts.
+                    try
+                    {
+                        CurrentSession.SelectedStage.StageImplementation.AdjustBeginningStageParameters(RecentBehaviorSessions, 
+                            CurrentSession.SelectedStage);
+                    }
+                    catch (Exception e)
+                    {
+                        MotoTrakMessaging.GetInstance().AddMessage("Unable to run session preparation upon stage selection");
+                        ErrorLoggingService.GetInstance().LogExceptionError(e);
+                    }
+
+                    //Reset the session state to not running
+                    SessionState = SessionRunState.SessionNotRunning;
+
+                    break;
                 case SessionRunState.SessionBegin:
 
                     //Clear the current session in preparation of beginning a new session.
@@ -1370,7 +1397,7 @@ namespace MotoTrak
                             MotoTrakMessaging.GetInstance().AddMessage("Unable to save to primary data path!");
                         }
                     }
- 
+                    
                     //Set the session state to be running
                     SessionState = SessionRunState.SessionRunning;
 

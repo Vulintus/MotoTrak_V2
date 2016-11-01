@@ -727,6 +727,8 @@ namespace MotoTrak
             {
                 StageChangeRequired = false;
                 Model.CurrentSession.SelectedStage = Model.CurrentSession.SelectedStage;
+
+                Model.RunSessionPreparationSteps();
             }
         }
 
