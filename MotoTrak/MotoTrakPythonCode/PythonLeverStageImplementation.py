@@ -48,6 +48,10 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         PythonLeverStageImplementation.TaskDefinition.RequiredDeviceType = MotorDeviceType.Lever
         PythonLeverStageImplementation.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On"])
 
+        PythonLeverStageImplementation.TaskDefinition.HitWindowDuration.IsAdaptive = True
+        PythonLeverStageImplementation.TaskDefinition.HitWindowDuration.IsAdaptabilityCustomizeable = True
+        PythonLeverStageImplementation.TaskDefinition.HitWindowDuration.ParameterDescription = "In the lever task, the hit window can adaptively shrink or grow based on an animal's inter-press interval performance."
+
         PythonLeverStageImplementation.TaskDefinition.DevicePosition.IsAdaptive = True
         PythonLeverStageImplementation.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
 

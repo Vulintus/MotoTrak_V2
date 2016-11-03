@@ -21,12 +21,20 @@ namespace StageDesigner
         /// </summary>
         public StageViewModel(MotorStage stage_to_edit)
         {
+            //Choose a default stage implementation if the MotorStage object doesn't already have one
+            if (stage_to_edit.StageImplementation == null)
+            {
+                var list_of_tasks = GetOrderedListOfPythonStageImplementations();
+                if (list_of_tasks != null && list_of_tasks.Count > 0)
+                {
+                    stage_to_edit.StageImplementation = list_of_tasks.FirstOrDefault().Item2;
+                }
+            }
+
             StageModel = stage_to_edit;
             StageParameters.CollectionChanged += StageParameters_CollectionChanged;
 
-            SetStageImplementation();
-            InstantiateRequiredStageParameters();
-            SetDeviceToRecommendedDeviceForStageImplementation();
+            RefreshViewAfterNewTaskSelection();
         }
 
         #endregion
@@ -64,6 +72,56 @@ namespace StageDesigner
         #endregion
 
         #region Private methods
+
+        private void RefreshViewAfterNewTaskSelection ()
+        {
+            //Set the stage implementation in the model stage object
+            SetStageImplementation();
+
+            //Get the task parameters
+            PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
+            if (k != null)
+            {
+                //Create view-models for the basic stage parameters
+                PreTrialRecordingDurationViewModel = new StageParameterControlViewModel(_stage.PreTrialSamplingPeriodInSeconds, k.TaskDefinition.PreTrialDuration);
+                HitWindowDurationViewModel = new StageParameterControlViewModel(_stage.HitWindowInSeconds, k.TaskDefinition.HitWindowDuration);
+                PostHitWindowRecordingDurationViewModel = new StageParameterControlViewModel(_stage.PostTrialSamplingPeriodInSeconds, k.TaskDefinition.PostTrialDuration);
+                PostTrialTimeoutDurationViewModel = new StageParameterControlViewModel(_stage.PostTrialTimeoutInSeconds, k.TaskDefinition.PostTrialTimeout);
+                DevicePositionViewModel = new StageParameterControlViewModel(_stage.Position, k.TaskDefinition.DevicePosition);
+
+                NotifyPropertyChanged("PreTrialRecordingDurationViewModel");
+                NotifyPropertyChanged("HitWindowDurationViewModel");
+                NotifyPropertyChanged("PostHitWindowRecordingDurationViewModel");
+                NotifyPropertyChanged("PostTrialTimeoutDurationViewModel");
+                NotifyPropertyChanged("DevicePositionViewModel");
+            }
+
+            //Subscribe to timing parameter view-model changes
+            SubscribeToTimingParameterViewModelChanges();
+            
+            //Instantiate required stage parameters for this stage, based on the stage implementation
+            InstantiateRequiredStageParameters();
+
+            //Set the recommended device for this stage, based on the stage implementation
+            SetDeviceToRecommendedDeviceForStageImplementation();
+
+            //Reset the output trigger type
+            StageModel.OutputTriggerType = string.Empty;
+            if (k != null)
+            {
+                if (k.TaskDefinition.OutputTriggerOptions != null && k.TaskDefinition.OutputTriggerOptions.Count > 0)
+                {
+                    StageModel.OutputTriggerType = k.TaskDefinition.OutputTriggerOptions[0];
+                }
+            }
+
+            NotifyPropertyChanged("SelectedTaskIndex");
+            NotifyPropertyChanged("TaskDescriptionVisibility");
+            NotifyPropertyChanged("TaskDescription");
+            NotifyPropertyChanged("DevicePositionWarningVisibility");
+            NotifyPropertyChanged("OutputTriggerOptions");
+            NotifyPropertyChanged("OutputTriggerSelectedIndex");
+        }
 
         private List<Tuple<string, PythonStageImplementation>> GetOrderedListOfPythonStageImplementations ()
         {
@@ -138,11 +196,24 @@ namespace StageDesigner
         /// </summary>
         private void InstantiateStageParameterViewModels ()
         {
+            //Clear the list of stage parameters
             StageParameters.Clear();
-            foreach (var sp in _stage.StageParameters)
+
+            //Fetch the list of required task parameters
+            PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
+            if (k != null)
             {
-                StageParameterControlViewModel spvm = new StageParameterControlViewModel(sp.Value);
-                StageParameters.Add(spvm);
+                var task_parameters = k.TaskDefinition.TaskParameters;
+                
+                foreach (var sp in _stage.StageParameters)
+                {
+                    //Get the corresponding task parameter
+                    var tp = task_parameters.Where(x => x.ParameterName.Equals(sp.Value.ParameterName)).FirstOrDefault();
+
+                    //Create the stage parameter view-model
+                    StageParameterControlViewModel spvm = new StageParameterControlViewModel(sp.Value, tp);
+                    StageParameters.Add(spvm);
+                }
             }
         }
 
@@ -188,22 +259,6 @@ namespace StageDesigner
             private set
             {
                 _stage = value;
-
-                if (_stage != null)
-                {
-                    //Create view-models for the basic stage parameters
-                    PreTrialRecordingDurationViewModel = new StageParameterControlViewModel(_stage.PreTrialSamplingPeriodInSeconds);
-                    HitWindowDurationViewModel = new StageParameterControlViewModel(_stage.HitWindowInSeconds);
-                    PostHitWindowRecordingDurationViewModel = new StageParameterControlViewModel(_stage.PostTrialSamplingPeriodInSeconds);
-                    PostTrialTimeoutDurationViewModel = new StageParameterControlViewModel(_stage.PostTrialTimeoutInSeconds);
-                    DevicePositionViewModel = new StageParameterControlViewModel(_stage.Position);
-
-                    //Subscribe to timing parameter view-model changes
-                    SubscribeToTimingParameterViewModelChanges();
-
-                    //Create view-models for each stage parameter
-                    InstantiateStageParameterViewModels();
-                }
             }
         }
 
@@ -275,19 +330,8 @@ namespace StageDesigner
                 //Get the newly selected index
                 _selected_task_index = value;
 
-                //Set the stage implementation in the model stage object
-                SetStageImplementation();
-
-                //Instantiate required stage parameters for this stage, based on the stage implementation
-                InstantiateRequiredStageParameters();
-                
-                //Set the recommended device for this stage, based on the stage implementation
-                SetDeviceToRecommendedDeviceForStageImplementation();
-
-                NotifyPropertyChanged("SelectedTaskIndex");
-                NotifyPropertyChanged("TaskDescriptionVisibility");
-                NotifyPropertyChanged("TaskDescription");
-                NotifyPropertyChanged("DevicePositionWarningVisibility");
+                //Refresh the view based on the new selected task's parameters
+                RefreshViewAfterNewTaskSelection();
             }
         }
 
@@ -593,11 +637,57 @@ namespace StageDesigner
             }
         }
 
+        /// <summary>
+        /// The list of output trigger options that we provide to the user
+        /// </summary>
         public List<string> OutputTriggerOptions
         {
             get
             {
-                return new List<string>();
+                List<string> result = new List<string>();
+                PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
+                if (k != null)
+                {
+                    result = k.TaskDefinition.OutputTriggerOptions;
+                }
+
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// The selected index within the list of output trigger options.
+        /// This indicates what the selected type of output trigger is for this stage.
+        /// </summary>
+        public int OutputTriggerSelectedIndex
+        {
+            get
+            {
+                int index = 0;
+                PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
+                if (k != null)
+                {
+                    index = k.TaskDefinition.OutputTriggerOptions.IndexOf(StageModel.OutputTriggerType);
+                }
+
+                return index;
+            }
+            set
+            {
+                PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
+                if (k != null)
+                {
+                    int index = value;
+                    if (k.TaskDefinition.OutputTriggerOptions != null &&
+                        k.TaskDefinition.OutputTriggerOptions.Count > 0 && 
+                        index < k.TaskDefinition.OutputTriggerOptions.Count &&
+                        index >= 0)
+                    {
+                        StageModel.OutputTriggerType = k.TaskDefinition.OutputTriggerOptions[index];
+                    }
+                }
+
+                NotifyPropertyChanged("OutputTriggerSelectedIndex");
             }
         }
 

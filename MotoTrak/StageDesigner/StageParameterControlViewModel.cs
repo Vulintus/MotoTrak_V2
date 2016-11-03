@@ -16,6 +16,7 @@ namespace StageDesigner
         #region Private data members
 
         MotorStageParameter _model_parameter;
+        MotorTaskParameter _model_task_parameter;
 
         #endregion
 
@@ -24,9 +25,10 @@ namespace StageDesigner
         /// <summary>
         /// Constructor
         /// </summary>
-        public StageParameterControlViewModel(MotorStageParameter model_param)
+        public StageParameterControlViewModel(MotorStageParameter model_param, MotorTaskParameter model_task_param)
         {
             ModelParameter = model_param;
+            ModelTaskParameter = model_task_param;
         }
 
         #endregion
@@ -85,6 +87,21 @@ namespace StageDesigner
         }
 
         /// <summary>
+        /// The task parameter model
+        /// </summary>
+        public MotorTaskParameter ModelTaskParameter
+        {
+            get
+            {
+                return _model_task_parameter;
+            }
+            set
+            {
+                _model_task_parameter = value;
+            }
+        }
+
+        /// <summary>
         /// The name of the stage parameter
         /// </summary>
         public string ParameterName
@@ -117,6 +134,17 @@ namespace StageDesigner
         }
 
         /// <summary>
+        /// Returns a description about the parameter in question
+        /// </summary>
+        public string ParameterDescription
+        {
+            get
+            {
+                return ModelTaskParameter.ParameterDescription;
+            }
+        }
+
+        /// <summary>
         /// The initial value of the stage parameter
         /// </summary>
         public string ParameterInitialValue
@@ -137,6 +165,17 @@ namespace StageDesigner
                 }
 
                 NotifyPropertyChanged("ParameterInitialValue");
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether this parameter is allowed to be adaptive or not.
+        /// </summary>
+        public bool CanThisParameterBeAdaptive
+        {
+            get
+            {
+                return ModelTaskParameter.IsAdaptive;
             }
         }
 
@@ -177,7 +216,8 @@ namespace StageDesigner
         {
             get
             {
-                if (ModelParameter.ParameterType == MotorStageParameter.StageParameterType.Variable)
+                if (ModelParameter.ParameterType == MotorStageParameter.StageParameterType.Variable &&
+                    ModelTaskParameter.IsAdaptabilityCustomizeable && ModelTaskParameter.IsAdaptive)
                 {
                     return Visibility.Visible;
                 }

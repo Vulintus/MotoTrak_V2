@@ -82,7 +82,7 @@ namespace MotoTrakBase
 
         private ConcurrentDictionary<string, MotorStageParameter> _stage_parameters = new ConcurrentDictionary<string, MotorStageParameter>();
         
-        private MotorStageStimulationType _output_trigger_type = MotorStageStimulationType.Off;
+        private string _output_trigger_type = string.Empty;
         
         private List<MotorBoardDataStreamType> _data_streams = new List<MotorBoardDataStreamType>()
         {
@@ -421,7 +421,7 @@ namespace MotoTrakBase
         /// <summary>
         /// The type of output trigger for this stage.
         /// </summary>
-        public MotorStageStimulationType OutputTriggerType
+        public string OutputTriggerType
         {
             get
             {
@@ -536,8 +536,7 @@ namespace MotoTrakBase
                 writer.WriteLine("Stage Implementation: " + stage_impl_name);
 
                 //Save the stage output trigger type
-                writer.WriteLine("Stage Output Trigger: " +
-                    MotorStageStimulationTypeConverter.ConvertToDescription(stage.OutputTriggerType));
+                writer.WriteLine("Stage Output Trigger: " + stage.OutputTriggerType);
 
                 //Write the stage device name
                 writer.WriteLine("Stage Device: " + MotorDeviceTypeConverter.ConvertToDescription(stage.DeviceType));
@@ -632,7 +631,7 @@ namespace MotoTrakBase
                             }
                             else if (parameter.Equals("Stage Output Trigger"))
                             {
-                                stage.OutputTriggerType = MotorStageStimulationTypeConverter.ConvertToMotorStageStimulationType(parameter_string_parts[1].Trim());
+                                stage.OutputTriggerType = parameter_string_parts[1].Trim();
                             }
                             else if (parameter.Equals("Stage Device"))
                             {
