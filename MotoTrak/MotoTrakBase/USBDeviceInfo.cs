@@ -58,7 +58,7 @@ namespace MotoTrakBase
                         //Close the connection to the port.  We don't want to maintain it right now.
                         SerialObject.Close();
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         port_busy = true;
                     }

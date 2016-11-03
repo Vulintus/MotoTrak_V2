@@ -26,9 +26,6 @@
     <Compile Include="PythonKnobStageImplementation.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="PythonKnob_NO_WEIGHT_StageImplementation.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="PythonLeverStageImplementation.py">
       <SubType>Code</SubType>
     </Compile>

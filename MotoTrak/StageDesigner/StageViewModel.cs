@@ -109,7 +109,7 @@ namespace StageDesigner
             var currently_selected_stage_impl = GetCurrentlySelectedPythonStageImplementation();
             if (currently_selected_stage_impl != null)
             {
-                var parameters = currently_selected_stage_impl.RequiredStageParameters.Values.ToList();
+                var parameters = currently_selected_stage_impl.TaskDefinition.TaskParameters;
                 if (parameters != null && parameters.Count > 0)
                 {
                     foreach (var p in parameters)
@@ -117,9 +117,9 @@ namespace StageDesigner
                         //Create a new stage parameter
                         MotorStageParameter new_param = new MotorStageParameter()
                         {
-                            ParameterName = p.Item1,
-                            ParameterUnits = p.Item2,
-                            InitialValue = 0, 
+                            ParameterName = p.ParameterName,
+                            ParameterUnits = p.ParameterUnits,
+                            InitialValue = 0,
                             CurrentValue = 0
                         };
 
@@ -157,7 +157,7 @@ namespace StageDesigner
         private void SetDeviceToRecommendedDeviceForStageImplementation ()
         {
             var stage_impl = GetCurrentlySelectedPythonStageImplementation();
-            StageModel.DeviceType = stage_impl.RecommendedDevice;
+            StageModel.DeviceType = stage_impl.TaskDefinition.RequiredDeviceType;
             NotifyPropertyChanged("DeviceSelectedIndex");
             NotifyPropertyChanged("DevicePositionWarningVisibility");
             NotifyPropertyChanged("DeviceTypeWarningVisibility");
@@ -218,7 +218,7 @@ namespace StageDesigner
                 var ordered_stage_impls = GetOrderedListOfPythonStageImplementations();
                 foreach (var implementation_tuple in ordered_stage_impls)
                 {
-                    string this_name = implementation_tuple.Item2.TaskName + " (" + implementation_tuple.Item1 + ")";
+                    string this_name = implementation_tuple.Item2.TaskDefinition.TaskName + " (" + implementation_tuple.Item1 + ")";
                     result.Add(this_name);
                 }
 
@@ -236,7 +236,7 @@ namespace StageDesigner
                 var currently_selected_stage_impl = GetCurrentlySelectedPythonStageImplementation();
                 if (currently_selected_stage_impl != null)
                 {
-                    return currently_selected_stage_impl.TaskDescription;
+                    return currently_selected_stage_impl.TaskDefinition.TaskDescription;
                 }
 
                 return string.Empty;
@@ -553,7 +553,8 @@ namespace StageDesigner
                 var stage_impl = GetCurrentlySelectedPythonStageImplementation();
                 if (stage_impl != null)
                 {
-                    if (stage_impl.RecommendedDevice != MotorDeviceType.Unknown && StageModel.DeviceType != stage_impl.RecommendedDevice)
+                    if (stage_impl.TaskDefinition.RequiredDeviceType != MotorDeviceType.Unknown &&
+                        stage_impl.TaskDefinition.RequiredDeviceType != StageModel.DeviceType)
                     {
                         return Visibility.Visible;
                     }
@@ -591,7 +592,15 @@ namespace StageDesigner
                 return result;
             }
         }
-        
+
+        public List<string> OutputTriggerOptions
+        {
+            get
+            {
+                return new List<string>();
+            }
+        }
+
         #endregion
     }
 }

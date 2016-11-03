@@ -588,9 +588,8 @@ namespace MotoTrak
                     var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
                     if (stage_impl != null)
                     {
-                        var tuple_indicators = stage_impl.RequiredStageParameters[sp_key];
-                        bool plot_this_annotation = tuple_indicators.Item3;
-                        if (!plot_this_annotation)
+                        var parameter_to_plot = stage_impl.TaskDefinition.TaskParameters.Where(x => x.ParameterName.Equals(sp_key)).FirstOrDefault();
+                        if (parameter_to_plot == null || !parameter_to_plot.DisplayOnPlot)
                         {
                             //If the stage implementation says to not create an annotation for this specific parameter,
                             //then we will tell the loop to continue with its next iteration.
@@ -658,9 +657,8 @@ namespace MotoTrak
                     var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
                     if (stage_impl != null)
                     {
-                        var tuple_indicators = stage_impl.RequiredStageParameters[k];
-                        bool plot_this_annotation = tuple_indicators.Item3;
-                        if (!plot_this_annotation)
+                        var task_parameter = stage_impl.TaskDefinition.TaskParameters.Where(x => x.ParameterName.Equals(sp)).FirstOrDefault();
+                        if (task_parameter == null || !task_parameter.DisplayOnPlot)
                         {
                             //If the stage implementation says to not create an annotation for this specific parameter,
                             //then we will tell the loop to continue with its next iteration.

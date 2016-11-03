@@ -18,6 +18,10 @@ from MotoTrakBase import MotorStageAdaptiveThresholdType
 from MotoTrakBase import MotoTrak_V1_CommonParameters
 from MotoTrakBase import MotorTrialEventType
 from MotoTrakBase import MotorDeviceType
+from MotoTrakBase import MotoTrakAutopositioner
+from MotoTrakBase import MotorStageParameter
+from MotoTrakBase import MotorTaskDefinition
+from MotoTrakBase import MotorTaskParameter
 
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
@@ -25,9 +29,17 @@ from MotoTrakUtilities import MotorMath
 class PythonLeverStageImplementation (IMotorStageImplementation):
 
     #Variables needed for this task to operate
+    Inter_Press_Interval_List = []
+    Inter_Press_Interval_Threshold_List = []
+    Press_Count_List = []
+
     inter_press_interval = 0
+    press_count = 0
+
+    Autopositioner_Trial_Interval = 10
 
     #Declare string parameters for this stage
+    TaskDefinition = MotorTaskDefinition()
     RecommendedDevice = MotorDeviceType.Lever
     TaskName = "Lever Task"
     TaskDescription = "This stage implementation is for the Lever Task, a classic task in which animals must press on a lever either once or multiple times to receive a reward."
@@ -37,6 +49,36 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
     Lever_Release_Point_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Release Point", "degrees", True)    
     Hit_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.HitThreshold, "presses", False)
     
+    def __init__(self):
+
+        PythonLeverStageImplementation.TaskDefinition.TaskName = "Lever Task"
+        PythonLeverStageImplementation.TaskDefinition.TaskDescription = "The lever task requires an animal to press a lever (once or multiple times) to receive a reward."
+        PythonLeverStageImplementation.TaskDefinition.RequiredDeviceType = MotorDeviceType.Lever
+        PythonLeverStageImplementation.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On"])
+
+        PythonLeverStageImplementation.TaskDefinition.DevicePosition.IsAdaptive = True
+        PythonLeverStageImplementation.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
+
+        initiation_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.InitiationThreshold, "degrees", True, True, True)
+        lever_full_press_parameter = MotorTaskParameter("Full Press", "degrees", True, True, True)
+        lever_release_point_parameter = MotorTaskParameter("Release Point", "degrees", True, True, True)
+        hit_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.HitThreshold, "presses", True, True, True)
+        
+        PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(initiation_threshold_parameter)
+        PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(lever_full_press_parameter)
+        PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(lever_release_point_parameter)
+        PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(hit_threshold_parameter)
+        
+        return
+
+    def AdjustBeginningStageParameters(self, recent_behavior_sessions, current_session_stage):
+
+        PythonLeverStageImplementation.Inter_Press_Interval_List = []
+        PythonLeverStageImplementation.Inter_Press_Interval_Threshold_List = []
+        PythonLeverStageImplementation.Press_Count_List = []
+
+        return
+
     def TransformSignals(self, new_data_from_controller, stage, device):
         result = List[List[System.Double]]()
         for i in range(0, new_data_from_controller.Count):
@@ -90,7 +132,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
             #Get the stream data from the device
             stream_data = trial.TrialData[1]
             
-            #Check to see if the hit threshold has been exceeded
+            #Grab the current hit threshold (in units of presses)
             current_hit_thresh = stage.StageParameters[PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
 
             #Check to see if the stream data has exceeded the current hit threshold
@@ -99,7 +141,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
                 #We must analyze the signal to determine how many "presses" have occurred
 
                 #Let's keep a press count, as well as indices of each press, and a current state.
-                press_count = 0
+                PythonLeverStageImplementation.press_count = 0
                 indices_of_presses = List[System.Int32]()
                 press_state = 0;   #0 = released, 1 = pressed
 
@@ -110,7 +152,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
                         #If the lever is currently released, check to see if it has been pressed
                         if (press_state is 0):
                             if (stream_data[i] > stage.StageParameters[PythonLeverStageImplementation.Lever_Full_Press_Parameter.Item1].CurrentValue):
-                                press_count = press_count + 1
+                                PythonLeverStageImplementation.press_count = PythonLeverStageImplementation.press_count + 1
                                 indices_of_presses.Add(i)
                                 press_state = 1
                         elif (press_state is 1):
@@ -119,7 +161,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
                                 press_state = 0
 
                 #If 2 hits have been detected, add a result to return to the caller
-                if (press_count >= stage.StageParameters[PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue):
+                if (PythonLeverStageImplementation.press_count >= stage.StageParameters[PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue):
                     #Create a successful trial result
                     result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, indices_of_presses[indices_of_presses.Count-1]))
 
@@ -139,7 +181,8 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         trial_events = trial.TrialEvents.Where(lambda x: x.Handled is False)
         for evt in trial_events:
             event_type = evt.EventType
-            if event_type is MotorTrialEventType.SuccessfulTrial:
+            evt.Handled = True
+            if event_type.value__ is MotorTrialEventType.SuccessfulTrial.value__:
                 #If a successful trial happened, then feed the animal
                 new_action = MotorTrialAction()
                 new_action.ActionType = MotorTrialActionType.TriggerFeeder
@@ -164,12 +207,94 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
             msg += "HIT"
         else:
             msg += "MISS"
-        msg += ", " + str(PythonLeverStageImplementation.inter_press_interval) + " ms"
+
+        #Add the number of presses from this trial to the press count list
+        PythonLeverStageImplementation.Press_Count_List.Add(PythonLeverStageImplementation.press_count)
+
+        #Add the press count to the message to the user
+        if (PythonLeverStageImplementation.press_count is 1):
+            msg += ", " + str(PythonLeverStageImplementation.press_count) + " press"
+        else:
+            msg += ", " + str(PythonLeverStageImplementation.press_count) + " presses"
+
+        #If the number of presses is greater than 1, add the isi to the isi list
+        if PythonLeverStageImplementation.press_count > 1:
+            PythonLeverStageImplementation.Inter_Press_Interval_List.Add(PythonLeverStageImplementation.inter_press_interval)
+
+            #Finish the message to display to the user
+            msg += ", inter-press interval: " + str(PythonLeverStageImplementation.inter_press_interval) + " ms"
+
+        #Add the inter-press interval threshold for the trial to the threshold list
+        PythonLeverStageImplementation.Inter_Press_Interval_Threshold_List.Add(stage.HitWindowInSeconds.CurrentValue * 1000)
+
         return msg
 
     def CalculateYValueForSessionOverviewPlot(self, trial, stage):
         return PythonLeverStageImplementation.inter_press_interval
 
     def AdjustDynamicStageParameters(self, all_trials, current_trial, stage):        
+
+        #Adjust the hit window duration if necessary.  This is adjusted according to the isi of recent trials
+        if stage.HitWindowInSeconds.ParameterType == MotorStageParameter.StageParameterType.Variable:
+            isi_to_add = PythonLeverStageImplementation.inter_press_interval
+            if PythonLeverStageImplementation.press_count is 1 or PythonLeverStageImplementation.inter_press_interval is 0:
+                isi_to_add = stage.HitWindowInSeconds.MaximumValue * 1000
+            stage.HitWindowInSeconds.History.Enqueue(isi_to_add)
+            stage.HitWindowInSeconds.CalculateAndSetBoundedCurrentValue()
+            
+        #Adjust the position of the auto-positioner, according to the stage settings
+        if stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
+            hit_count = all_trials.Where(lambda t: t.Result == MotorTrialResult.Hit).Count()
+            hit_count_modulus = hit_count % PythonLeverStageImplementation.Autopositioner_Trial_Interval
+            if hit_count > 0 and hit_count_modulus is 0:
+                stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
+                if stage.Position.CurrentValue is -0.5 or stage.Position.CurrentValue is 0:
+                    stage.Position.CurrentValue = 0.5
+                MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+
         return
 
+    def CreateEndOfSessionMessage(self, current_session):
+
+        # Find the number of feedings that occurred in this session
+        number_of_feedings = current_session.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count();
+
+        #Find the median number of presses that occurred per trial
+        net_press_count_list = List[System.Double]()
+        for i in PythonLeverStageImplementation.Press_Count_List:
+            net_press_count_list.Add(i)
+        median_press_count = MotorMath.Median(net_press_count_list)
+        if (System.Double.IsNaN(median_press_count)):
+            median_press_count = 0
+
+        #Find the median inter-press interval:
+        net_isi_list = List[System.Double]()
+        for i in PythonLeverStageImplementation.Inter_Press_Interval_List:
+            net_isi_list.Add(i)
+        median_isi = MotorMath.Median(net_isi_list)
+        if (System.Double.IsNaN(median_isi)):
+            median_isi = 0
+
+        #Find the percentage of trials that had an ISI lower than the minimum possible ISI
+        minimum_possible_isi = current_session.SelectedStage.HitWindowInSeconds.MinimumValue * 1000
+        hit_rate = net_isi_list.Where(lambda x: x <= minimum_possible_isi).Count()
+        hit_rate = (hit_rate / current_session.Trials.Count()) * 100
+
+        #Find the median isi threshold
+        net_isi_thresh_list = List[System.Double]()
+        for i in PythonLeverStageImplementation.Inter_Press_Interval_Threshold_List:
+            net_isi_thresh_list.Add(i)
+        median_isi_thresh = MotorMath.Median(net_isi_thresh_list)
+        if (System.Double.IsNaN(median_isi_thresh)):
+            median_isi_thresh = 0
+
+        #Create the end-of-session messages to display to the user
+        end_of_session_messages = List[System.String]()
+        end_of_session_messages.Add(System.DateTime.Now.ToShortTimeString() + " - Session ended.")
+        end_of_session_messages.Add("Pellets fed: " + System.Convert.ToInt32(number_of_feedings).ToString())
+        end_of_session_messages.Add("Median presses per trial: " + System.Convert.ToInt32(median_press_count).ToString())
+        end_of_session_messages.Add("Median inter-press interval: " + System.Convert.ToInt32(median_isi).ToString())
+        end_of_session_messages.Add("% Trials < minimum inter-press interval: " + System.Convert.ToInt32(hit_rate).ToString())
+        end_of_session_messages.Add("Median inter-press interval threshold: " + System.Convert.ToInt32(median_isi_thresh).ToString())
+
+        return end_of_session_messages

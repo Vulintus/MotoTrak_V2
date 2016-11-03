@@ -133,6 +133,16 @@
                     </ItemsControl>
                 </GroupBox>
 
+                <GroupBox Header="Stage output trigger settings">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Output trigger: " />
+                        <ComboBox Name="OutputTriggerComboBox"
+                                  ItemsSource="{Binding Path=OutputTriggerOptions}" 
+                                  SelectedIndex="{Binding Path=OutputTriggerSelectedIndex, Mode=TwoWay}" 
+                                  />
+                    </StackPanel>
+                </GroupBox>
+                
             </StackPanel>
         </DataTemplate>
         

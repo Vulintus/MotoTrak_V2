@@ -101,6 +101,8 @@
     <Compile Include="PythonEngine.cs" />
     <Compile Include="PythonStageImplementation.cs" />
     <Compile Include="ReactToModelPropertyChanged.cs" />
+    <Compile Include="MotorTaskDefinition.cs" />
+    <Compile Include="MotorTaskParameter.cs" />
     <Compile Include="TrialResultCodeAttribute.cs" />
     <Compile Include="UnitsAttribute.cs" />
     <Compile Include="USBDeviceInfo.cs" />

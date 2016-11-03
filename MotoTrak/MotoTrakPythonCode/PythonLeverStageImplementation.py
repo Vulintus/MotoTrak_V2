@@ -20,6 +20,8 @@ from MotoTrakBase import MotorTrialEventType
 from MotoTrakBase import MotorDeviceType
 from MotoTrakBase import MotoTrakAutopositioner
 from MotoTrakBase import MotorStageParameter
+from MotoTrakBase import MotorTaskDefinition
+from MotoTrakBase import MotorTaskParameter
 
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
@@ -37,15 +39,30 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
     Autopositioner_Trial_Interval = 10
 
     #Declare string parameters for this stage
-    RecommendedDevice = MotorDeviceType.Lever
-    TaskName = "Lever Task"
-    TaskDescription = "This stage implementation is for the Lever Task, a classic task in which animals must press on a lever either once or multiple times to receive a reward."
-
-    Initiation_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.InitiationThreshold, "degrees", True)    
-    Lever_Full_Press_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Full Press", "degrees", True)    
-    Lever_Release_Point_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Release Point", "degrees", True)    
-    Hit_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.HitThreshold, "presses", False)
+    TaskDefinition = MotorTaskDefinition()
     
+    def __init__(self):
+
+        PythonLeverStageImplementation.TaskDefinition.TaskName = "Lever Task"
+        PythonLeverStageImplementation.TaskDefinition.TaskDescription = "The lever task requires an animal to press a lever (once or multiple times) to receive a reward."
+        PythonLeverStageImplementation.TaskDefinition.RequiredDeviceType = MotorDeviceType.Lever
+        PythonLeverStageImplementation.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On"])
+
+        PythonLeverStageImplementation.TaskDefinition.DevicePosition.IsAdaptive = True
+        PythonLeverStageImplementation.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
+
+        initiation_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.InitiationThreshold, "degrees", True, True, True)
+        lever_full_press_parameter = MotorTaskParameter("Full Press", "degrees", True, True, True)
+        lever_release_point_parameter = MotorTaskParameter("Release Point", "degrees", True, True, True)
+        hit_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.HitThreshold, "presses", False, True, True)
+        
+        PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(hit_threshold_parameter)
+        PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(initiation_threshold_parameter)
+        PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(lever_full_press_parameter)
+        PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(lever_release_point_parameter)
+        
+        return
+
     def AdjustBeginningStageParameters(self, recent_behavior_sessions, current_session_stage):
 
         PythonLeverStageImplementation.Inter_Press_Interval_List = []
@@ -70,10 +87,13 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         #Create the value that will be our return value
         return_value = -1
 
+        #Get the name of the initiation threshold parameter
+        initiation_threshold_name = PythonLeverStageImplementation.TaskDefinition.TaskParameters[1].ParameterName
+
         #Look to see if the Initiation Threshold key exists
-        if stage.StageParameters.ContainsKey(PythonLeverStageImplementation.Initiation_Threshold_Parameter.Item1):
+        if stage.StageParameters.ContainsKey(initiation_threshold_name):
             #Get the stage's initiation threshold
-            init_thresh = stage.StageParameters[PythonLeverStageImplementation.Initiation_Threshold_Parameter.Item1].CurrentValue
+            init_thresh = stage.StageParameters[initiation_threshold_name].CurrentValue
 
             #Get the data stream itself
             stream_data = signal[1]
@@ -102,13 +122,22 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         #Instantiate a list of tuples that will hold any events that capture as a result of this function.
         result = List[Tuple[MotorTrialEventType, System.Int32]]()
 
+        #Get the name of the hit threshold parameter
+        hit_threshold_parameter_name = PythonLeverStageImplementation.TaskDefinition.TaskParameters[0].ParameterName
+
+        #Get the name of the lever full press parameter
+        full_press_parameter_name = PythonLeverStageImplementation.TaskDefinition.TaskParameters[2].ParameterName
+
+        #Get the name of the lever release point parameter
+        release_point_parameter_name = PythonLeverStageImplementation.TaskDefinition.TaskParameters[3].ParameterName
+
         #Only proceed if a hit threshold has been defined for this stage
-        if stage.StageParameters.ContainsKey(PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1):
+        if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
             #Get the stream data from the device
             stream_data = trial.TrialData[1]
             
             #Grab the current hit threshold (in units of presses)
-            current_hit_thresh = stage.StageParameters[PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue
+            current_hit_thresh = stage.StageParameters[hit_threshold_parameter_name].CurrentValue
 
             #Check to see if the stream data has exceeded the current hit threshold
             try:
@@ -126,17 +155,17 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
                     if (i >= stage.TotalRecordedSamplesBeforeHitWindow) and (i < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow)):
                         #If the lever is currently released, check to see if it has been pressed
                         if (press_state is 0):
-                            if (stream_data[i] > stage.StageParameters[PythonLeverStageImplementation.Lever_Full_Press_Parameter.Item1].CurrentValue):
+                            if (stream_data[i] > stage.StageParameters[full_press_parameter_name].CurrentValue):
                                 PythonLeverStageImplementation.press_count = PythonLeverStageImplementation.press_count + 1
                                 indices_of_presses.Add(i)
                                 press_state = 1
                         elif (press_state is 1):
                             #Otherwise, if the lever is pressed, check to see if it has been fully released
-                            if (stream_data[i] <= stage.StageParameters[PythonLeverStageImplementation.Lever_Release_Point_Parameter.Item1].CurrentValue):
+                            if (stream_data[i] <= stage.StageParameters[release_point_parameter_name].CurrentValue):
                                 press_state = 0
 
                 #If 2 hits have been detected, add a result to return to the caller
-                if (PythonLeverStageImplementation.press_count >= stage.StageParameters[PythonLeverStageImplementation.Hit_Threshold_Parameter.Item1].CurrentValue):
+                if (PythonLeverStageImplementation.press_count >= stage.StageParameters[hit_threshold_parameter_name].CurrentValue):
                     #Create a successful trial result
                     result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, indices_of_presses[indices_of_presses.Count-1]))
 
@@ -252,8 +281,11 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
 
         #Find the percentage of trials that had an ISI lower than the minimum possible ISI
         minimum_possible_isi = current_session.SelectedStage.HitWindowInSeconds.MinimumValue * 1000
-        hit_rate = net_isi_list.Where(lambda x: x <= minimum_possible_isi).Count()
-        hit_rate = (hit_rate / current_session.Trials.Count()) * 100
+        hit_rate = 0
+        trial_count = current_session.Trials.Count
+        if trial_count > 0:
+            hit_count = net_isi_list.Where(lambda x: x <= minimum_possible_isi).Count() 
+            hit_rate = (System.Double(hit_count) / System.Double(trial_count)) * 100
 
         #Find the median isi threshold
         net_isi_thresh_list = List[System.Double]()

@@ -26,37 +26,10 @@ namespace MotoTrakBase
         #region Public properties
 
         /// <summary>
-        /// This is the list of parameters defined WITHIN the Python file that are required to be defined by the stage definition file
-        /// in order for this stage to function.
+        /// The task definition as defined in the Python file
         /// </summary>
-        public ConcurrentDictionary<string, Tuple<string, string, bool>> RequiredStageParameters
-        {
-            get
-            {
-                return _required_stage_parameters;
-            }
-            set
-            {
-                _required_stage_parameters = value;
-            }
-        }
-
-        /// <summary>
-        /// The name of the task (as defined by the user) that this stage implementation actually implements.
-        /// This is only for general UI purposes.  Nothing serious.
-        /// </summary>
-        public string TaskName = string.Empty;
-
-        /// <summary>
-        /// The description of the task that is defined in this stage implementation file
-        /// </summary>
-        public string TaskDescription = string.Empty;
-
-        /// <summary>
-        /// This is the recommended device for this task, as defined by the stage implementation file
-        /// </summary>
-        public MotorDeviceType RecommendedDevice = MotorDeviceType.Unknown;
-
+        public MotorTaskDefinition TaskDefinition = new MotorTaskDefinition();
+        
         #endregion
 
         #region Constructors
@@ -99,27 +72,10 @@ namespace MotoTrakBase
                             bool success = _pythonScriptScope.Engine.Operations.TryGetMember(_pythonStageImplementationInstance, member_name, out member_object);
                             if (success)
                             {
-                                if (member_name.Equals("TaskName"))
+                                if (member_name.Equals("TaskDefinition"))
                                 {
-                                    TaskName = member_object as string;
-                                }
-                                else if (member_name.Equals("TaskDescription"))
-                                {
-                                    TaskDescription = member_object as string;
-                                }
-                                else if (member_name.Equals("RecommendedDevice"))
-                                {
-                                    RecommendedDevice = (MotorDeviceType)member_object;
-                                }
-                                else
-                                {
-                                    Tuple<string, string, bool> type_converted_object = member_object as Tuple<string, string, bool>;
-                                    if (type_converted_object != null)
-                                    {
-                                        RequiredStageParameters[type_converted_object.Item1] = type_converted_object;
-                                    }
-                                }
-                                
+                                    TaskDefinition = member_object as MotorTaskDefinition;
+                                }                                
                             }
                         }
                         
