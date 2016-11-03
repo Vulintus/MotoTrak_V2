@@ -1336,7 +1336,7 @@ namespace MotoTrak
 
                     //Eliminate the current trial, if there was one
                     CurrentTrial = null;
-
+                    
                     //Create a new "feed" trial and save it to the session
                     CurrentSession.ManualFeeds.Add(DateTime.Now);
                     

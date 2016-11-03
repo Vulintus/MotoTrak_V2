@@ -195,7 +195,7 @@ class PythonPullStageImplementation (IMotorStageImplementation):
 
         #Adjust the position of the auto-positioner, according to the stage settings
         if stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
-            hit_count = all_trials.Select(lambda t: t.Result == MotorTrialResult.Hit).Count()
+            hit_count = all_trials.Where(lambda t: t.Result == MotorTrialResult.Hit).Count()
             hit_count_modulus = hit_count % PythonPullStageImplementation.Autopositioner_Trial_Interval
             if hit_count > 0 and hit_count_modulus is 0:
                 stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
@@ -213,7 +213,7 @@ class PythonPullStageImplementation (IMotorStageImplementation):
             percent_trials_greater_than_max = (number_of_trials_greater_than_max / len(PythonPullStageImplementation.Maximal_Force_List)) * 100
         
         # Find the number of feedings that occurred in this session
-        number_of_feedings = current_session.Trials.Select(lambda x: x.Result == MotorTrialResult.Hit.value__).Count();
+        number_of_feedings = current_session.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count();
 
         # Find the median maximal force from the sesion
         net_max_force_list = List[System.Double]()
