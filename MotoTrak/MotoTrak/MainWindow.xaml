@@ -8,23 +8,23 @@
         xmlns:local="clr-namespace:MotoTrak"
         xmlns:metro="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d"
-        Title="MotoTrak" MinHeight="490" Height="530" MinWidth="600" Width="600"
+        Title="MotoTrak" MinHeight="490" Height="545" MinWidth="600" Width="600"
         Closed="Window_Closed">
     <Window.DataContext>
         <local:MotoTrakViewModel />
     </Window.DataContext>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="100" />
+            <RowDefinition Height="115" />
             <RowDefinition Height="*" />
             <RowDefinition Height="150" />
         </Grid.RowDefinitions>
 
         <Grid Name="SessionInfoRegion" Grid.Row="0" Margin="5">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="30" />
+                    <RowDefinition Height="35" />
+                    <RowDefinition Height="35" />
+                    <RowDefinition Height="35" />
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="80" />
@@ -34,51 +34,62 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Labels for the input and output fields -->
-                <TextBlock Text="Subject:" Foreground="Black" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"
+                <TextBlock Text="Subject:" Foreground="Black" FontWeight="Bold" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center"
                            Margin="0,0,5,0" TextAlignment="Right"  Grid.Row="0" Grid.Column="0" />
-                <TextBlock Text="Booth:" Foreground="Black" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"
+                <TextBlock Text="Booth:" Foreground="Black" FontWeight="Bold" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center"
                            Margin="0,0,5,0" TextAlignment="Right" Grid.Row="1" Grid.Column="0" />
-                <TextBlock Text="Stage:" Foreground="Black" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"
+                <TextBlock Text="Stage:" Foreground="Black" FontWeight="Bold" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center"
                            Margin="0,0,5,0" TextAlignment="Right" Grid.Row="0" Grid.Column="2" />
-                <TextBlock Text="Device:" Foreground="Black" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"
+                <TextBlock Text="Device:" Foreground="Black" FontWeight="Bold" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center"
                            Margin="0,0,5,0" TextAlignment="Right" Grid.Row="1" Grid.Column="2" />
-                
-                <!-- Input and output fields -->
-                <TextBox HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" Grid.Row="0" Grid.Column="1"
-                         Text="{Binding Path=RatName, FallbackValue=Unknown}" IsEnabled="{Binding Path=IsStageSelectionEnabled, FallbackValue=True}" />
-                <TextBox HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" Grid.Row="1" Grid.Column="1"
-                         Text="{Binding Path=BoothLabel, FallbackValue=Unknown, Mode=OneWay}" IsEnabled="False" IsReadOnly="True" />
 
-                <ComboBox Name="StageSelectionComboBox"
-                              DropDownClosed="StageSelectionComboBox_DropDownClosed"
-                              HorizontalAlignment="Stretch" 
-                              VerticalAlignment="Center" 
-                              Grid.Row="0" 
-                              Grid.Column="3"
-                              ItemsSource="{Binding Path=StageList}" 
-                              SelectedIndex="0"
-                              IsEnabled="{Binding Path=IsStageSelectionEnabled}" 
-                              />
-                <!--<ComboBox Name="StageSelectionComboBox"
-                              DropDownClosed="StageSelectionComboBox_DropDownClosed"
-                              HorizontalAlignment="Stretch" 
-                              VerticalAlignment="Center" 
-                              Grid.Row="0" 
-                              Grid.Column="3"
-                              ItemsSource="{Binding Path=StageList}" 
-                              SelectedIndex="{Binding Path=StageSelectedIndex, Mode=TwoWay}"
-                              IsEnabled="{Binding Path=IsStageSelectionEnabled}" 
-                              />-->
-                <TextBox HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Row="1" Grid.Column="3"
-                             Text="{Binding Path=DeviceName, FallbackValue=Unknown, Mode=OneWay}" IsEnabled="False" IsReadOnly="True" />
+            <!-- Input and output fields -->
+                <TextBox HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" 
+                         FontSize="18"
+                         Grid.Row="0" Grid.Column="1"
+                         Text="{Binding Path=RatName, FallbackValue=Unknown}" 
+                         IsEnabled="{Binding Path=IsStageSelectionEnabled, FallbackValue=True}" 
+                         />
+                <TextBox HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" 
+                         Grid.Row="1" Grid.Column="1"
+                         FontSize="18"
+                         Text="{Binding Path=BoothLabel, FallbackValue=Unknown, Mode=OneWay}" 
+                         IsEnabled="False" IsReadOnly="True" />
+
+            <ComboBox Name="StageSelectionComboBox"
+                      DropDownClosed="StageSelectionComboBox_DropDownClosed"
+                      HorizontalAlignment="Stretch" 
+                      VerticalAlignment="Center" 
+                      Grid.Row="0" 
+                      Grid.Column="3"
+                      FontSize="18"
+                      ItemsSource="{Binding Path=StageList}" 
+                      SelectedIndex="0"
+                      IsEnabled="{Binding Path=IsStageSelectionEnabled}" 
+                      />
+
+            <!-- Device and position fields -->
+            <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Stretch" Margin="0,0,2,0">
+                <TextBox Text="{Binding Path=DeviceName, FallbackValue=Unknown, Mode=OneWay}" 
+                         Width="75"
+                         FontSize="18"
+                         HorizontalAlignment="Stretch" VerticalAlignment="Center" IsEnabled="False" IsReadOnly="True" />
+                <TextBlock Text="Position:"
+                           Foreground="Black" FontWeight="Bold" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center"
+                           Margin="10,0,5,0" TextAlignment="Right" />
+                <TextBox Text="{Binding Path=Position, FallbackValue=Unknown, Mode=OneWay}" 
+                         FontSize="18"
+                         HorizontalAlignment="Stretch" VerticalAlignment="Center" IsEnabled="False" IsReadOnly="True" Width="75" />
+            </StackPanel>
 
             <!-- Fields for changing the plot view -->
-                <TextBlock Text="View:" Foreground="Black" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"
-                           Margin="0,0,5,0" TextAlignment="Right"  Grid.Row="2" Grid.Column="0" />
-                <ComboBox HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
-                          ItemsSource="{Binding Path=ViewList}" SelectedIndex="{Binding Path=ViewSelectedIndex, Mode=TwoWay}" />
+            <TextBlock Text="View:" Foreground="Black" FontWeight="Bold" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Margin="0,0,5,0" TextAlignment="Right"  Grid.Row="2" Grid.Column="0" />
+            <ComboBox HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+                        FontSize="18"
+                        ItemsSource="{Binding Path=ViewList}" SelectedIndex="{Binding Path=ViewSelectedIndex, Mode=TwoWay}" />
 
-            </Grid>
+        </Grid>
 
         <!--
         <Grid Grid.Row="1">

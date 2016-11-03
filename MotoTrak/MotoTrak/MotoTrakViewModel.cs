@@ -258,7 +258,7 @@ namespace MotoTrak
                         }
 
                         //Run session prep steps
-                        Model.RunSessionPreparationSteps();
+                        //Model.RunSessionPreparationSteps();
                     }
                 }
             }
@@ -619,6 +619,25 @@ namespace MotoTrak
 
                     //Load the rat's recent history based on its name
                     Model.LoadRecentHistory();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns the current device position for display in the GUI
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "Position", "SelectedStage" })]
+        public string Position
+        {
+            get
+            {
+                if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
+                {
+                    return Model.CurrentSession.SelectedStage.Position.CurrentValue.ToString("0.0");
+                }
+                else
+                {
+                    return string.Empty;
                 }
             }
         }
