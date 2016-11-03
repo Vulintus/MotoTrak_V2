@@ -205,7 +205,7 @@ namespace MotoTrak
             MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
             if (viewModel != null)
             {
-                viewModel.SetStageSelection();
+                viewModel.StageSelectedIndex = StageSelectionComboBox.SelectedIndex;
             }
         }
     }

@@ -56,9 +56,19 @@
                               Grid.Row="0" 
                               Grid.Column="3"
                               ItemsSource="{Binding Path=StageList}" 
-                              SelectedIndex="{Binding Path=StageSelectedIndex, Mode=TwoWay}"
+                              SelectedIndex="0"
                               IsEnabled="{Binding Path=IsStageSelectionEnabled}" 
                               />
+                <!--<ComboBox Name="StageSelectionComboBox"
+                              DropDownClosed="StageSelectionComboBox_DropDownClosed"
+                              HorizontalAlignment="Stretch" 
+                              VerticalAlignment="Center" 
+                              Grid.Row="0" 
+                              Grid.Column="3"
+                              ItemsSource="{Binding Path=StageList}" 
+                              SelectedIndex="{Binding Path=StageSelectedIndex, Mode=TwoWay}"
+                              IsEnabled="{Binding Path=IsStageSelectionEnabled}" 
+                              />-->
                 <TextBox HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Row="1" Grid.Column="3"
                              Text="{Binding Path=DeviceName, FallbackValue=Unknown, Mode=OneWay}" IsEnabled="False" IsReadOnly="True" />
 

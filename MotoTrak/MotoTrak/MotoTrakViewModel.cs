@@ -256,6 +256,9 @@ namespace MotoTrak
                             PlotViewModel.ScaleYAxis();
                             PlotViewModel.ScaleXAxis();
                         }
+
+                        //Run session prep steps
+                        Model.RunSessionPreparationSteps();
                     }
                 }
             }
@@ -720,18 +723,7 @@ namespace MotoTrak
         #endregion
 
         #region Methods
-
-        public void SetStageSelection ()
-        {
-            if (Model != null && Model.CurrentSession != null)
-            {
-                StageChangeRequired = false;
-                Model.CurrentSession.SelectedStage = Model.CurrentSession.SelectedStage;
-
-                Model.RunSessionPreparationSteps();
-            }
-        }
-
+        
         /// <summary>
         /// Pause or unpause the current session that is running
         /// </summary>
