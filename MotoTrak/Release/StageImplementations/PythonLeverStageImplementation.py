@@ -40,6 +40,9 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
     Lever_Release_Point_Parameter = System.Tuple[System.String, System.String, System.Boolean]("Release Point", "degrees", True)    
     Hit_Threshold_Parameter = System.Tuple[System.String, System.String, System.Boolean](MotoTrak_V1_CommonParameters.HitThreshold, "presses", False)
     
+    def AdjustBeginningStageParameters(self, recent_behavior_sessions, current_session_stage):
+        return
+
     def TransformSignals(self, new_data_from_controller, stage, device):
         result = List[List[System.Double]]()
         for i in range(0, new_data_from_controller.Count):
@@ -196,3 +199,5 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
 
         return
 
+    def CreateEndOfSessionMessage(self, current_session):
+        return List[System.String]()

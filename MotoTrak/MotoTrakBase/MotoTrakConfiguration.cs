@@ -131,18 +131,9 @@ namespace MotoTrakBase
                 //Open a stream to read the booth pairings configuration file
                 try
                 {
-                    StreamReader reader = new StreamReader(booth_pairings_file_name);
-
-                    //Read all the lines from the file
-                    List<string> lines = new List<string>();
-                    while (!reader.EndOfStream)
-                    {
-                        lines.Add(reader.ReadLine());
-                    }
-
-                    //Close the stream
-                    reader.Close();
-
+                    //Load the configuration file
+                    List<string> lines = MotoTrakUtilities.ConfigurationFileLoader.LoadConfigurationFile(booth_pairings_file_name);
+                    
                     //Now parse the input
                     for (int i = 0; i < lines.Count; i++)
                     {
@@ -169,7 +160,7 @@ namespace MotoTrakBase
         public void ReadConfigurationFile ()
         {
             string configuration_file_name = GetLocalApplicationDataFolder() + ConfigurationFileName;
-
+            
             try
             {
                 bool isConfigVersionSet = false;
@@ -183,19 +174,9 @@ namespace MotoTrakBase
                     GenerateDefaultConfigurationFile();
                 }
 
-                //Open the configuration file using a stream reader.
-                StreamReader reader = new StreamReader(configuration_file_name);
-
-                //Read all the lines from the configuration file, and then close the file.
-                List<string> lines = new List<string>();
-                while (!reader.EndOfStream)
-                {
-                    string newLine = reader.ReadLine();
-                    lines.Add(newLine);
-                }
-
-                reader.Close();
-
+                //Read the configuration file
+                List<string> lines = MotoTrakUtilities.ConfigurationFileLoader.LoadConfigurationFile(configuration_file_name);
+                
                 //Now parse the input
                 for (int i = 0; i < lines.Count; i++)
                 {
@@ -205,16 +186,16 @@ namespace MotoTrakBase
                     string key = splitString[0].Trim();
                     string value = splitString[1].Trim();
 
-                    if (key.Equals("VARIANT"))
+                    if (key.Equals("VARIANT", StringComparison.InvariantCultureIgnoreCase))
                     {
                         VariantName = value;
                     }
-                    else if (key.Equals("CONFIGURATION VERSION"))
+                    else if (key.Equals("CONFIGURATION VERSION", StringComparison.InvariantCultureIgnoreCase))
                     {
                         ConfigurationVersion = Int32.Parse(value);
                         isConfigVersionSet = true;
                     }
-                    else if (key.Equals("STAGE URL"))
+                    else if (key.Equals("STAGE URL", StringComparison.InvariantCultureIgnoreCase))
                     {
                         StageWebPath = value;
                     }
@@ -222,11 +203,11 @@ namespace MotoTrakBase
                     {
                         StageLocalPath = value;
                     }
-                    else if (key.Equals("MAIN DATA LOCATION"))
+                    else if (key.Equals("MAIN DATA LOCATION", StringComparison.InvariantCultureIgnoreCase))
                     {
                         DataPath = value;
                     }
-                    else if (key.Equals("SECONDARY DATA LOCATION"))
+                    else if (key.Equals("SECONDARY DATA LOCATION", StringComparison.InvariantCultureIgnoreCase))
                     {
                         SecondaryDataPath = value;
                     }

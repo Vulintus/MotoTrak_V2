@@ -581,151 +581,115 @@ namespace MotoTrakBase
             //Create an empty motor stage to use as we load in the stage file
             MotorStage stage = new MotorStage();
 
-            //Check to see if the desired stage file exists
-            FileInfo file_info = new FileInfo(full_path_and_filename);
-            if (file_info.Exists)
+            int file_version = 0;
+
+            //Load the lines of the file (excluding comments)
+            try
             {
-                //Save the stage path and file name to the stage object for future referencing
-                stage.StageFilePath = file_info.DirectoryName;
-                stage.StageFileName = file_info.Name;
+                List<string> file_lines = MotoTrakUtilities.ConfigurationFileLoader.LoadConfigurationFile(full_path_and_filename);
 
-                //Create a stream reader object
-                StreamReader reader = null;
-
-                try
+                if (file_lines.Count > 0)
                 {
-                    //Try to open a handle to the stage file
-                    reader = new StreamReader(full_path_and_filename);
-                }
-                catch (Exception e)
-                {
-                    //Log the exception that occurred
-                    ErrorLoggingService.GetInstance().LogExceptionError(e);
+                    //Pop the first line from the collection of lines from the file
+                    string first_line = file_lines[0];
+                    file_lines.RemoveAt(0);
 
-                    //Exit the function
-                    return null;
-                }
-
-                //Create a variable that indicates whether we have discovered the file version yet
-                bool version_found = false;
-                int file_version = 0;
-
-                //Continue loading the stage
-                while (!reader.EndOfStream)
-                {
-                    //Read in a line from the stage file
-                    string input_string = reader.ReadLine();
-
-                    //Parse away any comments that are at the end of the line
-                    string[] whole_line_parts = input_string.Split(new char[] { '%' }, 2);
-                    string line_without_comments = whole_line_parts[0].Trim();
-
-                    //If this line was just an empty line, or a line full of comments, skip it
-                    if (string.IsNullOrEmpty(line_without_comments))
+                    //Look to see if the first line contains the file version
+                    string[] parameter_string_parts_first_line = first_line.Split(new char[] { ':' }, 2);
+                    string parameter_first_line = parameter_string_parts_first_line[0].Trim();
+                    if (parameter_first_line.Equals("Stage File Version"))
                     {
-                        continue;
+                        
+                        bool success = Int32.TryParse(parameter_string_parts_first_line[1].Trim(), out file_version);
+                        if (!success)
+                        {
+                            ErrorLoggingService.GetInstance().LogStringError("Unable to read stage file version.");
+                            return null;
+                        }
                     }
 
-                    //Check to see if the file version has been found
-                    if (!version_found)
+                    if (file_version == 1)
                     {
-                        //The file version MUST be the first thing in the file (other than comments).
-                        //If anything comes before the file version, it will be ignored.
-                        string[] parameter_string_parts = line_without_comments.Split(new char[] { ':' }, 2);
-                        string parameter = parameter_string_parts[0].Trim();
-                        if (parameter.Equals("Stage File Version"))
+                        //Iterate over each line of the file
+                        foreach (var line in file_lines)
                         {
-                            bool success = Int32.TryParse(parameter_string_parts[1].Trim(), out file_version);
-                            if (!success)
+                            //At this point, we have found the file version, so we can read in parameters
+                            string[] parameter_string_parts = line.Split(new char[] { ':' }, 2);
+                            string parameter = parameter_string_parts[0].Trim();
+
+                            //Check the parameter and read it in
+                            if (parameter.Equals("Stage Name"))
                             {
-                                ErrorLoggingService.GetInstance().LogStringError("Unable to read stage file version.");
-                                return null;
+                                stage.StageName = parameter_string_parts[1].Trim();
                             }
-                            else
+                            else if (parameter.Equals("Stage Description"))
                             {
-                                version_found = true;
-                                if (file_version != 1)
+                                stage.Description = parameter_string_parts[1].Trim();
+                            }
+                            else if (parameter.Equals("Stage Implementation"))
+                            {
+                                stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations[parameter_string_parts[1].Trim()];
+                            }
+                            else if (parameter.Equals("Stage Output Trigger"))
+                            {
+                                stage.OutputTriggerType = MotorStageStimulationTypeConverter.ConvertToMotorStageStimulationType(parameter_string_parts[1].Trim());
+                            }
+                            else if (parameter.Equals("Stage Device"))
+                            {
+                                stage.DeviceType = MotorDeviceTypeConverter.ConvertToMotorDeviceType(parameter_string_parts[1].Trim());
+                            }
+                            else if (parameter.Equals("Stage Sampling Rate"))
+                            {
+                                int sampling_rate = 0;
+                                bool success = Int32.TryParse(parameter_string_parts[1].Trim(), out sampling_rate);
+                                if (success)
                                 {
-                                    ErrorLoggingService.GetInstance().LogStringError("Stage has an incompatible file version.");
-                                    return null;
+                                    stage.SamplePeriodInMilliseconds = sampling_rate;
+                                }
+                            }
+                            else if (parameter.Equals("Stage Parameter"))
+                            {
+                                MotorStageParameter p = MotorStage.ParseMotorStageParameterWithName(parameter_string_parts[1]);
+
+                                if (p.ParameterName.Equals(stage.PreTrialSamplingPeriodInSeconds.ParameterName))
+                                {
+                                    stage.PreTrialSamplingPeriodInSeconds = p;
+                                }
+                                else if (p.ParameterName.Equals(stage.HitWindowInSeconds.ParameterName))
+                                {
+                                    stage.HitWindowInSeconds = p;
+                                }
+                                else if (p.ParameterName.Equals(stage.PostTrialSamplingPeriodInSeconds.ParameterName))
+                                {
+                                    stage.PostTrialSamplingPeriodInSeconds = p;
+                                }
+                                else if (p.ParameterName.Equals(stage.PostTrialTimeoutInSeconds.ParameterName))
+                                {
+                                    stage.PostTrialTimeoutInSeconds = p;
+                                }
+                                else if (p.ParameterName.Equals(stage.Position.ParameterName))
+                                {
+                                    stage.Position = p;
+                                }
+                                else
+                                {
+                                    stage.StageParameters[p.ParameterName] = p;
                                 }
                             }
                         }
                     }
                     else
                     {
-                        //At this point, we have found the file version, so we can read in parameters
-                        string[] parameter_string_parts = line_without_comments.Split(new char[] { ':' }, 2);
-                        string parameter = parameter_string_parts[0].Trim();
-
-                        //Check the parameter and read it in
-                        if (parameter.Equals("Stage Name"))
-                        {
-                            stage.StageName = parameter_string_parts[1].Trim();
-                        }
-                        else if (parameter.Equals("Stage Description"))
-                        {
-                            stage.Description = parameter_string_parts[1].Trim();
-                        }
-                        else if (parameter.Equals("Stage Implementation"))
-                        {
-                            stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations[parameter_string_parts[1].Trim()];
-                        }
-                        else if (parameter.Equals("Stage Output Trigger"))
-                        {
-                            stage.OutputTriggerType = MotorStageStimulationTypeConverter.ConvertToMotorStageStimulationType(parameter_string_parts[1].Trim());
-                        }
-                        else if (parameter.Equals("Stage Device"))
-                        {
-                            stage.DeviceType = MotorDeviceTypeConverter.ConvertToMotorDeviceType(parameter_string_parts[1].Trim());
-                        }
-                        else if (parameter.Equals("Stage Sampling Rate"))
-                        {
-                            int sampling_rate = 0;
-                            bool success = Int32.TryParse(parameter_string_parts[1].Trim(), out sampling_rate);
-                            if (success)
-                            {
-                                stage.SamplePeriodInMilliseconds = sampling_rate;
-                            }
-                        }
-                        else if (parameter.Equals("Stage Parameter"))
-                        {
-                            MotorStageParameter p = MotorStage.ParseMotorStageParameterWithName(parameter_string_parts[1]);
-
-                            if (p.ParameterName.Equals(stage.PreTrialSamplingPeriodInSeconds.ParameterName))
-                            {
-                                stage.PreTrialSamplingPeriodInSeconds = p;
-                            }
-                            else if (p.ParameterName.Equals(stage.HitWindowInSeconds.ParameterName))
-                            {
-                                stage.HitWindowInSeconds = p;
-                            }
-                            else if (p.ParameterName.Equals(stage.PostTrialSamplingPeriodInSeconds.ParameterName))
-                            {
-                                stage.PostTrialSamplingPeriodInSeconds = p;
-                            }
-                            else if (p.ParameterName.Equals(stage.PostTrialTimeoutInSeconds.ParameterName))
-                            {
-                                stage.PostTrialTimeoutInSeconds = p;
-                            }
-                            else if (p.ParameterName.Equals(stage.Position.ParameterName))
-                            {
-                                stage.Position = p;
-                            }
-                            else
-                            {
-                                stage.StageParameters[p.ParameterName] = p;
-                            }
-                        }
+                        ErrorLoggingService.GetInstance().LogStringError("Stage has an incompatible file version.");
+                        return null;
                     }
                 }
             }
-            else
+            catch (Exception e)
             {
-                ErrorLoggingService.GetInstance().LogStringError("Unable to find stage file!");
+                ErrorLoggingService.GetInstance().LogExceptionError(e);
             }
             
-            //Return the loaded stage
             return stage;
         }
         
