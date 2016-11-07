@@ -210,6 +210,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
 
     def CreateEndOfTrialMessage(self, trial_number, trial, stage):
         msg = ""
+        msg += System.DateTime.Now.ToShortTimeString() + ", "
         msg += "Trial " + str(trial_number) + " "
         if trial.Result == MotorTrialResult.Hit:
             msg += "HIT"

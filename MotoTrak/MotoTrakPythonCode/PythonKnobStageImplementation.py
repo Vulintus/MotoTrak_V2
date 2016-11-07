@@ -158,6 +158,7 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
 
     def CreateEndOfTrialMessage(self, trial_number, trial, stage):
         msg = ""
+        msg += System.DateTime.Now.ToShortTimeString() + ", "
 
         #Get the device stream data
         device_stream = trial.TrialData[1]
