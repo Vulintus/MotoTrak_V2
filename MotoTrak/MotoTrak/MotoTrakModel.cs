@@ -676,12 +676,27 @@ namespace MotoTrak
                     _history_loader.WorkerSupportsCancellation = true;
                     _history_loader.DoWork += delegate
                     {
+                        //Load in this rat's recent history
                         RecentBehaviorSessions = MotoTrakFileRead.ReadHistory(CurrentSession.RatName, CurrentSession.SelectedStage.StageName);
+
+                        //Adjust stage parameters based on data from the recent behavior sessions
+                        try
+                        {
+                            CurrentSession.SelectedStage.StageImplementation.AdjustBeginningStageParameters(RecentBehaviorSessions, CurrentSession.SelectedStage);
+                        }
+                        catch (Exception e)
+                        {
+                            MotoTrakMessaging.GetInstance().AddMessage("Unable to adjust beginning stage parameters!");
+                            ErrorLoggingService.GetInstance().LogExceptionError(e);
+                        }
+
+                        //Tell the calling function that we are done
                         _history_loader.ReportProgress(0);
                     };
                     _history_loader.ProgressChanged += delegate
                     {
                         NotifyPropertyChanged("RecentBehaviorSessions");
+                        NotifyPropertyChanged("Position");
                     };
                     _history_loader.RunWorkerAsync();
                 }
@@ -869,6 +884,13 @@ namespace MotoTrak
                     frames++;
                 }
                 
+                //If the autopositioner needs to move, update the position on the GUI as well
+                if (MotoTrakAutopositioner.GetInstance().ContainsElementsInQueue &&
+                    MotoTrakAutopositioner.GetInstance().ReadyToMove)
+                {
+                    BackgroundPropertyChanged("Position");
+                }
+
                 //Run the autopositioner
                 MotoTrakAutopositioner.GetInstance().RunAutopositioner();
 

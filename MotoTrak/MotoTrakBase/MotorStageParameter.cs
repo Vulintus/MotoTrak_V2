@@ -39,7 +39,7 @@ namespace MotoTrakBase
         #region Private properties
 
         private double _increment = double.NaN;
-
+        
         #endregion
 
         #region Properties
@@ -78,7 +78,7 @@ namespace MotoTrakBase
         /// The current value of the motor parameter
         /// </summary>
         public double CurrentValue = double.NaN;
-
+        
         /// <summary>
         /// Increment is the amount by which the CurrentValue changes during Linear adaptive changes.
         /// It is also the size of the History queue for Percentile25, Percentile75, and Median adaptive changes.

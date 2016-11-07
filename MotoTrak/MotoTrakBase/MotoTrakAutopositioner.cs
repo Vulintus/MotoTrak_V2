@@ -44,6 +44,33 @@ namespace MotoTrakBase
 
         #endregion
 
+        #region Public properties
+
+        /// <summary>
+        /// Indicates whether there are elements in the queue that the autopositioner needs to move to
+        /// </summary>
+        public bool ContainsElementsInQueue
+        {
+            get
+            {
+                return (_positions_to_visit.Count > 0);
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether the autopositioner is ready to move to the next position in the queue
+        /// </summary>
+        public bool ReadyToMove
+        {
+            get
+            {
+                bool enough_time_elapsed = DateTime.Now >= (_most_recent_move_time.AddSeconds(_time_to_wait_inbetween_moves));
+                return enough_time_elapsed;
+            }
+        }
+
+        #endregion
+
         #region Public methods
 
         /// <summary>
