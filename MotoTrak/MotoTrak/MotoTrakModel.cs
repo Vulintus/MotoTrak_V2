@@ -61,7 +61,7 @@ namespace MotoTrak
         /// <summary>
         /// This enumerates the possible states a session could be in.
         /// </summary>
-        private enum SessionRunState
+        public enum SessionRunState
         {
             SessionBegin,
             SessionRunning,
@@ -78,7 +78,7 @@ namespace MotoTrak
         /// Enumerates the possible states of a trial within a session.
         /// "Idle" indicates that no trial is currently happening.
         /// </summary>
-        private enum TrialRunState
+        public enum TrialRunState
         {
             Idle,
             ResetBaseline,
@@ -202,10 +202,10 @@ namespace MotoTrak
         /// <summary>
         /// The state of the session: whether it is running, not running, beginning, ending, or paused.
         /// </summary>
-        private SessionRunState SessionState
+        public SessionRunState SessionState
         {
             get { return _session_state; }
-            set
+            private set
             {
                 //The session state can be modified by both the UI thread and the background thread
                 //So we need to make sure that it is within a semaphore.
@@ -226,10 +226,10 @@ namespace MotoTrak
         /// is running, and no trial is running.  Therefore MotoTrak is in idle mode.  When a session is running,
         /// this should never be set to idle.
         /// </summary>
-        private TrialRunState TrialState
+        public TrialRunState TrialState
         {
             get { return _trial_state; }
-            set
+            private set
             {
                 lock (trial_state_lock)
                 {

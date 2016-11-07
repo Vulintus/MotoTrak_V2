@@ -19,11 +19,11 @@ namespace MotoTrak
     public class MotoTrakPlotViewModel : NotifyPropertyChangedObject
     {
         #region Private members
-
-        private enum SeriesType
+        
+        private enum AnnotationFlag
         {
-            ScatterSeries,
-            AreaSeries
+            DisplayAlways,
+            DisplayOnActiveTrial
         }
 
         private PlotModel _plot_model = null;
@@ -44,14 +44,18 @@ namespace MotoTrak
 
             //Subscribe to events from the model
             Model.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
-
+            if (Model.CurrentSession != null)
+            {
+                Model.CurrentSession.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
+            }
+            
             //Initialize the plot
             InitializePlot();
 
             //Set which stream we will be reading from for this plot
             StreamIndex = stream_index;
         }
-        
+
         #endregion
 
         #region Private properties
@@ -151,12 +155,31 @@ namespace MotoTrak
 
         protected override void ExecuteReactionsToModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName.Equals("CurrentTrial"))
+            if (e.PropertyName.Equals("CurrentSession"))
+            {
+                if (Model.CurrentSession != null)
+                {
+                    Model.CurrentSession.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
+                }
+            }
+            if(e.PropertyName.Equals("SelectedStage"))
+            {
+                RunAnnotationLogic();
+            }
+            else if (e.PropertyName.Equals("SessionState"))
+            {
+                RunAnnotationLogic();
+            }
+            else if (e.PropertyName.Equals("TrialState"))
+            {
+                RunAnnotationLogic();
+            }
+            else if (e.PropertyName.Equals("CurrentTrial"))
             {
                 //If the "CurrentTrial" property has changed, then the property has either been set or unset.
                 //If it gets set to a new object, that means a new trial has begun.  If, on the other hand,
                 //the object is null, that means a trial is not currently taking place.
-                DrawTrialAnnotations();
+                //RunAnnotationLogic();
             }
             else if (e.PropertyName.Equals("TrialEventsQueue"))
             {
@@ -183,8 +206,7 @@ namespace MotoTrak
             //Call the base function to handle anything else
             base.ExecuteReactionsToModelPropertyChanged(sender, e);
         }
-
-
+        
         #endregion
 
         #region Basic setup and selection methods used
@@ -226,8 +248,8 @@ namespace MotoTrak
                     //Draw the streaming signal data
                     DrawStreamedData();
 
-                    //Draw any annotations that need to be drawn for trials
-                    DrawTrialAnnotations();
+                    //Draw annotations
+                    RunAnnotationLogic();
 
                     //Add annotations that are due to events occuring during a trial
                     AddTrialEventAnnotations();
@@ -487,6 +509,127 @@ namespace MotoTrak
             Plot.InvalidatePlot(true);
         }
 
+        private void RunAnnotationLogic ()
+        {
+            ClearAllAnnotations();
+            DrawAnnotations_AlwaysOn();
+            DrawAnnotations_DisplayDuringTrial();
+        }
+
+        /// <summary>
+        /// Clears all annotations on the plot
+        /// </summary>
+        private void ClearAllAnnotations ()
+        {
+            Plot.Annotations.Clear();
+            Plot.InvalidatePlot(true);
+        }
+
+        private void DrawAnnotations_AlwaysOn ()
+        {
+            //Calculate x-axis positions for the annotations
+            int x_pos_of_trial_initiation = 0;
+            int x_pos_of_hit_window_end = 0;
+            if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
+            {
+                if (Model.TrialState == MotoTrakModel.TrialRunState.TrialRun)
+                {
+                    x_pos_of_trial_initiation = Model.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
+                    x_pos_of_hit_window_end = Model.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow +
+                        Model.CurrentSession.SelectedStage.TotalRecordedSamplesDuringHitWindow;
+                }
+                else
+                {
+                    x_pos_of_hit_window_end = Model.CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial;
+                }
+            }
+            
+            //Now, let's iterate over each stage parameter and create horizontal line annotations
+            foreach (var sp_key in Model.CurrentSession.SelectedStage.StageParameters.Keys)
+            {
+                //Get the stage parameter itself
+                var sp = Model.CurrentSession.SelectedStage.StageParameters[sp_key];
+
+                //Now check to see if this stage parameter should be added as an annotation
+                var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
+                if (stage_impl != null)
+                {
+                    var parameter_to_plot = stage_impl.TaskDefinition.TaskParameters.Where(x => x.ParameterName.Equals(sp_key)).FirstOrDefault();
+                    if (parameter_to_plot == null || !parameter_to_plot.DisplayOnPlot)
+                    {
+                        //If the stage implementation says to not create an annotation for this specific parameter,
+                        //then we will tell the loop to continue with its next iteration.
+                        //Otherwise, the code below this if-statement will execute and an annotation will be created.
+                        continue;
+                    }
+                }
+
+                //Create a horizontal line annotation for the value of this parameter.
+                LineAnnotation parameter_annotation = new LineAnnotation();
+                parameter_annotation.Type = LineAnnotationType.Horizontal;
+                parameter_annotation.LineStyle = LineStyle.Dash;
+                parameter_annotation.StrokeThickness = 2;
+                parameter_annotation.Color = OxyColor.FromRgb(0, 0, 0);
+                parameter_annotation.Y = sp.CurrentValue;
+                parameter_annotation.MinimumX = x_pos_of_trial_initiation;
+                parameter_annotation.MaximumX = x_pos_of_hit_window_end;
+
+                Plot.Annotations.Add(parameter_annotation);
+
+                //We create a text annotation that is positioned very close to the line annotation
+                //This text annotation is invisible by default, but because visible when the user hovers the mouse over
+                //the plot.  The text of the annotation is the name of the parameter, and allows the user to see how
+                //each parameter is plotted as a line annotation.
+                TextAnnotation parameter_name_annotation = new TextAnnotation();
+                parameter_name_annotation.Text = sp_key;
+                parameter_name_annotation.TextPosition = new DataPoint(x_pos_of_trial_initiation + 5, sp.CurrentValue);
+                parameter_name_annotation.TextColor = OxyColor.FromArgb(0, 0, 0, 0);
+                parameter_name_annotation.FontSize = 10;
+                parameter_name_annotation.StrokeThickness = 0;
+                parameter_name_annotation.TextHorizontalAlignment = HorizontalAlignment.Left;
+
+                Plot.Annotations.Add(parameter_name_annotation);
+            }
+
+            //Update the plot
+            Plot.InvalidatePlot(true);
+        }
+
+        private void DrawAnnotations_DisplayDuringTrial ()
+        {
+            if (Model != null && Model.CurrentTrial != null && Model.TrialState == MotoTrakModel.TrialRunState.TrialRun)
+            {
+                //In this case, a trial has been initiated
+                
+                //We need to create vertical line annotations for the point of the trial
+                //initiation and the end of the hit window
+                int x_pos_of_trial_initiation = Model.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
+                int x_pos_of_hit_window_end = Model.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow +
+                    Model.CurrentSession.SelectedStage.TotalRecordedSamplesDuringHitWindow;
+
+                //Set up lines annotations around the hit window
+                LineAnnotation start_line = new LineAnnotation();
+                start_line.Type = LineAnnotationType.Vertical;
+                start_line.LineStyle = LineStyle.Solid;
+                start_line.StrokeThickness = 2;
+                start_line.Color = OxyColor.FromRgb(0, 0, 0);
+                start_line.X = x_pos_of_trial_initiation;
+
+                LineAnnotation end_line = new LineAnnotation();
+                end_line.Type = LineAnnotationType.Vertical;
+                end_line.LineStyle = LineStyle.Solid;
+                end_line.StrokeThickness = 2;
+                end_line.Color = OxyColor.FromRgb(0, 0, 0);
+                end_line.X = x_pos_of_hit_window_end;
+
+                Plot.Annotations.Add(start_line);
+                Plot.Annotations.Add(end_line);
+            }
+
+            //Update the plot
+            Plot.InvalidatePlot(true);
+        }
+
         /// <summary>
         /// This method is called during a trial.
         /// It adds annotations to the plot that represent events that have occured during the trial itself,
@@ -537,105 +680,7 @@ namespace MotoTrak
                 }
             }
         }
-
-        /// <summary>
-        /// This function is called when a trial is initiated.
-        /// It adds simple annotations to the plot, such as lines around the hit window of the trial.
-        /// </summary>
-        private void DrawTrialAnnotations()
-        {
-            if (Model.CurrentTrial != null)
-            {
-                //In this case, a trial has been initiated
-
-                //If there are previous annotations still being displayed, let's clear them
-                if (Plot.Annotations.Count > 0)
-                {
-                    Plot.Annotations.Clear();
-                }
-
-                //Next, we need to create vertical line annotations for the point of the trial
-                //initiation and the end of the hit window
-                int x_pos_of_trial_initiation = Model.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow;
-                int x_pos_of_hit_window_end = Model.CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow +
-                    Model.CurrentSession.SelectedStage.TotalRecordedSamplesDuringHitWindow;
-
-                //Set up lines annotations around the hit window
-                LineAnnotation start_line = new LineAnnotation();
-                start_line.Type = LineAnnotationType.Vertical;
-                start_line.LineStyle = LineStyle.Solid;
-                start_line.StrokeThickness = 2;
-                start_line.Color = OxyColor.FromRgb(0, 0, 0);
-                start_line.X = x_pos_of_trial_initiation;
-
-                LineAnnotation end_line = new LineAnnotation();
-                end_line.Type = LineAnnotationType.Vertical;
-                end_line.LineStyle = LineStyle.Solid;
-                end_line.StrokeThickness = 2;
-                end_line.Color = OxyColor.FromRgb(0, 0, 0);
-                end_line.X = x_pos_of_hit_window_end;
-
-                Plot.Annotations.Add(start_line);
-                Plot.Annotations.Add(end_line);
-
-                //Now, let's iterate over each stage parameter and create horizontal line annotations
-                foreach (var sp_key in Model.CurrentSession.SelectedStage.StageParameters.Keys)
-                {
-                    //Get the stage parameter itself
-                    var sp = Model.CurrentSession.SelectedStage.StageParameters[sp_key];
-
-                    //Now check to see if this stage parameter should be added as an annotation
-                    var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
-                    if (stage_impl != null)
-                    {
-                        var parameter_to_plot = stage_impl.TaskDefinition.TaskParameters.Where(x => x.ParameterName.Equals(sp_key)).FirstOrDefault();
-                        if (parameter_to_plot == null || !parameter_to_plot.DisplayOnPlot)
-                        {
-                            //If the stage implementation says to not create an annotation for this specific parameter,
-                            //then we will tell the loop to continue with its next iteration.
-                            //Otherwise, the code below this if-statement will execute and an annotation will be created.
-                            continue;
-                        }
-                    }
-
-                    //Create a horizontal line annotation for the value of this parameter.
-                    LineAnnotation parameter_annotation = new LineAnnotation();
-                    parameter_annotation.Type = LineAnnotationType.Horizontal;
-                    parameter_annotation.LineStyle = LineStyle.Dash;
-                    parameter_annotation.StrokeThickness = 2;
-                    parameter_annotation.Color = OxyColor.FromRgb(0, 0, 0);
-                    parameter_annotation.Y = sp.CurrentValue;
-                    parameter_annotation.MinimumX = x_pos_of_trial_initiation;
-                    parameter_annotation.MaximumX = x_pos_of_hit_window_end;
-
-                    Plot.Annotations.Add(parameter_annotation);
-
-                    //We create a text annotation that is positioned very close to the line annotation
-                    //This text annotation is invisible by default, but because visible when the user hovers the mouse over
-                    //the plot.  The text of the annotation is the name of the parameter, and allows the user to see how
-                    //each parameter is plotted as a line annotation.
-                    TextAnnotation parameter_name_annotation = new TextAnnotation();
-                    parameter_name_annotation.Text = sp_key;
-                    parameter_name_annotation.TextPosition = new DataPoint(x_pos_of_trial_initiation + 5, sp.CurrentValue);
-                    parameter_name_annotation.TextColor = OxyColor.FromArgb(0, 0, 0, 0);
-                    parameter_name_annotation.FontSize = 10;
-                    parameter_name_annotation.StrokeThickness = 0;
-                    parameter_name_annotation.TextHorizontalAlignment = HorizontalAlignment.Left;
-
-                    Plot.Annotations.Add(parameter_name_annotation);
-                }
-            }
-            else
-            {
-                //In this case, no trial is currently happening.
-                //If no trial is happening, we need to delete all annotations from the plot.
-                Plot.Annotations.Clear();
-
-                //Invalidate the plot so that it gets updated in the GUI
-                Plot.InvalidatePlot(true);
-            }
-        }
-
+        
         /// <summary>
         /// This method scales the y-axis of the streaming signal plot so that it is within the appropriate
         /// range to show the data being presented.
@@ -657,7 +702,7 @@ namespace MotoTrak
                     var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
                     if (stage_impl != null)
                     {
-                        var task_parameter = stage_impl.TaskDefinition.TaskParameters.Where(x => x.ParameterName.Equals(sp)).FirstOrDefault();
+                        var task_parameter = stage_impl.TaskDefinition.TaskParameters.Where(x => x.ParameterName.Equals(sp.ParameterName)).FirstOrDefault();
                         if (task_parameter == null || !task_parameter.DisplayOnPlot)
                         {
                             //If the stage implementation says to not create an annotation for this specific parameter,
@@ -685,7 +730,10 @@ namespace MotoTrak
                     //We do NOT set the maximum range in this instance (we want the maximum to be able to scale upwards
                     //in case the data has very large values).
                     y_axis.MinimumRange = yrange;
+                    y_axis.AbsoluteMinimum = -10;
                 }
+
+                Plot.InvalidatePlot(true);
             }
         }
 

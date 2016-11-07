@@ -1,5 +1,4 @@
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakUtilities\bin\Real Release\MotoTrakUtilities.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakUtilities\bin\Real Release\MotoTrakUtilities.pdb
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakUtilities\obj\Real Release\MotoTrakUtilities.csprojResolveAssemblyReference.cache
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakUtilities\obj\Real Release\MotoTrakUtilities.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakUtilities\obj\Real Release\MotoTrakUtilities.pdb

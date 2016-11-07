@@ -1,7 +1,6 @@
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\bin\Debug\MotoTrakLauncher.exe.config
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\bin\Debug\MotoTrakLauncher.exe
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\bin\Debug\MotoTrakLauncher.pdb
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher.csprojResolveAssemblyReference.cache
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MainWindow.g.cs
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\App.g.cs
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher_MarkupCompile.cache
