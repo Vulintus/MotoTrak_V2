@@ -98,7 +98,7 @@ namespace MotoTrak
         private MotorTrial _current_trial = null;
         private MotorDevice _current_device = null;
         private string _current_booth_label = string.Empty;
-
+        
         private List<MotorStage> _all_stages = new List<MotorStage>();
         private List<MotoTrakSession> _recent_mototrak_sessions = new List<MotoTrakSession>();
         
@@ -107,6 +107,8 @@ namespace MotoTrak
 
         private bool _trigger_manual_feed = false;
         private bool _restart_background_thread = false;
+
+        private Stopwatch _session_timer = new Stopwatch();
 
         private BackgroundWorker _background_thread = null;
         private BackgroundWorker _history_loader = null;
@@ -452,6 +454,17 @@ namespace MotoTrak
             }
         }
 
+        /// <summary>
+        /// Returns the elapsed amount of time from the currently running session
+        /// </summary>
+        public TimeSpan ElapsedSessionTime
+        {
+            get
+            {
+                return _session_timer.Elapsed;
+            }
+        }
+
         #endregion
 
         #region Public methods that are called based on user interactions with the GUI
@@ -744,7 +757,7 @@ namespace MotoTrak
 
                 propertyNames.Clear();
             }
-
+            
             //k.Stop();
             //TimeSpan j = k.Elapsed;
             //Console.WriteLine(j.TotalMilliseconds.ToString());
@@ -844,6 +857,7 @@ namespace MotoTrak
                     //This value is not throttled.
                     MillisecondsPerFrame = stop_watch_single_iteration_samples.Average();
                     stop_watch_single_iteration_samples.Clear();
+                    BackgroundPropertyChanged("ElapsedSessionTime");
 
                     //Set the total frames over the last second as the "frames per second".  This value is THROTTLED by Thread.Sleep()
                     FramesPerSecond = frames;
@@ -1375,6 +1389,9 @@ namespace MotoTrak
                     //Set that start time of the new session
                     CurrentSession.StartTime = DateTime.Now;
 
+                    //Start the timer for the new session
+                    _session_timer.Start();
+
                     //Clear all messages for the new session to begin.
                     MotoTrakMessaging.GetInstance().ClearMessages();
 
@@ -1408,6 +1425,9 @@ namespace MotoTrak
                 case SessionRunState.SessionEnd:
 
                     //Do any work to finish up a session here.
+
+                    //Stop the session timer
+                    _session_timer.Reset();
 
                     //Display an end-of-session message to the user
                     try

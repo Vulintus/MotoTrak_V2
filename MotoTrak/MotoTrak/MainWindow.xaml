@@ -90,7 +90,8 @@
                         ItemsSource="{Binding Path=ViewList}" SelectedIndex="{Binding Path=ViewSelectedIndex, Mode=TwoWay}" />
 
         </Grid>
-
+        
+        <!-- WinForms plot -->
         <!--
         <Grid Grid.Row="1">
             <WindowsFormsHost x:Name="host">
@@ -103,11 +104,25 @@
         </Grid>
         -->
         
+        <!-- OxyPlot WPF plot -->
         <oxy:PlotView Grid.Row="1" MinHeight="250" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" 
                       Model="{Binding Path=PlotViewModel.Plot}" MouseEnter="PlotView_MouseEnter"
                       MouseLeave="PlotView_MouseLeave" />
-        
-        
+
+        <!-- Session timer view -->
+        <Border Grid.Row="1"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="20,20"
+                BorderThickness="1"
+                BorderBrush="Black"
+                Visibility="{Binding Path=SessionTimerVisibility, FallbackValue=Visible}">
+            <TextBlock FontSize="18"
+                       FontWeight="Bold"
+                       Margin="5,5"
+                       Text="{Binding Path=SessionTimerText, FallbackValue=Timer}" />
+        </Border>
+
         <!-- The following UI elements are for debuggin purposes only!!!! -->
         <Grid Name="DebuggingPanel" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,50"
               Visibility="{Binding Path=DebuggingVisibility}">

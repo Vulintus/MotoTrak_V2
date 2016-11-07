@@ -642,6 +642,46 @@ namespace MotoTrak
             }
         }
 
+        /// <summary>
+        /// The visibility of the session timer
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning" })]
+        public Visibility SessionTimerVisibility
+        {
+            get
+            {
+                if (Model != null)
+                {
+                    if (Model.IsSessionRunning)
+                    {
+                        return Visibility.Visible;
+                    }
+                }
+
+                return Visibility.Collapsed;
+            }
+        }
+
+        /// <summary>
+        /// The text of the session timer, shown while a session is running.
+        /// </summary>
+        [ReactToModelPropertyChanged(new string[] { "IsSessionRunning", "ElapsedSessionTime" })]
+        public string SessionTimerText
+        {
+            get
+            {
+                string result = string.Empty;
+
+                if (Model != null && Model.IsSessionRunning)
+                {
+                    TimeSpan k = Model.ElapsedSessionTime;
+                    result = k.ToString(@"hh\:mm\:ss");
+                }
+
+                return result;
+            }
+        }
+
         #endregion
 
         #region Debugging properties
