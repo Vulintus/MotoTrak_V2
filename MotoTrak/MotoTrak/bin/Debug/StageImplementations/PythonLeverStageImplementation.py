@@ -48,6 +48,10 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         PythonLeverStageImplementation.TaskDefinition.RequiredDeviceType = MotorDeviceType.Lever
         PythonLeverStageImplementation.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On"])
 
+        PythonLeverStageImplementation.TaskDefinition.HitWindowDuration.IsAdaptive = True
+        PythonLeverStageImplementation.TaskDefinition.HitWindowDuration.IsAdaptabilityCustomizeable = True
+        PythonLeverStageImplementation.TaskDefinition.HitWindowDuration.ParameterDescription = "In the lever task, the hit window can adaptively shrink or grow based on an animal's inter-press interval performance."
+
         PythonLeverStageImplementation.TaskDefinition.DevicePosition.IsAdaptive = True
         PythonLeverStageImplementation.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
 
@@ -243,7 +247,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
             isi_to_add = PythonLeverStageImplementation.inter_press_interval
             if PythonLeverStageImplementation.press_count is 1 or PythonLeverStageImplementation.inter_press_interval is 0:
                 isi_to_add = stage.HitWindowInSeconds.MaximumValue * 1000
-            stage.HitWindowInSeconds.History.Enqueue(isi_to_add)
+            stage.HitWindowInSeconds.History.Enqueue(System.Double(isi_to_add) / System.Double(1000))
             stage.HitWindowInSeconds.CalculateAndSetBoundedCurrentValue()
             
         #Adjust the position of the auto-positioner, according to the stage settings

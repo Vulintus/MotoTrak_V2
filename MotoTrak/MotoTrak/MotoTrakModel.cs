@@ -875,6 +875,9 @@ namespace MotoTrak
                 //Run the autopositioner
                 MotoTrakAutopositioner.GetInstance().RunAutopositioner();
 
+                //Set the buffer size (it may change inbetween trials)
+                buffer_size = CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial;
+
                 //Read in new datapoints from the Arduino board
                 var new_data_points = ReadNewDataFromArduino();
 
@@ -1494,6 +1497,9 @@ namespace MotoTrak
                             MotoTrakMessaging.GetInstance().AddMessage("Unable to save to the secondary datapath!");
                         }
                     }
+
+                    //Reset the stage parameters to their initial values
+                    CurrentSession.SelectedStage.ResetStateToInitialValues();
 
                     //Set the session to not be running
                     SessionState = SessionRunState.SessionNotRunning;

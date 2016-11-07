@@ -179,7 +179,7 @@ namespace MotoTrak
                 //If the "CurrentTrial" property has changed, then the property has either been set or unset.
                 //If it gets set to a new object, that means a new trial has begun.  If, on the other hand,
                 //the object is null, that means a trial is not currently taking place.
-                //RunAnnotationLogic();
+                ScaleXAxis();
             }
             else if (e.PropertyName.Equals("TrialEventsQueue"))
             {
@@ -751,9 +751,11 @@ namespace MotoTrak
                 if (x_axis != null)
                 {
                     //Set the range of the x-axis
+                    x_axis.Minimum = 1;
+                    x_axis.Maximum = Model.CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial;
                     x_axis.MinimumRange = Model.CurrentSession.SelectedStage.TotalRecordedSamplesPerTrial;
                     x_axis.MaximumRange = x_axis.MinimumRange;
-
+                    
                     //Invalidate the plot to update the range
                     Plot.InvalidatePlot(true);
                 }

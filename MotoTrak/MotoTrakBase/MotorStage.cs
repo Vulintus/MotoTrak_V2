@@ -435,6 +435,27 @@ namespace MotoTrakBase
 
         #endregion
 
+        #region Public methods
+
+        /// <summary>
+        /// Resets all stage parameters to their initial values
+        /// </summary>
+        public void ResetStateToInitialValues ()
+        {
+            Position.ResetParameterToInitialValue();
+            PreTrialSamplingPeriodInSeconds.ResetParameterToInitialValue();
+            HitWindowInSeconds.ResetParameterToInitialValue();
+            PostTrialSamplingPeriodInSeconds.ResetParameterToInitialValue();
+            PostTrialTimeoutInSeconds.ResetParameterToInitialValue();
+            
+            foreach (var sp in StageParameters)
+            {
+                sp.Value.ResetParameterToInitialValue();
+            }
+        }
+
+        #endregion
+
         #region Static Methods
 
         /// <summary>

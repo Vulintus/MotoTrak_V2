@@ -117,6 +117,14 @@ namespace MotoTrakBase
         #region Methods
 
         /// <summary>
+        /// Resets the current value of a motor stage parameter to its initial value
+        /// </summary>
+        public void ResetParameterToInitialValue ()
+        {
+            CurrentValue = InitialValue;
+        }
+
+        /// <summary>
         /// This function calculates a new CurrentValue for this parameter based on the History property and the AdaptiveThresholdType.
         /// </summary>
         public void CalculateAndSetBoundedCurrentValue ()
