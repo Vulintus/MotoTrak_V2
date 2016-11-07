@@ -211,7 +211,7 @@ class PythonPullStageImplementation (IMotorStageImplementation):
                 PythonPullStageImplementation.Force_Threshold_List.append(current_hit_threshold)
 
                 #If this is an adaptive stage, then display the hit threshold of the current trial in the "end-of-trial" message to the user
-                if stage.StageParameters[hit_threshold_parameter_name].AdaptiveThresholdType is MotorStageAdaptiveThresholdType.Median:    
+                if stage.StageParameters[hit_threshold_parameter_name].ParameterType == MotorStageParameter.StageParameterType.Variable:
                     msg += "(Hit threshold = " + Math.Floor(current_hit_threshold).ToString() + " grams)"
             
             return msg
