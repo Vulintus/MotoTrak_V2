@@ -73,6 +73,29 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         PythonLeverStageImplementation.Inter_Press_Interval_Threshold_List = []
         PythonLeverStageImplementation.Press_Count_List = []
 
+        #Take only recent behavior sessions that have at least 50 successful trials
+        total_hits = 0
+        for i in recent_behavior_sessions:
+            this_session_hits = i.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count()
+            if this_session_hits >= 1:
+                total_hits += this_session_hits
+                
+        #Now, based off the total number of hits that have occurred in previous sessions, set the position of the autopositioner
+        position = -1.0
+        if total_hits >= 50 and total_hits < 100:
+            position = 0.5
+        elif total_hits >= 100 and total_hits < 150:
+            position = 1.0
+        elif total_hits >= 150 and total_hits < 200:
+            position = 1.5
+        elif total_hits >= 200:
+            position = 2.0
+        
+        #Set the position of the autopositioner if it is supposed to be adaptively set
+        if current_session_stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
+            current_session_stage.Position.CurrentValue = position
+            MotoTrakAutopositioner.GetInstance().SetPosition(position)
+
         return
 
     def TransformSignals(self, new_data_from_controller, stage, device):
