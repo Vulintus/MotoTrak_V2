@@ -1,6 +1,7 @@
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\MotoTrakLauncher.exe.config
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\MotoTrakLauncher.exe
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\MotoTrakLauncher.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Real Release\MotoTrakLauncher.csprojResolveAssemblyReference.cache
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Real Release\MainWindow.g.cs
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Real Release\App.g.cs
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Real Release\MotoTrakLauncher_MarkupCompile.cache
@@ -11,4 +12,3 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Real Rel
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Real Release\MotoTrakLauncher.csproj.GenerateResource.Cache
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Real Release\MotoTrakLauncher.exe
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Real Release\MotoTrakLauncher.pdb
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Real Release\MotoTrakLauncher.csprojResolveAssemblyReference.cache

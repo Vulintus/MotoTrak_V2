@@ -546,10 +546,7 @@ namespace MotoTrak
 
                 //Tell the Arduino board to stream data at the sampling rate defined in the default stage
                 SetStreamingParameters();
-
-                //Welcome the user to MotoTrak
-                MotoTrakMessaging.GetInstance().AddMessage("Welcome to MotoTrak!");
-
+                
                 //Start a background worker which will continue looping and reading in data.
                 _background_thread = new BackgroundWorker();
                 _background_thread.WorkerSupportsCancellation = true;

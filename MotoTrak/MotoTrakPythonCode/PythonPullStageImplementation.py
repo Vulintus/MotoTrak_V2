@@ -180,9 +180,14 @@ class PythonPullStageImplementation (IMotorStageImplementation):
             hit_threshold_parameter_name = PythonPullStageImplementation.TaskDefinition.TaskParameters[0].ParameterName
 
             if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
-                if stage.StageParameters[hit_threshold_parameter_name].AdaptiveThresholdType is MotorStageAdaptiveThresholdType.Median:
-                    current_hit_threshold = stage.StageParameters[hit_threshold_parameter_name].CurrentValue
-                    PythonPullStageImplementation.Force_Threshold_List.append(current_hit_threshold)
+                #Grab the hit threshold for the current trial
+                current_hit_threshold = stage.StageParameters[hit_threshold_parameter_name].CurrentValue
+
+                #Add the hit threshold to the list of all hit thresholds that we are maintaining for this session
+                PythonPullStageImplementation.Force_Threshold_List.append(current_hit_threshold)
+
+                #If this is an adaptive stage, then display the hit threshold of the current trial in the "end-of-trial" message to the user
+                if stage.StageParameters[hit_threshold_parameter_name].AdaptiveThresholdType is MotorStageAdaptiveThresholdType.Median:    
                     msg += "(Hit threshold = " + Math.Floor(current_hit_threshold).ToString() + " grams)"
             
             return msg

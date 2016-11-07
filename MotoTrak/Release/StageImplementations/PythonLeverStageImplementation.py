@@ -210,6 +210,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
 
     def CreateEndOfTrialMessage(self, trial_number, trial, stage):
         msg = ""
+        msg += System.DateTime.Now.ToShortTimeString() + ", "
         msg += "Trial " + str(trial_number) + " "
         if trial.Result == MotorTrialResult.Hit:
             msg += "HIT"
@@ -247,7 +248,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
             isi_to_add = PythonLeverStageImplementation.inter_press_interval
             if PythonLeverStageImplementation.press_count is 1 or PythonLeverStageImplementation.inter_press_interval is 0:
                 isi_to_add = stage.HitWindowInSeconds.MaximumValue * 1000
-            stage.HitWindowInSeconds.History.Enqueue(isi_to_add)
+            stage.HitWindowInSeconds.History.Enqueue(System.Double(isi_to_add) / System.Double(1000))
             stage.HitWindowInSeconds.CalculateAndSetBoundedCurrentValue()
             
         #Adjust the position of the auto-positioner, according to the stage settings
