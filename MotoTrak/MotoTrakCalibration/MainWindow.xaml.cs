@@ -2,6 +2,7 @@
 using System.Speech.Synthesis;
 using MotoTrakBoothLauncher;
 using MotoTrakBase;
+using System;
 
 namespace MotoTrakCalibration
 {
@@ -57,6 +58,27 @@ namespace MotoTrakCalibration
                     this.PullCalibrationControl.DataContext = vm;
 
                     //Kick off a background thread to start streaming device data from the motor board.
+                    DeviceStreamModel.GetInstance().StartStreaming();
+                }
+                else if (device.DeviceType == MotorDeviceType.Lever)
+                {
+                    //Save the device to the calibration model
+                    LeverCalibrationModel.GetInstance().LeverDevice = device;
+                    LeverCalibrationModel.GetInstance().SavedMaxValue = Convert.ToInt32(device.Baseline);
+                    int range = -Convert.ToInt32(Convert.ToDouble(MotorDevice.LeverRangeInDegrees / device.Slope));
+                    int min_value = Convert.ToInt32(device.Baseline) - range;
+                    LeverCalibrationModel.GetInstance().SavedMinValue = min_value;
+                    
+                    //Create a view-model object
+                    LeverCalibrationViewModel vm = new LeverCalibrationViewModel(booth_label, portName, device, LeverCalibrationModel.GetInstance());
+
+                    //Set the data context for the window
+                    DataContext = vm;
+
+                    //Set the data context of the lever calibration control
+                    this.LeverCalibrationControl.DataContext = vm;
+
+                    //Kick off a background thread to start streaming device data from the motor board
                     DeviceStreamModel.GetInstance().StartStreaming();
                 }
                 else

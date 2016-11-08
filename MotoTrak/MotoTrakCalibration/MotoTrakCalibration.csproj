@@ -83,6 +83,11 @@
     </ApplicationDefinition>
     <Compile Include="BaseCalibrationViewModel.cs" />
     <Compile Include="DeviceStreamModel.cs" />
+    <Compile Include="LeverCalibrationControl.xaml.cs">
+      <DependentUpon>LeverCalibrationControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="LeverCalibrationModel.cs" />
+    <Compile Include="LeverCalibrationViewModel.cs" />
     <Compile Include="NumericalWeightAttribute.cs" />
     <Compile Include="PullCalibrationControl.xaml.cs">
       <DependentUpon>PullCalibrationControl.xaml</DependentUpon>
@@ -94,6 +99,10 @@
     <Compile Include="PullWeightModel.cs" />
     <Compile Include="PullWeightViewModel.cs" />
     <Compile Include="SimpleCommand.cs" />
+    <Page Include="LeverCalibrationControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -10,6 +10,12 @@ namespace MotoTrakBase
     /// </summary>
     public class MotorDevice : NotifyPropertyChangedObject
     {
+        #region Static variables
+
+        public static int LeverRangeInDegrees = 13;
+
+        #endregion
+
         #region Private constants
 
         //Constants used to identify devices

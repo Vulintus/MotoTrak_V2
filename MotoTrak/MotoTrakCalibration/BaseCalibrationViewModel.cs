@@ -93,6 +93,29 @@ namespace MotoTrakCalibration
                 return DeviceModel.Slope.ToString("0.0000");
             }
         }        
+
+        /// <summary>
+        /// The slope units
+        /// </summary>
+        public string SlopeUnits
+        {
+            get
+            {
+                if (DeviceModel != null)
+                {
+                    if (DeviceModel.DeviceType == MotorDeviceType.Pull)
+                    {
+                        return "g/tick";
+                    }
+                    else if (DeviceModel.DeviceType == MotorDeviceType.Lever)
+                    {
+                        return "deg/tick";
+                    }
+                }
+
+                return string.Empty;
+            }
+        }
         
         /// <summary>
         /// The name of the connected device
@@ -113,6 +136,24 @@ namespace MotoTrakCalibration
             get
             {
                 if (DeviceModel.DeviceType == MotorDeviceType.Pull)
+                {
+                    return Visibility.Visible;
+                }
+                else
+                {
+                    return Visibility.Collapsed;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Visibility of the lever calibration UI elements
+        /// </summary>
+        public Visibility LeverCalibrationControlVisible
+        {
+            get
+            {
+                if (DeviceModel.DeviceType == MotorDeviceType.Lever)
                 {
                     return Visibility.Visible;
                 }
