@@ -216,7 +216,7 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
 
                 #Show the current hit threshold in the message to the user if this is an adaptive stage
                 if stage.StageParameters[hit_threshold_parameter_name].ParameterType == MotorStageParameter.StageParameterType.Variable:
-                    msg += "(Hit threshold = " + Math.Floor(current_hit_threshold).ToString() + " degrees)"
+                    msg += " (Hit threshold = " + System.Math.Floor(current_hit_threshold).ToString() + " degrees)"
             
             return msg
         except ValueError:

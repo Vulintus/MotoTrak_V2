@@ -47,6 +47,10 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MathNet.Numerics, Version=3.14.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MathNet.Numerics.3.14.0-beta01\lib\net40\MathNet.Numerics.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="OxyPlot, Version=1.0.0.0, Culture=neutral, PublicKeyToken=638079a8f0bd61e9, processorArchitecture=MSIL">
       <HintPath>..\packages\OxyPlot.Core.1.0.0\lib\net45\OxyPlot.dll</HintPath>
       <Private>True</Private>
@@ -143,6 +147,10 @@
     <ProjectReference Include="..\MotoTrakBoothLauncher\MotoTrakBoothLauncher.csproj">
       <Project>{4601DC8F-EC86-455A-BAF7-BC966D8B588C}</Project>
       <Name>MotoTrakBoothLauncher</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MotoTrakUtilities\MotoTrakUtilities.csproj">
+      <Project>{9fa143ac-97aa-4662-9ca7-1c0887a833b4}</Project>
+      <Name>MotoTrakUtilities</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

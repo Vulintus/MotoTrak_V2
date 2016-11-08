@@ -1335,9 +1335,10 @@ namespace MotoTrak
                             CurrentSession.Trials.Count + 1, CurrentTrial, CurrentSession.SelectedStage);
                         MotoTrakMessaging.GetInstance().AddMessage(msg);
                     }
-                    catch
+                    catch (Exception e)
                     {
                         //If an error was encountered, log it
+                        ErrorLoggingService.GetInstance().LogExceptionError(e);
                         MotoTrakMessaging.GetInstance().AddMessage("Error in stage implementation: CreateEndOfTrialMessage function");
                     }
                     

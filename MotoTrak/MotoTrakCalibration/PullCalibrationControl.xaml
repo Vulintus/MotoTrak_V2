@@ -29,7 +29,21 @@
                               HorizontalAlignment="Stretch"
                               Model="{Binding Path=LoadCellPlotModel}" />
             </StackPanel>
-            
+
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    Margin="50,100,0,100"
+                    BorderBrush="Black"
+                    BorderThickness="1"
+                    Background="White"
+                    Visibility="{Binding Path=CountdownVisibility}"
+                    >
+                <TextBlock Text="{Binding Path=CountdownText}"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           />
+            </Border>
+
         </Grid>
         
         <!-- Buttons -->

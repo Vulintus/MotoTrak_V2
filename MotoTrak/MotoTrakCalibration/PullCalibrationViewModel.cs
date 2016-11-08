@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 
 namespace MotoTrakCalibration
@@ -82,7 +83,7 @@ namespace MotoTrakCalibration
                 MinimumRange = 1024,
                 MaximumRange = 1024,
                 Title = "Loadcell",
-                TitleFontWeight = FontWeights.Bold,
+                TitleFontWeight = OxyPlot.FontWeights.Bold,
                 TitleFontSize = 14
             };
 
@@ -104,7 +105,7 @@ namespace MotoTrakCalibration
                 MaximumRange = 800,
                 Title = "Loadcell Reading (ticks)",
                 TitleFontSize = 14,
-                TitleFontWeight = FontWeights.Bold
+                TitleFontWeight = OxyPlot.FontWeights.Bold
             };
 
             //Calculate the y-axis limits
@@ -117,7 +118,7 @@ namespace MotoTrakCalibration
                 Minimum = y_min,
                 Maximum = y_max,
                 Title = "Force (gm)",
-                TitleFontWeight = FontWeights.Bold,
+                TitleFontWeight = OxyPlot.FontWeights.Bold,
                 TitleFontSize = 14
             };
 
@@ -137,6 +138,17 @@ namespace MotoTrakCalibration
             //Calculate the y-axis limits
             double y_min = DeviceModel.Slope * (0 - DeviceModel.Baseline);
             double y_max = DeviceModel.Slope * (800 - DeviceModel.Baseline);
+
+            //Calculate values for the OLD calibration, if it exists
+            bool old_calibration_exists = false;
+            double old_y_min = double.NaN;
+            double old_y_max = double.NaN;
+            if (Model.OldCalibrationValues != null)
+            {
+                old_calibration_exists = true;
+                old_y_min = Model.OldCalibrationValues.Item2 * (0 - Model.OldCalibrationValues.Item1);
+                old_y_max = Model.OldCalibrationValues.Item2 * (800 - Model.OldCalibrationValues.Item1);
+            }
 
             //Draw lines indicating the current calibrated value and current load cell value
             LineAnnotation annotation1 = new LineAnnotation()
@@ -201,7 +213,7 @@ namespace MotoTrakCalibration
                 StrokeThickness = 2,
                 Stroke = OxyColors.Red,
                 Text = calibrated_value_string,
-                FontWeight = FontWeights.Bold,
+                FontWeight = OxyPlot.FontWeights.Bold,
                 FontSize = 12,
                 TextPosition = new DataPoint(50, calibrated_value)
             };
@@ -212,11 +224,25 @@ namespace MotoTrakCalibration
                 StrokeThickness = 2,
                 Stroke = OxyColors.Red,
                 Text = raw_value_string,
-                FontWeight = FontWeights.Bold,
+                FontWeight = OxyPlot.FontWeights.Bold,
                 FontSize = 12,
                 TextPosition = new DataPoint(raw_value, y_min),
             };
-            
+
+            if (old_calibration_exists)
+            {
+                LineAnnotation old_calibration_annotation_fixed_line = new LineAnnotation()
+                {
+                    Type = LineAnnotationType.LinearEquation,
+                    Intercept = old_y_min,
+                    Slope = Model.OldCalibrationValues.Item2,
+                    LineStyle = LineStyle.Dash,
+                    Color = OxyColors.Blue
+                };
+
+                CalibrationPlotModel.Annotations.Add(old_calibration_annotation_fixed_line);
+            }
+
             //Add the new annotations to the plot model
             CalibrationPlotModel.Annotations.Add(annotation1);
             CalibrationPlotModel.Annotations.Add(annotation2);
@@ -252,19 +278,26 @@ namespace MotoTrakCalibration
             //This function is called any time the device stream reports new data in the buffer
 
             //Grab the data
-            var buffer_data = DeviceStreamModel.GetInstance().DataBuffer.Select((y_val, x_val) =>
+            try
+            {
+                var buffer_data = DeviceStreamModel.GetInstance().DataBuffer.Select((y_val, x_val) =>
                 new DataPoint(x_val + 1, y_val)).ToList();
 
-            //Update the load cell plot
-            UpdateLoadCellPlot(buffer_data);
+                //Update the load cell plot
+                UpdateLoadCellPlot(buffer_data);
 
-            //Get the latest raw value
-            var latest = buffer_data.Skip(DeviceStreamModel.GetInstance().BufferSize - 50).Select(x => x.Y).ToList();
-            double latest_raw = latest.Average();
-            double latest_calibrated = DeviceModel.Slope * (latest_raw - DeviceModel.Baseline);
+                //Get the latest raw value
+                var latest = buffer_data.Skip(DeviceStreamModel.GetInstance().BufferSize - 50).Select(x => x.Y).ToList();
+                double latest_raw = latest.Average();
+                double latest_calibrated = DeviceModel.Slope * (latest_raw - DeviceModel.Baseline);
 
-            //Update the calibration plot
-            UpdateCalibrationPlot(latest_calibrated, latest_raw);
+                //Update the calibration plot
+                UpdateCalibrationPlot(latest_calibrated, latest_raw);
+            }
+            catch (Exception err)
+            {
+                ErrorLoggingService.GetInstance().LogExceptionError(err);
+            }
         }
 
         #endregion
@@ -419,6 +452,47 @@ namespace MotoTrakCalibration
             }
         }
 
+        /// <summary>
+        /// Returns the text of the current countdown step
+        /// </summary>
+        public string CountdownText
+        {
+            get
+            {
+                if (Model != null)
+                {
+                    if (Model.CurrentCalibrationState == PullCalibrationModel.CalibrationStates.RunningCountdown ||
+                        Model.CurrentCalibrationState == PullCalibrationModel.CalibrationStates.GrabbingValues)
+                    {
+                        return Model.CurrentCountdownText;
+                    }
+                }
+
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Returns a visibility value that is dependent upon whether the countdown for the calibration process
+        /// is currently happening
+        /// </summary>
+        public Visibility CountdownVisibility
+        {
+            get
+            {
+                if (Model != null)
+                {
+                    if (Model.CurrentCalibrationState == PullCalibrationModel.CalibrationStates.RunningCountdown ||
+                        Model.CurrentCalibrationState == PullCalibrationModel.CalibrationStates.GrabbingValues)
+                    {
+                        return Visibility.Visible;
+                    }
+                }
+                
+                return Visibility.Collapsed;
+            }
+        }
+
         #endregion
 
         #region Commands
@@ -493,12 +567,12 @@ namespace MotoTrakCalibration
 
         private void ResetToPrevious ()
         {
-
+            Model.LoadPreviousCalibration();
         }
 
         private void SaveCalibration ()
         {
-
+            Model.SaveCalibration();
         }
 
         #endregion
@@ -513,6 +587,15 @@ namespace MotoTrakCalibration
                 NotifyPropertyChanged("RunVoiceGuideStatus");
                 NotifyPropertyChanged("RunVoiceGuideStatusColor");
                 NotifyPropertyChanged("CountdownStatusColor");
+            }
+            else if (e.PropertyName.Equals("CurrentCalibrationState"))
+            {
+                NotifyPropertyChanged("CountdownVisibility");
+                NotifyPropertyChanged("CountdownText");
+            }
+            else if (e.PropertyName.Equals("CurrentCountdownText"))
+            {
+                NotifyPropertyChanged("CountdownText");
             }
         }
 

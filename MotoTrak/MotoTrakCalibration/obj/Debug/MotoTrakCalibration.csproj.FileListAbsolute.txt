@@ -38,3 +38,5 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\bin\Debug
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\bin\Debug\OxyPlot.Wpf.xml
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\bin\Debug\MotoTrakBoothLauncher.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\bin\Debug\MotoTrakBoothLauncher.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\bin\Debug\MathNet.Numerics.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\bin\Debug\MathNet.Numerics.xml

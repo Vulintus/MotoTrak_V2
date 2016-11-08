@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigurationFileLoader.cs" />
+    <Compile Include="EventHandlerUtilities.cs" />
     <Compile Include="FixedSizeQueue.cs" />
     <Compile Include="MotorExtensionMethods.cs" />
     <Compile Include="MotorMath.cs" />

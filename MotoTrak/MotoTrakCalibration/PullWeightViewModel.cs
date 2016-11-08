@@ -156,7 +156,7 @@ namespace MotoTrakCalibration
         /// </summary>
         public void RunWeightCalibration ()
         {
-
+            _calibration_model.RunCalibration(_model.Weight);
         }
 
         #endregion
