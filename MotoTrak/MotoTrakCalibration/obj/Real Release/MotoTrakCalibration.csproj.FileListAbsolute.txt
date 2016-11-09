@@ -34,3 +34,5 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real 
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real Release\MotoTrakCalibration.csproj.GenerateResource.Cache
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real Release\MotoTrakCalibration.exe
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real Release\MotoTrakCalibration.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real Release\LeverCalibrationControl.g.cs
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real Release\LeverCalibrationControl.baml
