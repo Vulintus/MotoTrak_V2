@@ -36,7 +36,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
     inter_press_interval = 0
     press_count = 0
 
-    Autopositioner_Trial_Interval = 10
+    Autopositioner_Trial_Interval = 50
 
     #Declare string parameters for this stage
     TaskDefinition = MotorTaskDefinition()
@@ -279,10 +279,11 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
             hit_count = all_trials.Where(lambda t: t.Result == MotorTrialResult.Hit).Count()
             hit_count_modulus = hit_count % PythonLeverStageImplementation.Autopositioner_Trial_Interval
             if hit_count > 0 and hit_count_modulus is 0:
-                stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
-                if stage.Position.CurrentValue is -0.5 or stage.Position.CurrentValue is 0:
-                    stage.Position.CurrentValue = 0.5
-                MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+                if stage.Position.CurrentValue < 2.0:
+                    stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
+                    if stage.Position.CurrentValue is -0.5 or stage.Position.CurrentValue is 0:
+                        stage.Position.CurrentValue = 0.5
+                    MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
 
         return
 

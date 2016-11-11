@@ -30,7 +30,7 @@ from MotoTrakUtilities import MotorMath
 class PythonPullStageImplementation (IMotorStageImplementation):
 
     #Variables used by this task
-    Autopositioner_Trial_Interval = 10
+    Autopositioner_Trial_Interval = 50
     Maximal_Force_List = []
     Force_Threshold_List = []
 
@@ -259,8 +259,9 @@ class PythonPullStageImplementation (IMotorStageImplementation):
             hit_count = all_trials.Where(lambda t: t.Result == MotorTrialResult.Hit).Count()
             hit_count_modulus = hit_count % PythonPullStageImplementation.Autopositioner_Trial_Interval
             if hit_count > 0 and hit_count_modulus is 0:
-                stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
-                MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+                if stage.Position.CurrentValue < 2.0:
+                    stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
+                    MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
                 
         return
 

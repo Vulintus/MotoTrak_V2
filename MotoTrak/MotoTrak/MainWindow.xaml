@@ -114,6 +114,7 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="20,20"
+                Background="White"
                 BorderThickness="1"
                 BorderBrush="Black"
                 Visibility="{Binding Path=SessionTimerVisibility, FallbackValue=Visible}">

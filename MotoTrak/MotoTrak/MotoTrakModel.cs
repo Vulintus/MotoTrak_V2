@@ -1376,6 +1376,9 @@ namespace MotoTrak
                     
                     //Create a new "feed" trial and save it to the session
                     CurrentSession.ManualFeeds.Add(DateTime.Now);
+
+                    //Add a message to the GUI indicating a manual feed occurred
+                    MotoTrakMessaging.GetInstance().AddMessage(DateTime.Now.ToShortTimeString() + " - Manual feed");
                     
                     break;
             }

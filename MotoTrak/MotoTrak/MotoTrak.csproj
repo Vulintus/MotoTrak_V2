@@ -47,6 +47,9 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <AllowedReferenceRelatedFileExtensions>.pdb</AllowedReferenceRelatedFileExtensions>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>mototrak_icon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Dynamitey, Version=1.0.2.0, Culture=neutral, PublicKeyToken=cbf53ea3aeb972c6, processorArchitecture=MSIL">
       <HintPath>..\packages\Dynamitey.1.0.2.0\lib\net40\Dynamitey.dll</HintPath>
@@ -162,6 +165,9 @@
       <Project>{9FA143AC-97AA-4662-9CA7-1C0887A833B4}</Project>
       <Name>MotoTrakUtilities</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="mototrak_icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
