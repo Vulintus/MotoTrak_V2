@@ -46,7 +46,10 @@
             
             <!-- Booth name -->
             <TextBlock Text="Booth: " FontSize="20" FontWeight="Bold" Grid.Column="0" HorizontalAlignment="Right" />
-            <TextBlock Text="{Binding Path=BoothLabel, FallbackValue=0}" FontSize="20" FontWeight="Bold" Grid.Column="1" HorizontalAlignment="Center" />
+            <TextBox Text="{Binding Path=BoothLabel, Mode=TwoWay, FallbackValue=0}" 
+                     FontSize="20" FontWeight="Bold" Grid.Column="1" HorizontalAlignment="Center"
+                     HorizontalContentAlignment="Center" Margin="2"
+                     Width="120" />
 
             <!-- Baseline value -->
             <TextBlock Text="Baseline: " FontSize="20" FontWeight="Bold" Grid.Column="2" HorizontalAlignment="Right" />
@@ -73,6 +76,9 @@
             <local:LeverCalibrationControl x:Name="LeverCalibrationControl"
                                            Visibility="{Binding Path=LeverCalibrationControlVisible, FallbackValue=Collapsed}"
                                            />
+            <local:KnobCalibrationControl x:Name="KnobCalibrationControl"
+                                          Visibility="{Binding Path=KnobCalibrationControlVisible, FallbackValue=Collapsed}"
+                                          />
         </Grid>
     </Grid>
 </Window>

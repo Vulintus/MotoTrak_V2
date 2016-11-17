@@ -12,3 +12,17 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\Mo
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher.exe
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher.csprojResolveAssemblyReference.cache
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\bin\Debug\MotoTrakLauncher.exe.config
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\bin\Debug\MotoTrakLauncher.exe
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\bin\Debug\MotoTrakLauncher.pdb
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher.csprojResolveAssemblyReference.cache
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MainWindow.baml
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MainWindow.g.cs
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\App.g.cs
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher_MarkupCompile.cache
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher_MarkupCompile.lref
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher.g.resources
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher.Properties.Resources.resources
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher.csproj.GenerateResource.Cache
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher.exe
+C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakLauncher\obj\Debug\MotoTrakLauncher.pdb

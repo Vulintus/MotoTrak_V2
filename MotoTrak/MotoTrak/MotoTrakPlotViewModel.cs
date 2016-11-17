@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using OxyPlot.Annotations;
 using MotoTrakUtilities;
+using System.Diagnostics;
 
 namespace MotoTrak
 {
@@ -28,7 +29,13 @@ namespace MotoTrak
 
         private PlotModel _plot_model = null;
         private MotoTrakModel _model = null;
+        private bool _is_plotting_enabled = true;
         private int _stream_index = -1;
+
+        private Stopwatch _plotting_timer = new Stopwatch();
+        private Stopwatch _plot_time_gui_update = new Stopwatch();
+        private List<long> _plotting_times = new List<long>();
+        
 
         #endregion
 
@@ -38,6 +45,9 @@ namespace MotoTrak
         {
             //Create a new plot model for this plot.
             Plot = new PlotModel();
+            Plot.Updating += OnPlotUpdating;
+            Plot.Updated += OnPlotUpdated;
+            _plot_time_gui_update.Start();
 
             //Set the MotoTrak model
             Model = model;
@@ -54,6 +64,41 @@ namespace MotoTrak
 
             //Set which stream we will be reading from for this plot
             StreamIndex = stream_index;
+        }
+
+        private void OnPlotUpdated(object sender, EventArgs e)
+        {
+            //Stop the plotting timer
+            _plotting_timer.Stop();
+
+            //Grab the number of milliseconds that elapsed since plotting began
+            long millis = _plotting_timer.ElapsedMilliseconds;
+
+            //Store that value in a list
+            _plotting_times.Add(millis);
+
+            //Make sure we only keep the latest 1000 plotting times
+            if (_plotting_times.Count > 1000)
+            {
+                //Remove the oldest plotting time if the number of stored times exceeds 1000 elements
+                _plotting_times.RemoveAt(0);
+            }
+
+            //Check to see if we shuold update the debugging variable displayed in the GUI
+            if (_plot_time_gui_update.ElapsedMilliseconds >= 1000)
+            {
+                //Restart the gui update timer
+                _plot_time_gui_update.Restart();
+
+                //Tell the GUI to refresh the average plotting time in the debugging information section
+                NotifyPropertyChanged("AveragePlottingTime");
+            }
+        }
+
+        private void OnPlotUpdating(object sender, EventArgs e)
+        {
+            //Restart the timer to track how long it takes to plot.
+            _plotting_timer.Restart();
         }
 
         #endregion
@@ -91,6 +136,24 @@ namespace MotoTrak
             set
             {
                 _plot_model = value;
+            }
+        }
+
+        /// <summary>
+        /// Returns the average time taken to plot on the GUI
+        /// </summary>
+        public string AveragePlottingTime
+        {
+            get
+            {
+                if (_plotting_times.Count > 0)
+                {
+                    return _plotting_times.Average().ToString("###0.0");
+                }
+                else
+                {
+                    return "NaN";
+                }
             }
         }
 
@@ -155,54 +218,57 @@ namespace MotoTrak
 
         protected override void ExecuteReactionsToModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName.Equals("CurrentSession"))
+            if (_is_plotting_enabled)
             {
-                if (Model.CurrentSession != null)
+                if (e.PropertyName.Equals("CurrentSession"))
                 {
-                    Model.CurrentSession.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
+                    if (Model.CurrentSession != null)
+                    {
+                        Model.CurrentSession.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
+                    }
+                }
+                if (e.PropertyName.Equals("SelectedStage"))
+                {
+                    RunAnnotationLogic();
+                }
+                else if (e.PropertyName.Equals("SessionState"))
+                {
+                    RunAnnotationLogic();
+                }
+                else if (e.PropertyName.Equals("TrialState"))
+                {
+                    RunAnnotationLogic();
+                }
+                else if (e.PropertyName.Equals("CurrentTrial"))
+                {
+                    //If the "CurrentTrial" property has changed, then the property has either been set or unset.
+                    //If it gets set to a new object, that means a new trial has begun.  If, on the other hand,
+                    //the object is null, that means a trial is not currently taking place.
+                    ScaleXAxis();
+                }
+                else if (e.PropertyName.Equals("TrialEventsQueue"))
+                {
+                    //If we enter this portion of the if-statement, it indicates that some kind of event has occurred within
+                    //the trial that is currently executing.
+
+                    //We need to process any new events that have occurred and create line annotations of them on the graph.
+                    //This is very similar to the process of creating line annotations for stage parameters, except that
+                    //these will be vertical line annotations instead of horizontal line annotations.
+                    //We will also create text annotations for these, just like we did for stage parameters.
+                    AddTrialEventAnnotations();
+                }
+                else if (e.PropertyName.Equals("MonitoredSignal"))
+                {
+                    //Update the plot signal
+                    DrawStreamedData();
+                }
+                else if (e.PropertyName.Equals("SessionOverviewValues"))
+                {
+                    //Update the session overview plot
+                    DrawSessionOverviewPlot();
                 }
             }
-            if(e.PropertyName.Equals("SelectedStage"))
-            {
-                RunAnnotationLogic();
-            }
-            else if (e.PropertyName.Equals("SessionState"))
-            {
-                RunAnnotationLogic();
-            }
-            else if (e.PropertyName.Equals("TrialState"))
-            {
-                RunAnnotationLogic();
-            }
-            else if (e.PropertyName.Equals("CurrentTrial"))
-            {
-                //If the "CurrentTrial" property has changed, then the property has either been set or unset.
-                //If it gets set to a new object, that means a new trial has begun.  If, on the other hand,
-                //the object is null, that means a trial is not currently taking place.
-                ScaleXAxis();
-            }
-            else if (e.PropertyName.Equals("TrialEventsQueue"))
-            {
-                //If we enter this portion of the if-statement, it indicates that some kind of event has occurred within
-                //the trial that is currently executing.
-
-                //We need to process any new events that have occurred and create line annotations of them on the graph.
-                //This is very similar to the process of creating line annotations for stage parameters, except that
-                //these will be vertical line annotations instead of horizontal line annotations.
-                //We will also create text annotations for these, just like we did for stage parameters.
-                AddTrialEventAnnotations();
-            }
-            else if (e.PropertyName.Equals("MonitoredSignal"))
-            {
-                //Update the plot signal
-                DrawStreamedData();
-            }
-            else if (e.PropertyName.Equals("SessionOverviewValues"))
-            {
-                //Update the session overview plot
-                DrawSessionOverviewPlot();
-            }
-
+            
             //Call the base function to handle anything else
             base.ExecuteReactionsToModelPropertyChanged(sender, e);
         }
@@ -758,6 +824,49 @@ namespace MotoTrak
                     
                     //Invalidate the plot to update the range
                     Plot.InvalidatePlot(true);
+                }
+            }
+        }
+
+        #endregion
+
+        #region Methods to manually turn on/off plotting and subscribing to model events
+
+        /// <summary>
+        /// This function will cause plotting in MotoTrak to be turned on or off.
+        /// This function is typically called when a window resize/move event is either
+        /// begun or completed.  While a window resize/move event is taking place, we
+        /// don't plot because it slows down the computer during the event.
+        /// </summary>
+        /// <param name="is_plotting_enabled">Whether or not to enable plotting</param>
+        public void SetPlotting (bool is_plotting_enabled)
+        {
+            _is_plotting_enabled = is_plotting_enabled;
+
+            if (is_plotting_enabled)
+            {
+                //Remove the handlers if they already are set
+                //This insures that we don't add a handler multiple times
+                Model.PropertyChanged -= ExecuteReactionsToModelPropertyChanged;
+                if (Model.CurrentSession != null)
+                {
+                    Model.CurrentSession.PropertyChanged -= ExecuteReactionsToModelPropertyChanged;
+                }
+
+                //Now add the handlers
+                Model.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
+                if (Model.CurrentSession != null)
+                {
+                    Model.CurrentSession.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
+                }
+            }
+            else
+            {
+                //Remove the handlers
+                Model.PropertyChanged -= ExecuteReactionsToModelPropertyChanged;
+                if (Model.CurrentSession != null)
+                {
+                    Model.CurrentSession.PropertyChanged -= ExecuteReactionsToModelPropertyChanged;
                 }
             }
         }

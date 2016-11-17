@@ -88,7 +88,7 @@ namespace MotoTrakCalibration
                 Maximum = 1024,
                 MinimumRange = 1024,
                 MaximumRange = 1024,
-                Title = "Loadcell",
+                Title = "Ticks",
                 TitleFontWeight = OxyPlot.FontWeights.Bold,
                 TitleFontSize = 14
             };

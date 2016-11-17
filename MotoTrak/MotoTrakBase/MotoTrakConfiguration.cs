@@ -64,6 +64,8 @@ namespace MotoTrakBase
         public string SecondaryDataPath { get; set; }
         public bool DebuggingMode = false;
 
+        public string PreSpecifiedComPort = string.Empty;
+
         #endregion
 
         #region Private methods
@@ -221,6 +223,10 @@ namespace MotoTrakBase
                         {
                             DebuggingMode = false;
                         }
+                    }
+                    else if (key.Equals("COM"))
+                    {
+                        PreSpecifiedComPort = value;
                     }
                 }
 

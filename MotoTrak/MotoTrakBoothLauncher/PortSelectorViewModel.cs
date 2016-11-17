@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace MotoTrakBoothLauncher
 {
@@ -64,6 +65,7 @@ namespace MotoTrakBoothLauncher
             _available_port_list = MotorBoard.QueryConnectedArduinoDevices();
             NotifyPropertyChanged("AvailablePorts");
             NotifyPropertyChanged("AvailablePortCount");
+            NotifyPropertyChanged("NoBoothsTextVisibility");
         }
 
         #endregion
@@ -122,6 +124,24 @@ namespace MotoTrakBoothLauncher
             set
             {
                 _result_ok = value;
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether the message that says whether booths are available is visible to the user or not.
+        /// </summary>
+        public Visibility NoBoothsTextVisibility
+        {
+            get
+            {
+                if (AvailablePortCount > 0)
+                {
+                    return Visibility.Collapsed;
+                }
+                else
+                {
+                    return Visibility.Visible;
+                }
             }
         }
 

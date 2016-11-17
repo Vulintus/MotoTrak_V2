@@ -25,7 +25,7 @@ namespace MotoTrakBase
         private const int KNOB_MIN_VALUE = 100;
         private const int KNOB_MAX_VALUE = 449;
         private const int PULL_MIN_VALUE = 450;
-        private const int PULL_MAX_VALUE = 550;
+        private const int PULL_MAX_VALUE = 600;
 
         private const int LEVER_MIN_VALUE = 800;
         private const int LEVER_MAX_VALUE = 949;
@@ -92,7 +92,7 @@ namespace MotoTrakBase
             if (DeviceType == MotorDeviceType.Knob)
             {
                 //Turn off SPI communication for the knob.
-                MotorBoard board = MotorBoard.GetInstance();
+                IMotorBoard board = MotorBoard.GetInstance();
                 board.KnobToggle(0);
             }
         }
@@ -261,7 +261,7 @@ namespace MotoTrakBase
         private void InitializeDevice()
         {
             //Get the instance of the motor board
-            MotorBoard motorBoard = MotorBoard.GetInstance();
+            IMotorBoard motorBoard = MotorBoard.GetInstance();
 
             //Set these to some defaults
             Slope = 1;

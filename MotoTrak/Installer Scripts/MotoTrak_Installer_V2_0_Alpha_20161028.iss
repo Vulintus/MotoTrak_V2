@@ -4,7 +4,7 @@
 #include <idp.iss>
 
 #define MyAppName "MotoTrak"
-#define MyAppVersion "2.0.10 Alpha"
+#define MyAppVersion "2.0.12 Alpha"
 #define MyAppPublisher "Vulintus"
 #define MyAppURL "http://www.vulintus.com"
 #define MyAppExeName "MotoTrakLauncher.exe"
@@ -24,8 +24,9 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppPublisher}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-OutputDir=C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Installer
-OutputBaseFilename=MotoTrak_Setup_V2_0_10_Alpha_20161028
+;OutputDir=C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Installer
+OutputDir=..\Installer
+OutputBaseFilename=MotoTrak_Setup_V2_0_12_Alpha_20161028
 Compression=lzma
 SolidCompression=yes
 
@@ -36,8 +37,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\MotoTrakLauncher.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+;Source: "C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\MotoTrakLauncher.exe"; DestDir: "{app}"; Flags: ignoreversion
+;Source: "C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+Source: "..\Release\MotoTrakLauncher.exe"; DestDir: "{app}"; Flags: ignoreversion 
+Source: "..\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

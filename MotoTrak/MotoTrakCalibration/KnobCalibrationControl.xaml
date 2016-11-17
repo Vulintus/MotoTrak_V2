@@ -1,0 +1,30 @@
+﻿<UserControl x:Class="MotoTrakCalibration.KnobCalibrationControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MotoTrakCalibration"
+             xmlns:oxy="http://oxyplot.org/wpf"
+             mc:Ignorable="d"
+             >
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            <oxy:PlotView MinHeight="150"
+                          MinWidth="400"
+                          Margin="0,0,10,0"
+                          VerticalAlignment="Stretch"
+                          HorizontalAlignment="Stretch"
+                          Model="{Binding Path=KnobPlotModel}" />
+            <Button Name="KnobRebaselineButton"
+                    Content="Reset Baseline"
+                    HorizontalAlignment="Center"
+                    Margin="5"
+                    Width="160"
+                    Height="40"
+                    FontSize="18"
+                    FontWeight="Bold" 
+                    Command="{Binding Path=KnobResetBaselineCommand}"
+                    />
+        </StackPanel>
+    </Grid>
+</UserControl>

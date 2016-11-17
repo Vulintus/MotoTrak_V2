@@ -244,6 +244,9 @@ namespace MotoTrak
                         //Finally, let's change the selected stage itself
                         Model.CurrentSession.SelectedStage = new_stage;
 
+                        //Move the autopositioner to the correct position for the new stage
+                        MotoTrakAutopositioner.GetInstance().SetPosition(Model.CurrentSession.SelectedStage.Position.CurrentValue);
+                        
                         //Load the rat's recent history based on the newly selected stage
                         Model.LoadRecentHistory();
 
@@ -866,13 +869,19 @@ namespace MotoTrak
         /// <summary>
         /// Connects to the motor board and initializes streaming
         /// </summary>
-        public void InitializeMotoTrak (string comPort)
+        public bool InitializeMotoTrak (string comPort)
         {
-            Model.InitializeMotoTrak(comPort);
+            bool result = Model.InitializeMotoTrak(comPort);
 
-            //This line of code is necessary to initiate the default stage selection.
-            //When this happens, it selects a default "view" to be plotted from the view-list.
-            StageSelectedIndex = StageSelectedIndex;
+            if (result)
+            {
+                //This line of code is necessary to initiate the default stage selection.
+                //When this happens, it selects a default "view" to be plotted from the view-list.
+                StageSelectedIndex = StageSelectedIndex;
+            }
+
+            //Return whether or not MotoTrak successfully intialized
+            return result;
         }
 
         /// <summary>
@@ -889,6 +898,19 @@ namespace MotoTrak
         public void ResetBaseline ()
         {
             Model.ResetBaseline();
+        }
+
+        /// <summary>
+        /// This function is called when the window is being moved or resized.
+        /// When a move/resize event is in operation, this function will set
+        /// a flag on the model indicating that plotting should cease.  Plotting
+        /// while a move/resize event is in operation slows the program down
+        /// a lot.
+        /// </summary>
+        /// <param name="resize">True if a move/resize event is taking place, false if completed</param>
+        public void SetWindowResizeFlag (bool resize)
+        {
+            PlotViewModel.SetPlotting(!resize);
         }
 
         #endregion

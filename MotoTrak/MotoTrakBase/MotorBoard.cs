@@ -10,7 +10,7 @@ namespace MotoTrakBase
     /// <summary>
     /// This class handles interfacing with the MotoTrak controller board
     /// </summary>
-    public class MotorBoard : NotifyPropertyChangedObject
+    public class MotorBoard : NotifyPropertyChangedObject, IMotorBoard
     {
         #region Private data members
 
@@ -38,20 +38,27 @@ namespace MotoTrakBase
         /// Gets the one and only instance of this class that is allowed to exist.
         /// </summary>
         /// <returns>Instance of ArdyMotorBoard class</returns>
-        public static MotorBoard GetInstance()
+        public static IMotorBoard GetInstance()
         {
-            if (_instance == null)
+            if (MotoTrakConfiguration.GetInstance().PreSpecifiedComPort.Equals("SIMULATED", StringComparison.OrdinalIgnoreCase))
             {
-                lock (_instance_lock)
+                return MotorBoardSimulator.GetInstance();
+            }
+            else
+            {
+                if (_instance == null)
                 {
-                    if (_instance == null)
+                    lock (_instance_lock)
                     {
-                        _instance = new MotorBoard();
+                        if (_instance == null)
+                        {
+                            _instance = new MotorBoard();
+                        }
                     }
                 }
-            }
 
-            return _instance;
+                return _instance;
+            }
         }
 
         #endregion

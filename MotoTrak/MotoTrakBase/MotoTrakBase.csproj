@@ -61,6 +61,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IMotorBoard.cs" />
+    <Compile Include="MotorBoardSimulator.cs" />
     <Compile Include="MultipleEventsAllowedAttribute.cs" />
     <Compile Include="ErrorLoggingService.cs" />
     <Compile Include="IMotorStageImplementation.cs" />

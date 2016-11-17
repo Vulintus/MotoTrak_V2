@@ -9,10 +9,9 @@
         xmlns:metro="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         mc:Ignorable="d"
         Title="MotoTrak" MinHeight="490" Height="545" MinWidth="600" Width="600"
-        Closed="Window_Closed">
-    <Window.DataContext>
-        <local:MotoTrakViewModel />
-    </Window.DataContext>
+        Closed="Window_Closed"
+        Loaded="Window_Loaded"
+        >
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="115" />
@@ -132,6 +131,7 @@
                 <ColumnDefinition Width="50" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Orientation="Vertical">
+                <TextBlock Text="Plot Millis: " FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" />
                 <TextBlock Text="Millis/Frame: " FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" />
                 <TextBlock Text="FPS: " FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" />
                 <TextBlock Text="Baseline: " FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" />
@@ -139,6 +139,7 @@
                 <TextBlock Text="Calibrated: " FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Vertical">
+                <TextBlock HorizontalAlignment="Right" Text="{Binding Path=PlotViewModel.AveragePlottingTime, FallbackValue=0}" FontWeight="Bold" FontSize="14" />
                 <TextBlock HorizontalAlignment="Right" Text="{Binding Path=MillisecondsPerFrame, FallbackValue=0}" FontWeight="Bold" FontSize="14" />
                 <TextBlock HorizontalAlignment="Right" Text="{Binding Path=FrameRate, FallbackValue=60}" FontWeight="Bold" FontSize="14" />
                 <TextBlock HorizontalAlignment="Right" Text="{Binding Path=DeviceBaseline, FallbackValue=1}" FontWeight="Bold" FontSize="14" />

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -51,8 +52,38 @@ namespace MotoTrakCalibration
             }
             set
             {
-                _booth_label = value;
+                string temp = value;
+                temp = BaseCalibrationViewModel.CleanInput(_booth_label).Trim();
+
+                int booth_number = 0;
+                bool success = Int32.TryParse(_booth_label, out booth_number);
+
+                if (success)
+                {
+                    //Set the local string label
+                    _booth_label = booth_number.ToString();
+
+                    //Send the new booth label to the board
+                    MotorBoard.GetInstance().SetBoothNumber(booth_number);
+                }
+
                 NotifyPropertyChanged("BoothLabel");
+            }
+        }
+
+        private static string CleanInput(string strIn)
+        {
+            // Replace invalid characters with empty strings.
+            try
+            {
+                return Regex.Replace(strIn, @"[^\w\-]", "",
+                                     RegexOptions.None, TimeSpan.FromSeconds(1.5));
+            }
+            // If we timeout when replacing invalid characters, 
+            // we should return Empty.
+            catch (RegexMatchTimeoutException)
+            {
+                return String.Empty;
             }
         }
 
@@ -90,7 +121,14 @@ namespace MotoTrakCalibration
         {
             get
             {
-                return DeviceModel.Slope.ToString("0.0000");
+                if (DeviceModel.DeviceType == MotorDeviceType.Knob)
+                {
+                    return "1.0";
+                }
+                else
+                {
+                    return DeviceModel.Slope.ToString("0.0000");
+                }
             }
         }        
 
@@ -108,6 +146,10 @@ namespace MotoTrakCalibration
                         return "g/tick";
                     }
                     else if (DeviceModel.DeviceType == MotorDeviceType.Lever)
+                    {
+                        return "deg/tick";
+                    }
+                    else if (DeviceModel.DeviceType == MotorDeviceType.Knob)
                     {
                         return "deg/tick";
                     }
@@ -154,6 +196,24 @@ namespace MotoTrakCalibration
             get
             {
                 if (DeviceModel.DeviceType == MotorDeviceType.Lever)
+                {
+                    return Visibility.Visible;
+                }
+                else
+                {
+                    return Visibility.Collapsed;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Visibility of the knob calibration UI elements
+        /// </summary>
+        public Visibility KnobCalibrationControlVisible
+        {
+            get
+            {
+                if (DeviceModel.DeviceType == MotorDeviceType.Knob)
                 {
                     return Visibility.Visible;
                 }

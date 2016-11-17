@@ -83,6 +83,10 @@
     </ApplicationDefinition>
     <Compile Include="BaseCalibrationViewModel.cs" />
     <Compile Include="DeviceStreamModel.cs" />
+    <Compile Include="KnobCalibrationControl.xaml.cs">
+      <DependentUpon>KnobCalibrationControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="KnobCalibrationViewModel.cs" />
     <Compile Include="LeverCalibrationControl.xaml.cs">
       <DependentUpon>LeverCalibrationControl.xaml</DependentUpon>
     </Compile>
@@ -99,6 +103,10 @@
     <Compile Include="PullWeightModel.cs" />
     <Compile Include="PullWeightViewModel.cs" />
     <Compile Include="SimpleCommand.cs" />
+    <Page Include="KnobCalibrationControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="LeverCalibrationControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

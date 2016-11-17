@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace MotoTrak
 {
@@ -93,7 +94,7 @@ namespace MotoTrak
 
         #region Private data members
 
-        private MotorBoard _ardy = MotorBoard.GetInstance();
+        private IMotorBoard _ardy = MotorBoard.GetInstance();
         private MotoTrakSession _current_session = null;
         private MotorTrial _current_trial = null;
         private MotorDevice _current_device = null;
@@ -128,7 +129,7 @@ namespace MotoTrak
         /// <summary>
         /// The motor controller board object
         /// </summary>
-        private MotorBoard ControllerBoard
+        private IMotorBoard ControllerBoard
         {
             get { return _ardy; }
             set { _ardy = value; }
@@ -475,7 +476,7 @@ namespace MotoTrak
         /// The session run state at the end of this method will be "SessionNotRunning".
         /// </summary>
         /// <param name="comPort">The serial port to connect to</param>
-        public void InitializeMotoTrak (string comPort)
+        public bool InitializeMotoTrak (string comPort)
         {
             /*
              * Flow of this function:
@@ -494,13 +495,21 @@ namespace MotoTrak
             bool success = ControllerBoard.ConnectToArduino(comPort);
             if (!success || !ControllerBoard.IsSerialConnectionValid)
             {
-                MotoTrakMessaging.GetInstance().AddMessage("Unable to connect to MotoTrak controller board!");
+                var msg_box_result = MessageBox.Show("Error: Unable to connect to MotoTrak controller! The application will now close.");
+                ErrorLoggingService.GetInstance().LogStringError("Error: Unable to connect to MotoTrak controller!");
+
+                //Return a false value to the caller indicating that this function failed
+                return false;
             }
 
             //Check the board version
             if (!ControllerBoard.DoesSketchMeetMinimumRequirements())
             {
-                MotoTrakMessaging.GetInstance().AddMessage("The controller board that is connected is not compatible with this version of MotoTrak.");
+                var msg_box_result = MessageBox.Show("Error: The MotoTrak controller is not compatible with this version of MotoTrak! The application will now close.");
+                ErrorLoggingService.GetInstance().LogStringError("Error: The MotoTrak controller is not compatible with this version of MotoTrak!");
+
+                //Return a false value to the caller indicating that this function failed
+                return false;
             }
 
             //Gather information about the booth and what devices are connected to it
@@ -519,12 +528,13 @@ namespace MotoTrak
             //If no device was found, or if the device is unknown, throw an error.
             if (CurrentDevice == null || CurrentDevice.DeviceType == MotorDeviceType.Unknown)
             {
-                MotoTrakMessaging.GetInstance().AddMessage("We are unable to recognize the device that is attached to the MotoTrak controller board.");
+                var msg_box_result = MessageBox.Show("Error: Could not detect a known device connected to the MotoTrak controller! The application will now close.");
+                ErrorLoggingService.GetInstance().LogStringError("Error: Could not detect a known device connected to the MotoTrak controller!");
+                
+                //Return a false value to the caller indicating that this function failed
+                return false;
             }
             
-            //At this point, we need to read the MotoTrak configuration file to determine how to load in stages
-            config.ReadConfigurationFile();
-
             //Now read in all stage implementations that exist
             config.InitializeStageImplementations();
 
@@ -561,6 +571,9 @@ namespace MotoTrak
                 //If there are no available stages for this device
                 CurrentSession.SelectedStage = null;
             }
+
+            //If we reach this point of the function, return true indicating that everything went fine.
+            return true;
         }
 
         /// <summary>

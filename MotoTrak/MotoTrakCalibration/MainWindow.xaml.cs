@@ -29,7 +29,7 @@ namespace MotoTrakCalibration
                 string portName = portSelectorResult.AvailablePorts[portSelectorResult.SelectedPortIndex].Model.DeviceID;
 
                 //Connect to the board
-                MotorBoard motor_board = MotorBoard.GetInstance();
+                IMotorBoard motor_board = MotorBoard.GetInstance();
                 motor_board.ConnectToArduino(portName);
 
                 //Query the booth number
@@ -81,8 +81,25 @@ namespace MotoTrakCalibration
                     //Kick off a background thread to start streaming device data from the motor board
                     DeviceStreamModel.GetInstance().StartStreaming();
                 }
+                else if (device.DeviceType == MotorDeviceType.Knob)
+                {
+                    //Create a view-model object
+                    KnobCalibrationViewModel vm = new KnobCalibrationViewModel(booth_label, portName, device);
+
+                    //Set the data context for the window
+                    DataContext = vm;
+
+                    //Set the data context of the knob calibration control
+                    this.KnobCalibrationControl.DataContext = vm;
+
+                    //Kick off a background thread to start streaming device data from the motor board
+                    DeviceStreamModel.GetInstance().StartStreaming();
+                }
                 else
                 {
+                    //If the device was unrecognized, then close the window.
+                    var msg_box_result = MessageBox.Show("Error: Unable to detect device connected to MotoTrak controller! The application will now close.");
+                    ErrorLoggingService.GetInstance().LogStringError("Error: Unable to detect device connected to MotoTrak controller!");
                     this.Close();
                 }
             }

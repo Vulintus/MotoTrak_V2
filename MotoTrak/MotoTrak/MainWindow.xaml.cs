@@ -14,6 +14,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
@@ -29,18 +30,42 @@ namespace MotoTrak
         public MainWindow()
         {
             InitializeComponent();
-            
-            //Create a window to allow the user to select a port
-            PortSelectionUI portSelectorWindow = new PortSelectionUI();
-            
-            portSelectorWindow.ShowDialog();
+
+            //Read the MotoTrak configuration file
+            var config = MotoTrakConfiguration.GetInstance();
+            config.ReadConfigurationFile();
+
+            //Set the data context of the window
+            this.DataContext = new MotoTrakViewModel();
+
+            //If a default com port was not specified in the configuration file, display a dialog
+            //requesting the user to select a com port
+            if (string.IsNullOrEmpty(config.PreSpecifiedComPort))
+            {
+                //Create a window to allow the user to select a port
+                PortSelectionUI portSelectorWindow = new PortSelectionUI();
+
+                portSelectorWindow.ShowDialog();
+            }
 
             //Get the result of the port selection window
             PortSelectorViewModel portSelectorResult = PortSelectorViewModel.GetInstance();
-            
-            if (portSelectorResult.ResultOK && portSelectorResult.AvailablePortCount > 0)
+
+            string portName = string.Empty;
+            if (!config.PreSpecifiedComPort.Equals("SIMULATED", StringComparison.OrdinalIgnoreCase))
             {
-                string portName = portSelectorResult.AvailablePorts[portSelectorResult.SelectedPortIndex].Model.DeviceID;
+                if (portSelectorResult.ResultOK && portSelectorResult.AvailablePortCount > 0)
+                {
+                    portName = portSelectorResult.AvailablePorts[portSelectorResult.SelectedPortIndex].Model.DeviceID;
+                }
+            }
+            else
+            {
+                portName = config.PreSpecifiedComPort;
+            }
+
+            if (!string.IsNullOrEmpty(portName))
+            {
                 MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
                 if (viewModel != null)
                 {
@@ -52,7 +77,13 @@ namespace MotoTrak
                     MainWindowSessionNotesView.CloseSessionNotes += MainWindowSessionNotesView_CloseSessionNotes;
 
                     //Initialize MotoTrak
-                    viewModel.InitializeMotoTrak(portName);
+                    bool success = viewModel.InitializeMotoTrak(portName);
+
+                    //If we failed to initialize MotoTrak, close the window
+                    if (!success)
+                    {
+                        this.Close();
+                    }
                 }
             }
             else
@@ -210,6 +241,47 @@ namespace MotoTrak
             {
                 viewModel.StageSelectedIndex = StageSelectionComboBox.SelectedIndex;
             }
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            var helper = new WindowInteropHelper(this);
+            if (helper.Handle != null)
+            {
+                var source = HwndSource.FromHwnd(helper.Handle);
+                if (source != null)
+                    source.AddHook(HwndMessageHook);
+            }
+        }
+
+        private IntPtr HwndMessageHook(IntPtr wnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            const int WM_ENTERSIZEMOVE = 0x0231;
+            const int WM_EXITSIZEMOVE = 0x0232;
+
+            MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;
+
+            switch (msg)
+            {
+                case WM_EXITSIZEMOVE:
+
+                    if (viewModel != null)
+                    {
+                        viewModel.SetWindowResizeFlag(false);
+                    }
+
+                    break;
+                case WM_ENTERSIZEMOVE:
+
+                    if (viewModel != null)
+                    {
+                        viewModel.SetWindowResizeFlag(true);
+                    }
+
+                    break;
+            }
+
+            return IntPtr.Zero;
         }
     }
 }
