@@ -57,3 +57,5 @@ C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real Relea
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real Release\MotoTrakCalibration.pdb
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real Release\KnobCalibrationControl.g.cs
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real Release\KnobCalibrationControl.baml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real Release\KnobCalibrationControl.g.cs
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakCalibration\obj\Real Release\KnobCalibrationControl.baml

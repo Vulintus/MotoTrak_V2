@@ -148,6 +148,11 @@ namespace MotoTrakBase
                         break;
                     case MotorTrialActionType.SendStimulationTrigger:
 
+                        if (MotoTrakConfiguration.GetInstance().DebuggingMode)
+                        {
+                            MotoTrakMessaging.GetInstance().AddMessage("DEBUG: Stimulation triggered");
+                        }
+
                         //Perform the stimulation trigger
                         MotorBoard.GetInstance().TriggerStim();
 

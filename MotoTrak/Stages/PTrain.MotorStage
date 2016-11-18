@@ -2,7 +2,7 @@ Stage File Version: 1
 Stage Name: PTrain
 Stage Description: Pre-lesion training for animals
 Stage Implementation: PythonPullStageImplementation.py
-Stage Output Trigger: OFF
+Stage Output Trigger: On
 Stage Device: Pull
 Stage Sampling Rate: 10
 Stage Parameter: Pre-Trial Duration, seconds, Fixed, Undefined, 1, NaN, NaN, NaN
