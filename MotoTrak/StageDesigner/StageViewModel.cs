@@ -229,6 +229,8 @@ namespace StageDesigner
         {
             var stage_impl = GetCurrentlySelectedPythonStageImplementation();
             StageModel.DeviceType = stage_impl.TaskDefinition.RequiredDeviceType;
+
+            NotifyPropertyChanged("SelectedDeviceString");
             NotifyPropertyChanged("DeviceSelectedIndex");
             NotifyPropertyChanged("DevicePositionWarningVisibility");
             NotifyPropertyChanged("DeviceTypeWarningVisibility");
@@ -419,6 +421,17 @@ namespace StageDesigner
                 List<string> result = MotoTrakBase.MotorDevice.GetAllDeviceTypes().Select(x =>
                     MotorDeviceTypeConverter.ConvertToDescription(x)).ToList();
                 return result;
+            }
+        }
+
+        /// <summary>
+        /// The name of the device used for this stage
+        /// </summary>
+        public string SelectedDeviceString
+        {
+            get
+            {
+                return MotorDeviceTypeConverter.ConvertToDescription(StageModel.DeviceType);
             }
         }
 

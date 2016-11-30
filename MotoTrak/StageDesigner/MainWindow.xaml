@@ -92,14 +92,12 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Select a device to use on this stage:" HorizontalAlignment="Left" VerticalAlignment="Center" />
-                        <ComboBox Grid.Row="0" Grid.Column="1" SelectedIndex="{Binding Path=DeviceSelectedIndex, FallbackValue=0}" ItemsSource="{Binding Path=DevicesAvailable}" HorizontalAlignment="Left"
-                                  VerticalAlignment="Center" Height="20" Width="100" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
-                                   Text="Warning: you have selected a device different from what this task was designed to use." 
-                                   Visibility="{Binding Path=DeviceTypeWarningVisibility}"
-                                   Foreground="Red" FontWeight="Bold" FontSize="10" />
-
+                        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <TextBlock Text="The selected task for this stage uses the " />
+                            <TextBlock Text="{Binding Path=SelectedDeviceString}" FontWeight="Bold" />
+                            <TextBlock Text=" device." />
+                        </StackPanel>
+                        
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="How fast would you like to sample the device? (ms/sample)" HorizontalAlignment="Left" VerticalAlignment="Center" />
                         <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Path=SamplingRate, FallbackValue=10}" HorizontalAlignment="Left" VerticalAlignment="Center" Width="100" />
 
