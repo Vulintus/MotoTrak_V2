@@ -53,10 +53,10 @@ namespace MotoTrakCalibration
             set
             {
                 string temp = value;
-                temp = BaseCalibrationViewModel.CleanInput(_booth_label).Trim();
+                temp = BaseCalibrationViewModel.CleanInput(temp).Trim();
 
                 int booth_number = 0;
-                bool success = Int32.TryParse(_booth_label, out booth_number);
+                bool success = Int32.TryParse(temp, out booth_number);
 
                 if (success)
                 {

@@ -3,6 +3,7 @@ using System.Speech.Synthesis;
 using MotoTrakBoothLauncher;
 using MotoTrakBase;
 using System;
+using System.Threading;
 
 namespace MotoTrakCalibration
 {
@@ -31,7 +32,7 @@ namespace MotoTrakCalibration
                 //Connect to the board
                 IMotorBoard motor_board = MotorBoard.GetInstance();
                 motor_board.ConnectToArduino(portName);
-
+                
                 //Query the booth number
                 string booth_label = motor_board.GetBoothLabel();
 
