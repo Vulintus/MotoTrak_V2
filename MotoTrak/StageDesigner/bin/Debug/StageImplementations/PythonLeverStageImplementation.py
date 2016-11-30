@@ -36,7 +36,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
     inter_press_interval = 0
     press_count = 0
 
-    Autopositioner_Trial_Interval = 10
+    Autopositioner_Trial_Interval = 50
 
     #Declare string parameters for this stage
     TaskDefinition = MotorTaskDefinition()
@@ -55,15 +55,17 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         PythonLeverStageImplementation.TaskDefinition.DevicePosition.IsAdaptive = True
         PythonLeverStageImplementation.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
 
-        initiation_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.InitiationThreshold, "degrees", True, True, True)
+        hit_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.HitThreshold, "presses", False, True, True)
+        initiation_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.InitiationThreshold, "degrees", True, False, False)
         lever_full_press_parameter = MotorTaskParameter("Full Press", "degrees", True, True, True)
         lever_release_point_parameter = MotorTaskParameter("Release Point", "degrees", True, True, True)
-        hit_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.HitThreshold, "presses", False, True, True)
+        press_counting_parameter = MotorTaskParameter("Method for counting presses", "0 = count on downward motion, 1 = count on release motion", False, False, False)
         
         PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(hit_threshold_parameter)
         PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(initiation_threshold_parameter)
         PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(lever_full_press_parameter)
         PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(lever_release_point_parameter)
+        PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(press_counting_parameter)
         
         return
 
@@ -72,6 +74,29 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         PythonLeverStageImplementation.Inter_Press_Interval_List = []
         PythonLeverStageImplementation.Inter_Press_Interval_Threshold_List = []
         PythonLeverStageImplementation.Press_Count_List = []
+
+        #Take only recent behavior sessions that have at least 50 successful trials
+        total_hits = 0
+        for i in recent_behavior_sessions:
+            this_session_hits = i.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count()
+            if this_session_hits >= 1:
+                total_hits += this_session_hits
+                
+        #Now, based off the total number of hits that have occurred in previous sessions, set the position of the autopositioner
+        position = -1.0
+        if total_hits >= 50 and total_hits < 100:
+            position = 0.5
+        elif total_hits >= 100 and total_hits < 150:
+            position = 1.0
+        elif total_hits >= 150 and total_hits < 200:
+            position = 1.5
+        elif total_hits >= 200:
+            position = 2.0
+        
+        #Set the position of the autopositioner if it is supposed to be adaptively set
+        if current_session_stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
+            current_session_stage.Position.CurrentValue = position
+            MotoTrakAutopositioner.GetInstance().SetPosition(position)
 
         return
 
@@ -135,6 +160,9 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         #Get the name of the lever release point parameter
         release_point_parameter_name = PythonLeverStageImplementation.TaskDefinition.TaskParameters[3].ParameterName
 
+        #Get the name of the feed-on-press/feed-on-release parameter
+        press_counting_parameter_name = PythonLeverStageImplementation.TaskDefinition.TaskParameters[4].ParameterName
+
         #Only proceed if a hit threshold has been defined for this stage
         if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
             #Get the stream data from the device
@@ -160,13 +188,22 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
                         #If the lever is currently released, check to see if it has been pressed
                         if (press_state is 0):
                             if (stream_data[i] > stage.StageParameters[full_press_parameter_name].CurrentValue):
-                                PythonLeverStageImplementation.press_count = PythonLeverStageImplementation.press_count + 1
-                                indices_of_presses.Add(i)
                                 press_state = 1
+
+                                #If we are counting presses based on downward motion
+                                if (stage.StageParameters[press_counting_parameter_name].CurrentValue is not 1):
+                                    PythonLeverStageImplementation.press_count = PythonLeverStageImplementation.press_count + 1
+                                    indices_of_presses.Add(i)
+
                         elif (press_state is 1):
                             #Otherwise, if the lever is pressed, check to see if it has been fully released
                             if (stream_data[i] <= stage.StageParameters[release_point_parameter_name].CurrentValue):
                                 press_state = 0
+
+                                #If we are counting presses based on releasing motion
+                                if (stage.StageParameters[press_counting_parameter_name].CurrentValue is 1):
+                                    PythonLeverStageImplementation.press_count = PythonLeverStageImplementation.press_count + 1
+                                    indices_of_presses.Add(i)
 
                 #If 2 hits have been detected, add a result to return to the caller
                 if (PythonLeverStageImplementation.press_count >= stage.StageParameters[hit_threshold_parameter_name].CurrentValue):
@@ -210,6 +247,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
 
     def CreateEndOfTrialMessage(self, trial_number, trial, stage):
         msg = ""
+        msg += System.DateTime.Now.ToShortTimeString() + ", "
         msg += "Trial " + str(trial_number) + " "
         if trial.Result == MotorTrialResult.Hit:
             msg += "HIT"
@@ -242,23 +280,58 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
 
     def AdjustDynamicStageParameters(self, all_trials, current_trial, stage):        
 
+        #Get the name of the hit threshold parameter
+        hit_threshold_parameter_name = PythonLeverStageImplementation.TaskDefinition.TaskParameters[0].ParameterName
+
+        #Get the name of the lever full press parameter
+        full_press_parameter_name = PythonLeverStageImplementation.TaskDefinition.TaskParameters[2].ParameterName
+
+        #Get the name of the lever release point parameter
+        release_point_parameter_name = PythonLeverStageImplementation.TaskDefinition.TaskParameters[3].ParameterName
+
         #Adjust the hit window duration if necessary.  This is adjusted according to the isi of recent trials
         if stage.HitWindowInSeconds.ParameterType == MotorStageParameter.StageParameterType.Variable:
             isi_to_add = PythonLeverStageImplementation.inter_press_interval
             if PythonLeverStageImplementation.press_count is 1 or PythonLeverStageImplementation.inter_press_interval is 0:
                 isi_to_add = stage.HitWindowInSeconds.MaximumValue * 1000
-            stage.HitWindowInSeconds.History.Enqueue(isi_to_add)
+            stage.HitWindowInSeconds.History.Enqueue(System.Double(isi_to_add) / System.Double(1000))
             stage.HitWindowInSeconds.CalculateAndSetBoundedCurrentValue()
+
+        #Adjust the number of degrees that is considered a press and a release if necessary.
+        if stage.StageParameters[full_press_parameter_name].ParameterType == MotorStageParameter.StageParameterType.Variable:
+            #Grab the device signal for this trial
+            stream_data = current_trial.TrialData[1]
+        
+            #Find the maximal degrees pressed from the current trial
+            max_deg_press = stream_data.Where(lambda val, index: \
+                (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
+                (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max()
+
+            half_max_deg_press = max_deg_press / 2.0
+
+            #Retain the maximal force of the most recent 10 trials
+            stage.StageParameters[full_press_parameter_name].History.Enqueue(max_deg_press)
+            stage.StageParameters[full_press_parameter_name].CalculateAndSetBoundedCurrentValue()
+
+            #Change the release point as necessary
+            stage.StageParameters[release_point_parameter_name].History.Enqueue(half_max_deg_press)
+            stage.StageParameters[release_point_parameter_name].CalculateAndSetBoundedCurrentValue()
+
+        #Adjust the number of presses hit threshold if necessary
+        if stage.StageParameters[hit_threshold_parameter_name].ParameterType == MotorStageParameter.StageParameterType.Variable:
+            stage.StageParameters[hit_threshold_parameter_name].History.Enqueue(PythonLeverStageImplementation.press_count)
+            stage.StageParameters[hit_threshold_parameter_name].CalculateAndSetBoundedCurrentValue()
             
         #Adjust the position of the auto-positioner, according to the stage settings
         if stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
             hit_count = all_trials.Where(lambda t: t.Result == MotorTrialResult.Hit).Count()
             hit_count_modulus = hit_count % PythonLeverStageImplementation.Autopositioner_Trial_Interval
             if hit_count > 0 and hit_count_modulus is 0:
-                stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
-                if stage.Position.CurrentValue is -0.5 or stage.Position.CurrentValue is 0:
-                    stage.Position.CurrentValue = 0.5
-                MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+                if stage.Position.CurrentValue < 2.0:
+                    stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
+                    if stage.Position.CurrentValue is -0.5 or stage.Position.CurrentValue is 0:
+                        stage.Position.CurrentValue = 0.5
+                    MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
 
         return
 

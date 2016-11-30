@@ -49,6 +49,9 @@ namespace MotoTrakUtilities
                         result.Add(line_without_comments);
                     }
                 }
+
+                //Close the file stream
+                reader.Close();
             }
 
             return result;
