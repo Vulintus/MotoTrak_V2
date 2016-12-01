@@ -241,26 +241,35 @@ namespace MotoTrak
                 }
                 else if (e.PropertyName.Equals("CurrentTrial"))
                 {
-                    //If the "CurrentTrial" property has changed, then the property has either been set or unset.
-                    //If it gets set to a new object, that means a new trial has begun.  If, on the other hand,
-                    //the object is null, that means a trial is not currently taking place.
-                    ScaleXAxis();
+                    if (StreamIndex < Model.CurrentSession.SelectedStage.DataStreamTypes.Count)
+                    {
+                        //If the "CurrentTrial" property has changed, then the property has either been set or unset.
+                        //If it gets set to a new object, that means a new trial has begun.  If, on the other hand,
+                        //the object is null, that means a trial is not currently taking place.
+                        ScaleXAxis();
+                    }
                 }
                 else if (e.PropertyName.Equals("TrialEventsQueue"))
                 {
-                    //If we enter this portion of the if-statement, it indicates that some kind of event has occurred within
-                    //the trial that is currently executing.
+                    if (StreamIndex < Model.CurrentSession.SelectedStage.DataStreamTypes.Count)
+                    {
+                        //If we enter this portion of the if-statement, it indicates that some kind of event has occurred within
+                        //the trial that is currently executing.
 
-                    //We need to process any new events that have occurred and create line annotations of them on the graph.
-                    //This is very similar to the process of creating line annotations for stage parameters, except that
-                    //these will be vertical line annotations instead of horizontal line annotations.
-                    //We will also create text annotations for these, just like we did for stage parameters.
-                    AddTrialEventAnnotations();
+                        //We need to process any new events that have occurred and create line annotations of them on the graph.
+                        //This is very similar to the process of creating line annotations for stage parameters, except that
+                        //these will be vertical line annotations instead of horizontal line annotations.
+                        //We will also create text annotations for these, just like we did for stage parameters.
+                        AddTrialEventAnnotations();
+                    }
                 }
                 else if (e.PropertyName.Equals("MonitoredSignal"))
                 {
-                    //Update the plot signal
-                    DrawStreamedData();
+                    if (StreamIndex < Model.CurrentSession.SelectedStage.DataStreamTypes.Count)
+                    {
+                        //Update the plot signal
+                        DrawStreamedData();
+                    }
                 }
                 else if (e.PropertyName.Equals("SessionOverviewValues"))
                 {
@@ -306,6 +315,8 @@ namespace MotoTrak
         {
             if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
             {
+                ClearAllAnnotations();
+
                 if (StreamIndex < Model.CurrentSession.SelectedStage.DataStreamTypes.Count)
                 {
                     //Set up the plot for streaming signal data
@@ -439,11 +450,30 @@ namespace MotoTrak
                 LinearAxis x_axis = Plot.Axes.FirstOrDefault(x => x.Position == AxisPosition.Bottom) as LinearAxis;
                 if (x_axis != null)
                 {
-                    //Set the x-axis limits to encompass how many trials exist
-                    x_axis.Minimum = 0;
-                    x_axis.MinimumRange = 10;
-                    x_axis.Maximum = Math.Max(Model.CurrentSession.Trials.Count + 1, x_axis.MinimumRange);
-                    x_axis.MaximumRange = Model.CurrentSession.Trials.Count + 1;
+                    if (datapoints != null && datapoints.Count > 0)
+                    {
+                        double max_x_limit = Math.Ceiling(datapoints.LastOrDefault().X) + 1;
+
+                        //Set the x-axis limits to encompass how many trials exist
+                        x_axis.Minimum = 0;
+                        x_axis.MinimumRange = 1;
+                        x_axis.Maximum = Math.Max(max_x_limit, x_axis.MinimumRange);
+                        x_axis.MaximumRange = max_x_limit;
+                    }
+                }
+
+                //Set the y-axis limit
+                LinearAxis y_axis = Plot.Axes.FirstOrDefault(x => x.Position == AxisPosition.Left) as LinearAxis;
+                if (y_axis != null)
+                {
+                    if (datapoints != null && datapoints.Count > 0)
+                    {
+                        double max_y_limit = Math.Ceiling(datapoints.Select(x => x.Y).ToList().Max());
+                        y_axis.Minimum = 0;
+                        y_axis.MinimumRange = max_y_limit;
+                        y_axis.Maximum = max_y_limit + 1;
+                        y_axis.MaximumRange = max_y_limit + 1;
+                    }
                 }
 
                 //Grab all of the scatter plot series
@@ -577,9 +607,12 @@ namespace MotoTrak
 
         private void RunAnnotationLogic ()
         {
-            ClearAllAnnotations();
-            DrawAnnotations_AlwaysOn();
-            DrawAnnotations_DisplayDuringTrial();
+            if (StreamIndex < Model.CurrentSession.SelectedStage.DataStreamTypes.Count)
+            {
+                ClearAllAnnotations();
+                DrawAnnotations_AlwaysOn();
+                DrawAnnotations_DisplayDuringTrial();
+            }
         }
 
         /// <summary>
@@ -786,7 +819,7 @@ namespace MotoTrak
 
                 var ymin = MotorMath.NanMin(values);
                 var ymax = MotorMath.NanMax(values);
-                var yrange = Math.Abs(ymax - ymin) * 1.2;  //Multiply the range by 120% to extend it a bit
+                var yrange = Math.Abs(ymax - ymin) * 1.2 + 10;  //Multiply the range by 120% to extend it a bit
 
                 //Get the y-axis object
                 var y_axis = Plot.Axes.Where(x => x.Position == AxisPosition.Left).FirstOrDefault();
