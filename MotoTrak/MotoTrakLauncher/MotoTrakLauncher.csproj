@@ -113,6 +113,12 @@
   <ItemGroup>
     <Resource Include="mototrak_icon.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MotoTrakBase\MotoTrakBase.csproj">
+      <Project>{e2a22dfd-4af2-4d75-bd72-0cd083865047}</Project>
+      <Name>MotoTrakBase</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

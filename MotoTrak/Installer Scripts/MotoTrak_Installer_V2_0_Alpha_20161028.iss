@@ -4,7 +4,7 @@
 #include <idp.iss>
 
 #define MyAppName "MotoTrak"
-#define MyAppVersion "2.0.13 Alpha"
+#define MyAppVersion "2.0.15 Beta"
 #define MyAppPublisher "Vulintus"
 #define MyAppURL "http://www.vulintus.com"
 #define MyAppExeName "MotoTrakLauncher.exe"
@@ -26,7 +26,7 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 ;OutputDir=C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Installer
 OutputDir=..\Installer
-OutputBaseFilename=MotoTrak_Setup_V2_0_13_Beta_20161118
+OutputBaseFilename=MotoTrak_Setup_V2_0_15_Beta_20161202
 Compression=lzma
 SolidCompression=yes
 
@@ -42,6 +42,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 Source: "..\Release\MotoTrakLauncher.exe"; DestDir: "{app}"; Flags: ignoreversion 
 Source: "..\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\Release\Stages\*"; DestDir: "{localappdata}\Vulintus\MotoTrak\Stages"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

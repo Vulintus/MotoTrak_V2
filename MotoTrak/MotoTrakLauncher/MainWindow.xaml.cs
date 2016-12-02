@@ -53,5 +53,17 @@ namespace MotoTrakLauncher
         {
             this.Close();
         }
+
+        private void ViewSession_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void OpenConfigFolder_Click(object sender, RoutedEventArgs e)
+        {
+            var config = MotoTrakBase.MotoTrakConfiguration.GetInstance();
+            string folder_to_open = config.GetLocalApplicationDataFolder();
+            Process.Start(folder_to_open);
+        }
     }
 }

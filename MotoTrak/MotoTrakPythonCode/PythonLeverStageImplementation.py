@@ -36,7 +36,8 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
     inter_press_interval = 0
     press_count = 0
 
-    Autopositioner_Trial_Interval = 50
+    Autopositioner_Between_Session_Trial_Interval = 40
+    Autopositioner_Trial_Interval = 30
 
     #Declare string parameters for this stage
     TaskDefinition = MotorTaskDefinition()
@@ -75,28 +76,27 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         PythonLeverStageImplementation.Inter_Press_Interval_Threshold_List = []
         PythonLeverStageImplementation.Press_Count_List = []
 
-        #Take only recent behavior sessions that have at least 50 successful trials
-        total_hits = 0
-        for i in recent_behavior_sessions:
-            this_session_hits = i.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count()
-            if this_session_hits >= 1:
-                total_hits += this_session_hits
-                
-        #Now, based off the total number of hits that have occurred in previous sessions, set the position of the autopositioner
-        position = -1.0
-        if total_hits >= 50 and total_hits < 100:
-            position = 0.5
-        elif total_hits >= 100 and total_hits < 150:
-            position = 1.0
-        elif total_hits >= 150 and total_hits < 200:
-            position = 1.5
-        elif total_hits >= 200:
-            position = 2.0
+        position_to_set = -1.0
+
+        behavior_sessions_to_test = recent_behavior_sessions.Where(lambda x: x.Trials.Count >= PythonLeverStageImplementation.Autopositioner_Between_Session_Trial_Interval).ToList()
+        last_behavior_session = behavior_sessions_to_test.LastOrDefault()
+        next_to_last_behavior_session = None
+        if (behavior_sessions_to_test.Count > 1):
+            next_to_last_behavior_session = behavior_sessions_to_test[behavior_sessions_to_test.Count - 2]
+        if (last_behavior_session is not None):
+            last_position = last_behavior_session.Trials.LastOrDefault().DevicePosition
+            next_to_last_position = 0
+            if (next_to_last_behavior_session is not None):
+                next_to_last_position = next_to_last_behavior_session.Trials.LastOrDefault().DevicePosition
+            if (last_position > 1.5 and next_to_last_position > 1.5):
+                position_to_set = 2.0
+            else:
+                position_to_set = last_position - 0.5
         
         #Set the position of the autopositioner if it is supposed to be adaptively set
         if current_session_stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
-            current_session_stage.Position.CurrentValue = position
-            MotoTrakAutopositioner.GetInstance().SetPosition(position)
+            current_session_stage.Position.CurrentValue = position_to_set
+            MotoTrakAutopositioner.GetInstance().SetPosition(position_to_set)
 
         return
 
