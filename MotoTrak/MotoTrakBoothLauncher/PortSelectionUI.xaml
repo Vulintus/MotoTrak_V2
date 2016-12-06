@@ -38,13 +38,17 @@
 
         <TextBlock FontSize="14" 
                    FontWeight="Bold" 
-                   Text="No MotoTrak booths were detected!" 
+                   Text="{Binding Path=NoBoothsDetectedText, FallbackValue=None}" 
                    HorizontalAlignment="Center"
                    Visibility="{Binding Path=NoBoothsTextVisibility, FallbackValue=Collapsed}"
                    />
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-            <Button Width="120" Height="40" Margin="5,0,0,5" Click="RefreshButtonClick" VerticalAlignment="Bottom">
+            <Button Width="120" 
+                    Height="40" 
+                    Margin="5,0,0,5" 
+                    Command="{Binding Path=RefreshCommand}"
+                    VerticalAlignment="Bottom">
                 <Button.Content>
                     <Canvas>
                         <Path Stroke="Green" StrokeThickness="3">
@@ -60,9 +64,17 @@
                     </Canvas>
                 </Button.Content>
             </Button>
-            <Button Content="OK" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="120" Height="40" Margin="5,0,0,5"
-                    FontSize="18" FontWeight="Bold"
-                Click="OK_Button_Click" />
+            <Button Content="{Binding Path=SelectBoothButtonContent, FallbackValue=OK}" 
+                    IsEnabled="{Binding Path=SelectBoothButtonEnabled, FallbackValue=True}"
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Bottom" 
+                    Width="120" 
+                    Height="40" 
+                    Margin="5,0,0,5"
+                    FontSize="18" 
+                    FontWeight="Bold" 
+                    Click="OK_Button_Click"
+                    />
         </StackPanel>
 
     </StackPanel>

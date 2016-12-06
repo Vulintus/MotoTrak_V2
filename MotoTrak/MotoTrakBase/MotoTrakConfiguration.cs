@@ -54,8 +54,10 @@ namespace MotoTrakBase
         #region Properties
 
         public ConcurrentDictionary<string, IMotorStageImplementation> PythonStageImplementations = new ConcurrentDictionary<string, IMotorStageImplementation>();
-        public ConcurrentDictionary<string, string> BoothPairings = new ConcurrentDictionary<string, string>();
 
+        //public ConcurrentDictionary<string, string> BoothPairings = new ConcurrentDictionary<string, string>();
+        public ConcurrentBag<MotoTrakBoothPairing> BoothPairings = new ConcurrentBag<MotoTrakBoothPairing>();
+        
         public int ConfigurationVersion { get; set; }
         public string VariantName { get; set; }
         public string StageWebPath { get; set; }
@@ -103,6 +105,14 @@ namespace MotoTrakBase
                 StreamWriter writer = new StreamWriter(booth_pairings_file_name);
 
                 //Write each booth pairing to the file
+                foreach (var pairing in BoothPairings)
+                {
+                    string device_type_string = MotorDeviceTypeConverter.ConvertToDescription(pairing.DeviceConnected);
+                    string last_updated_string = pairing.LastUpdated.ToString();
+                    writer.WriteLine(pairing.BoothLabel + ", " + pairing.ComPort + ", " + last_updated_string + ", " + device_type_string);
+                }
+
+                /*
                 foreach (var kvp in BoothPairings)
                 {
                     if (!string.IsNullOrEmpty(kvp.Value))
@@ -110,6 +120,7 @@ namespace MotoTrakBase
                         writer.WriteLine(kvp.Value + ", " + kvp.Key);
                     }
                 }
+                */
 
                 //Close the file handle
                 writer.Close();
@@ -117,6 +128,31 @@ namespace MotoTrakBase
             catch
             {
                 ErrorLoggingService.GetInstance().LogStringError("Unable to save booth pairings!");
+            }
+        }
+
+        /// <summary>
+        /// Updates an existing booth pairing in our collection of booth pairings, OR creates a new booth pairing
+        /// if it doesn't already exist.
+        /// </summary>
+        /// <param name="com_port">The com port is used as the key to the booth pairings.  It is how we find an existing booth pairing, or determine whether to create a new one.</param>
+        /// <param name="booth_label">The booth label to update for the com port.</param>
+        /// <param name="device_type">The device currently connected to the booth.</param>
+        public void UpdateBoothPairing (string com_port, string booth_label, MotorDeviceType device_type)
+        {
+            var pairing = BoothPairings.Where(x => x.ComPort.Equals(com_port)).FirstOrDefault();
+            if (pairing != null)
+            {
+                //If the booth pairing already exists in our collection, let's update it.
+                pairing.BoothLabel = booth_label;
+                pairing.DeviceConnected = device_type;
+                pairing.LastUpdated = DateTime.Now;
+            }
+            else
+            {
+                //Otherwise, create a new booth pairing to be stored.
+                MotoTrakBoothPairing new_pairing = new MotoTrakBoothPairing(booth_label, com_port, device_type, DateTime.Now);
+                BoothPairings.Add(new_pairing);
             }
         }
 
@@ -144,9 +180,31 @@ namespace MotoTrakBase
 
                         string booth_name = splitString[0].Trim();
                         string com_port = splitString[1].Trim();
+                        DateTime last_updated = DateTime.MinValue;
+                        MotorDeviceType device_type = MotorDeviceType.Unknown;
+
+                        //Parse out the "last updated" date and time if it exists
+                        if (splitString.Length >= 3)
+                        {
+                            string last_updated_string = splitString[2].Trim();
+                            last_updated = DateTime.Parse(last_updated_string);
+                        }
+
+                        //Parse out the connected device if it exists
+                        if (splitString.Length >= 4)
+                        {
+                            string device_type_string = splitString[3].Trim();
+                            device_type = MotorDeviceTypeConverter.ConvertToMotorDeviceType(device_type_string);
+                        }
+
+                        //Instantiate a booth pairing object
+                        MotoTrakBoothPairing pairing = new MotoTrakBoothPairing(booth_name, com_port, device_type, last_updated);
+
+                        //Add the booth pairing to our set
+                        BoothPairings.Add(pairing);
 
                         //Add the booth pairing to our dictionary
-                        BoothPairings.TryAdd(com_port, booth_name);
+                        //BoothPairings.TryAdd(com_port, booth_name);
                     }
                 }
                 catch

@@ -515,15 +515,20 @@ namespace MotoTrak
             //Gather information about the booth and what devices are connected to it
             BoothLabel = ControllerBoard.GetBoothLabel();
 
-            //Save the booth label the the booth pairings file
-            if (ControllerBoard.IsSerialConnectionValid)
-            {
-                config.BoothPairings[comPort] = BoothLabel;
-                config.SaveBoothPairings();
-            }
+            //Sleep for 50 milliseconds to allow the booth label operation to complete before going on to the operation
+            //that gets the connected motor device.
+            Thread.Sleep(50);
 
             //Grab the motor device
             CurrentDevice = ControllerBoard.GetMotorDevice();
+            
+            //Save the booth label the the booth pairings file
+            if (ControllerBoard.IsSerialConnectionValid)
+            {
+                //config.BoothPairings[comPort] = BoothLabel;
+                config.UpdateBoothPairing(comPort, BoothLabel, CurrentDevice.DeviceType);
+                config.SaveBoothPairings();
+            }
             
             //If no device was found, or if the device is unknown, throw an error.
             if (CurrentDevice == null || CurrentDevice.DeviceType == MotorDeviceType.Unknown)

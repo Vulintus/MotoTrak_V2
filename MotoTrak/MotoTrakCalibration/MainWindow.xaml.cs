@@ -38,9 +38,10 @@ namespace MotoTrakCalibration
 
                 //Query the motor device that is connected to the motor board
                 MotorDevice device = motor_board.GetMotorDevice();
-                
+
                 //Save the booth pairings
-                MotoTrakConfiguration.GetInstance().BoothPairings[portName] = booth_label;
+                //MotoTrakConfiguration.GetInstance().BoothPairings[portName] = booth_label;
+                MotoTrakConfiguration.GetInstance().UpdateBoothPairing(portName, booth_label, device.DeviceType);
                 MotoTrakConfiguration.GetInstance().SaveBoothPairings();
                 
                 //Check to see which type of device is connected to the board

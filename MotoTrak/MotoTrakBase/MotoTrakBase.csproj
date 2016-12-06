@@ -30,7 +30,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Real Release|AnyCPU'">
-    <OutputPath>bin\Real Release\</OutputPath>
+    <OutputPath>..\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="IMotorBoard.cs" />
     <Compile Include="MotorBoardSimulator.cs" />
+    <Compile Include="MotoTrakBoothPairing.cs" />
     <Compile Include="MultipleEventsAllowedAttribute.cs" />
     <Compile Include="ErrorLoggingService.cs" />
     <Compile Include="IMotorStageImplementation.cs" />

@@ -49,6 +49,17 @@ namespace MotoTrakBoothLauncher
         {
             get
             {
+                var booth_pairing = MotoTrakConfiguration.GetInstance().BoothPairings.Where(x => x.ComPort.Equals(_model.DeviceID)).FirstOrDefault();
+                if (booth_pairing != null)
+                {
+                    var booth_name = booth_pairing.BoothLabel;
+                    if (!string.IsNullOrEmpty(booth_name))
+                    {
+                        return ("Booth " + booth_name);
+                    }
+                }
+
+                /*
                 if (MotoTrakConfiguration.GetInstance().BoothPairings.ContainsKey(_model.DeviceID))
                 {
                     var booth_name = MotoTrakConfiguration.GetInstance().BoothPairings[_model.DeviceID];
@@ -57,6 +68,7 @@ namespace MotoTrakBoothLauncher
                         return ("Booth " + booth_name);
                     }
                 }
+                */
 
                 return "Unknown booth";
             }

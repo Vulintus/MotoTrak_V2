@@ -2,8 +2,9 @@ Stage File Version: 1
 Stage Name: PAutoShape
 Stage Description: Allows for automatic shaping of animals
 Stage Implementation: PythonPullStageImplementation.py
-Stage Output Trigger: OFF
+Stage Output Trigger: Off
 Stage Device: Pull
+Stage Sampling Rate: 10
 Stage Parameter: Pre-Trial Duration, seconds, Fixed, Undefined, 1, NaN, NaN, NaN
 Stage Parameter: Hit Window Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
 Stage Parameter: Post-Trial Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN

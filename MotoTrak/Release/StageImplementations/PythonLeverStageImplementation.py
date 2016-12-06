@@ -60,7 +60,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         initiation_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.InitiationThreshold, "degrees", True, False, False)
         lever_full_press_parameter = MotorTaskParameter("Full Press", "degrees", True, True, True)
         lever_release_point_parameter = MotorTaskParameter("Release Point", "degrees", True, True, True)
-        press_counting_parameter = MotorTaskParameter("Method for counting presses", "0 = count on downward motion, 1 = count on release motion", False, False, False)
+        press_counting_parameter = MotorTaskParameter("Method for counting presses", "0 = count on downward motion; 1 = count on release motion", False, False, False)
         
         PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(hit_threshold_parameter)
         PythonLeverStageImplementation.TaskDefinition.TaskParameters.Add(initiation_threshold_parameter)
@@ -186,22 +186,22 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
                     #Only look at samples within the hit window
                     if (i >= stage.TotalRecordedSamplesBeforeHitWindow) and (i < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow)):
                         #If the lever is currently released, check to see if it has been pressed
-                        if (press_state is 0):
+                        if (press_state == 0):
                             if (stream_data[i] > stage.StageParameters[full_press_parameter_name].CurrentValue):
                                 press_state = 1
 
                                 #If we are counting presses based on downward motion
-                                if (stage.StageParameters[press_counting_parameter_name].CurrentValue is not 1):
+                                if (stage.StageParameters[press_counting_parameter_name].CurrentValue != 1):
                                     PythonLeverStageImplementation.press_count = PythonLeverStageImplementation.press_count + 1
                                     indices_of_presses.Add(i)
 
-                        elif (press_state is 1):
+                        elif (press_state == 1):
                             #Otherwise, if the lever is pressed, check to see if it has been fully released
                             if (stream_data[i] <= stage.StageParameters[release_point_parameter_name].CurrentValue):
                                 press_state = 0
 
                                 #If we are counting presses based on releasing motion
-                                if (stage.StageParameters[press_counting_parameter_name].CurrentValue is 1):
+                                if (stage.StageParameters[press_counting_parameter_name].CurrentValue == 1):
                                     PythonLeverStageImplementation.press_count = PythonLeverStageImplementation.press_count + 1
                                     indices_of_presses.Add(i)
 

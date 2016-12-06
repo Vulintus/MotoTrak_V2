@@ -11,23 +11,6 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\bin\Real Releas
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\bin\Real Release\MotoTrakBase.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\bin\Real Release\MotoTrakUtilities.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\bin\Real Release\Dynamitey.pdb
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\StageDesigner.exe.config
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\StageDesigner.exe
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\StageDesigner.pdb
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.csprojResolveAssemblyReference.cache
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\MainWindow.g.cs
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageParameterControl.g.cs
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\App.g.cs
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\GeneratedInternalTypeHelper.g.cs
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner_MarkupCompile.cache
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner_MarkupCompile.lref
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\MainWindow.baml
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageParameterControl.baml
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.g.resources
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.Properties.Resources.resources
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.csproj.GenerateResource.Cache
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.exe
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.pdb
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\Release\StageDesigner.exe.config
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\Release\StageDesigner.exe
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\Release\StageDesigner.pdb
@@ -45,3 +28,20 @@ C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\Sta
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.csproj.GenerateResource.Cache
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.exe
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\StageDesigner.exe.config
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\StageDesigner.exe
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\StageDesigner.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.csprojResolveAssemblyReference.cache
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\MainWindow.g.cs
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageParameterControl.g.cs
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\App.g.cs
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\GeneratedInternalTypeHelper.g.cs
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner_MarkupCompile.cache
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner_MarkupCompile.lref
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\MainWindow.baml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageParameterControl.baml
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.g.resources
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.Properties.Resources.resources
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.csproj.GenerateResource.Cache
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.exe
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\StageDesigner\obj\Real Release\StageDesigner.pdb
