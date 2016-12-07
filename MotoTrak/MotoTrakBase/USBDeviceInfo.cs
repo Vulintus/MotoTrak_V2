@@ -15,11 +15,12 @@ namespace MotoTrakBase
     {
         #region Constructor
 
-        public USBDeviceInfo (string device_description, string com_port)
+        public USBDeviceInfo (string device_description, string com_port, bool busy)
         {
             Description = device_description;
             DeviceID = com_port;
             SerialObject = new SerialPort(DeviceID, 115200);
+            IsPortBusy = busy;
         }
 
         #endregion
@@ -29,12 +30,13 @@ namespace MotoTrakBase
         public string DeviceID = string.Empty;
         public string Description = string.Empty;
         public SerialPort SerialObject = null;
-
+        
         /// <summary>
         /// Indicates whether the current serial port is busy
         /// </summary>
         public bool IsPortBusy
         {
+            /*
             get
             {
                 bool port_busy = true;
@@ -65,7 +67,9 @@ namespace MotoTrakBase
                 }
 
                 return port_busy;
-            }
+            }*/
+            get;
+            set;
         }
 
         #endregion

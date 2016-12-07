@@ -75,6 +75,32 @@ namespace MotoTrakBoothLauncher
         }
 
         /// <summary>
+        /// A string describing what kind of motor device is connected to the MotoTrak controller board.
+        /// </summary>
+        public string MotorDeviceInformation
+        {
+            get
+            {
+                var motor_device_connected = MotoTrakConfiguration.GetInstance().BoothPairings.Where(x => x.ComPort == _model.DeviceID).Select(x => x.DeviceConnected).FirstOrDefault();
+                string motor_device_string = MotorDeviceTypeConverter.ConvertToDescription(motor_device_connected);
+                return motor_device_string;
+            }
+        }
+
+        /// <summary>
+        /// A string indicating the date and time this information was last updated
+        /// </summary>
+        public string LastUpdatedInformation
+        {
+            get
+            {
+                var date_last_updated = MotoTrakConfiguration.GetInstance().BoothPairings.Where(x => x.ComPort == _model.DeviceID).Select(x => x.LastUpdated).FirstOrDefault();
+                string date_updated_string = date_last_updated.ToString();
+                return date_updated_string;
+            }
+        }
+
+        /// <summary>
         /// Some information about the device itself.
         /// </summary>
         public string DeviceInformation

@@ -225,7 +225,7 @@ namespace MotoTrakBoothLauncher
         /// <summary>
         /// Kicks off a refresh of the booth listing in the booth selection box
         /// </summary>
-        public void ToggleRefresh ()
+        public void ToggleRefresh ( )
         {
             if (_refresh_thread == null  || !_refresh_thread.IsBusy)
             {
@@ -236,6 +236,11 @@ namespace MotoTrakBoothLauncher
                 _refresh_thread.DoWork += delegate
                 {
                     _available_port_list = MotorBoard.QueryConnectedArduinoDevices();
+                    foreach (var port in _available_port_list)
+                    {
+                        bool success = MotorBoard.QueryConnectedMotorBoard(port.DeviceID);
+                        port.IsPortBusy = !success;
+                    }
                 };
                 _refresh_thread.ProgressChanged += delegate
                 {

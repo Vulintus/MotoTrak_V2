@@ -102,14 +102,15 @@ namespace MotoTrakBase
                 string booth_pairings_file_name = GetLocalApplicationDataFolder() + BoothPairingsFileName;
 
                 //Open a stream to write to the file
-                StreamWriter writer = new StreamWriter(booth_pairings_file_name);
+                StreamWriter writer = new StreamWriter(booth_pairings_file_name, false);
 
                 //Write each booth pairing to the file
                 foreach (var pairing in BoothPairings)
                 {
                     string device_type_string = MotorDeviceTypeConverter.ConvertToDescription(pairing.DeviceConnected);
                     string last_updated_string = pairing.LastUpdated.ToString();
-                    writer.WriteLine(pairing.BoothLabel + ", " + pairing.ComPort + ", " + last_updated_string + ", " + device_type_string);
+                    string output_string = pairing.BoothLabel + ", " + pairing.ComPort + ", " + last_updated_string + ", " + device_type_string;
+                    writer.WriteLine(output_string);
                 }
 
                 /*
@@ -176,7 +177,7 @@ namespace MotoTrakBase
                     for (int i = 0; i < lines.Count; i++)
                     {
                         string thisLine = lines[i];
-                        string[] splitString = thisLine.Split(new char[] { ',' }, 2);
+                        string[] splitString = thisLine.Split(new char[] { ',' }, 4);
 
                         string booth_name = splitString[0].Trim();
                         string com_port = splitString[1].Trim();

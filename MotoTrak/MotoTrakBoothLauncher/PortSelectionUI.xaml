@@ -17,6 +17,15 @@
                 <DataTemplate>
                     <StackPanel Orientation="Vertical">
                         <TextBlock Text="{Binding Path=BoothName, FallbackValue=Booth}" FontSize="24" />
+
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Motor device: " FontSize="10" />
+                            <TextBlock Text="{Binding Path=MotorDeviceInformation, FallbackValue=Unknown}" FontSize="10" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Last updated: " FontSize="10" />
+                            <TextBlock Text="{Binding Path=LastUpdatedInformation, FallbackValue=Unknown}" FontSize="10" />
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <!--<Path Data="M 0,0 L 0,0 5,10 L 5,10 10,-10" Stroke="ForestGreen" Fill="ForestGreen" Margin="0,0,10,0" />-->
                             <Canvas Visibility="{Binding Path=ConnectionBadVisibility, FallbackValue=Collapsed}"

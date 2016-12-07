@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO.Ports;
 using System.Management;
+using System.Threading;
 
 namespace MotoTrakBase
 {
@@ -59,6 +60,15 @@ namespace MotoTrakBase
 
                 return _instance;
             }
+        }
+
+        /// <summary>
+        /// Gets an instance of the MotorBoard class separate from the singleton instance.
+        /// </summary>
+        /// <returns>Returns a shiny new instance of the MotorBoard class</returns>
+        public static IMotorBoard GetNewInstance ()
+        {
+            return new MotorBoard();
         }
 
         #endregion
@@ -944,6 +954,44 @@ namespace MotoTrakBase
 
         #region Static methods
 
+        /// <summary>
+        /// This function attempts to connect to the motor board at the specified COM port.  If successful, it then
+        /// queries the booth label and the device that are connected to the motor board, updates the booth pairings 
+        /// collection, and saves the booth pairings out to the booth pairings file.  It then returns true, indicating
+        /// that the process was successful.  If a connection cannot be made, it returns false.
+        /// </summary>
+        /// <param name="com_port">The COM port of the MotoTrak controller board we want to connect to.</param>
+        /// <returns>True if successful, False if not successful.</returns>
+        public static bool QueryConnectedMotorBoard ( string com_port )
+        {
+            IMotorBoard new_motor_board = MotorBoard.GetNewInstance();
+            bool success = new_motor_board.ConnectToArduino(com_port);
+            if (success)
+            {
+                //Get the booth label
+                string booth_number = new_motor_board.GetBoothLabel();
+
+                //Get the board device value
+                int device_value = new_motor_board.GetBoardDeviceValue();
+                MotorDeviceType device_type = MotorDevice.ConvertAnalogDeviceValueToDeviceType(device_value);
+
+                //Update the booth pairing
+                MotoTrakConfiguration.GetInstance().UpdateBoothPairing(com_port, booth_number, device_type);
+                MotoTrakConfiguration.GetInstance().SaveBoothPairings();
+
+                //Close the connection to the motor board
+                new_motor_board.DisconnectFromArduino();
+
+                //Return true indicating that we were successful
+                return true;
+            }
+            else
+            {
+                //Return false indicating that we were not able to connect to the motor board.
+                return false;
+            }
+        }
+
         public static List<USBDeviceInfo> QueryConnectedArduinoDevices ()
         {
             //Create a list to hold information from USB devices
@@ -958,7 +1006,7 @@ namespace MotoTrakBase
             {
                 string id = (string)device.GetPropertyValue("DeviceID");
                 string desc = (string)device.GetPropertyValue("Description");
-                USBDeviceInfo d = new USBDeviceInfo(desc, id);
+                USBDeviceInfo d = new USBDeviceInfo(desc, id, false);
                 
                 //Check to see if the available serial port is a connected Arduino device
                 if (d.Description.Contains("Arduino"))
