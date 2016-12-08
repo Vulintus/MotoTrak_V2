@@ -477,7 +477,8 @@ namespace MotoTrakBase
                     //If we are loading stages from a local source...
                     try
                     {
-                        stages = RetrieveAllLocalStages(config.StageLocalPath);
+                        string full_stage_path = config.GetLocalApplicationDataFolder() + config.StageLocalPath + @"\";
+                        stages = RetrieveAllLocalStages(full_stage_path);
                     }
                     catch (Exception e)
                     {

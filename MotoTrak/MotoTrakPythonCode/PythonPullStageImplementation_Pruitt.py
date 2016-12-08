@@ -68,18 +68,14 @@ class PythonPullStageImplementation (IMotorStageImplementation):
                 total_hits += this_session_hits
                 
         #Now, based off the total number of hits that have occurred in previous sessions, set the position of the autopositioner
-        position = -1.0
+        position = 0.0
         if total_hits >= 50 and total_hits < 100:
-            position = -0.5
-        elif total_hits >= 100 and total_hits < 150:
-            position = 0.0
-        elif total_hits >= 150 and total_hits < 200:
             position = 0.5
-        elif total_hits >= 200 and total_hits < 250:
+        elif total_hits >= 100 and total_hits < 150:
             position = 1.0
-        elif total_hits >= 250 and total_hits < 300:
+        elif total_hits >= 150 and total_hits < 200:
             position = 1.5
-        elif total_hits >= 300:
+        elif total_hits >= 200:
             position = 2.0
         
         #Set the position of the autopositioner if it is supposed to be adaptively set

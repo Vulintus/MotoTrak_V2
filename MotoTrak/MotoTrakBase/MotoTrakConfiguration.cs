@@ -54,8 +54,6 @@ namespace MotoTrakBase
         #region Properties
 
         public ConcurrentDictionary<string, IMotorStageImplementation> PythonStageImplementations = new ConcurrentDictionary<string, IMotorStageImplementation>();
-
-        //public ConcurrentDictionary<string, string> BoothPairings = new ConcurrentDictionary<string, string>();
         public ConcurrentBag<MotoTrakBoothPairing> BoothPairings = new ConcurrentBag<MotoTrakBoothPairing>();
         
         public int ConfigurationVersion { get; set; }
@@ -87,7 +85,7 @@ namespace MotoTrakBase
             //Return the path to the caller
             return path_name;
         }
-
+        
         #endregion
 
         #region Methods
@@ -112,16 +110,6 @@ namespace MotoTrakBase
                     string output_string = pairing.BoothLabel + ", " + pairing.ComPort + ", " + last_updated_string + ", " + device_type_string;
                     writer.WriteLine(output_string);
                 }
-
-                /*
-                foreach (var kvp in BoothPairings)
-                {
-                    if (!string.IsNullOrEmpty(kvp.Value))
-                    {
-                        writer.WriteLine(kvp.Value + ", " + kvp.Key);
-                    }
-                }
-                */
 
                 //Close the file handle
                 writer.Close();
@@ -203,9 +191,6 @@ namespace MotoTrakBase
 
                         //Add the booth pairing to our set
                         BoothPairings.Add(pairing);
-
-                        //Add the booth pairing to our dictionary
-                        //BoothPairings.TryAdd(com_port, booth_name);
                     }
                 }
                 catch

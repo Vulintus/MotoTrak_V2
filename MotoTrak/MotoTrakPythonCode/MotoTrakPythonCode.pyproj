@@ -32,6 +32,7 @@
     <Compile Include="PythonPullStageImplementation.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="PythonPullStageImplementation_Pruitt.py" />
     <Compile Include="PythonSustainedPullStageImplementation.py">
       <SubType>Code</SubType>
     </Compile>
