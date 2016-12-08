@@ -117,11 +117,20 @@ namespace MotoTrakBase
         #region Methods
 
         /// <summary>
+        /// Clears the stage parameter history
+        /// </summary>
+        public void ClearHistory ()
+        {
+            History.Clear();
+        }
+
+        /// <summary>
         /// Resets the current value of a motor stage parameter to its initial value
         /// </summary>
         public void ResetParameterToInitialValue ()
         {
             CurrentValue = InitialValue;
+            this.ClearHistory();
         }
 
         /// <summary>

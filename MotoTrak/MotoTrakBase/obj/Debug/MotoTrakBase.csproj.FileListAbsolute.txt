@@ -34,5 +34,3 @@ C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\Microsoft.S
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\obj\Debug\MotoTrakBase.csprojResolveAssemblyReference.cache
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\obj\Debug\MotoTrakBase.dll
 C:\Users\PTSD\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\obj\Debug\MotoTrakBase.pdb
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\ZylSerialPort.dll
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBase\bin\Debug\ZylSerialPort.xml

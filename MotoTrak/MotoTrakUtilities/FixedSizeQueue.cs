@@ -53,5 +53,14 @@ namespace MotoTrakUtilities
                 while (q.Count > Limit && q.TryDequeue(out overflow)) ;
             }
         }
+
+        public void Clear ()
+        {
+            T item;
+            while (!q.IsEmpty)
+            {
+                bool success = q.TryDequeue(out item);
+            }
+        }
     }
 }
