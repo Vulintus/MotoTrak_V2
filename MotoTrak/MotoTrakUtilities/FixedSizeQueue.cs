@@ -50,7 +50,7 @@ namespace MotoTrakUtilities
             lock (this)
             {
                 T overflow;
-                while (q.Count > Limit && q.TryDequeue(out overflow)) ;
+                while (q.Count > Limit && q.TryDequeue(out overflow));
             }
         }
 

@@ -1,0 +1,161 @@
+﻿<Window x:Class="SessionViewer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SessionViewer"
+        xmlns:oxy="http://oxyplot.org/wpf"
+        mc:Ignorable="d"
+        Title="MotoTrak Session Viewer" Height="550" Width="700">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="40" />
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="30" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Grid.Column="0"
+                   Text="Subject: "
+                   FontSize="18"
+                   FontWeight="Bold"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left"
+                   Margin="5,0"
+                   />
+        <TextBlock Grid.Row="1"
+                   Grid.Column="0"
+                   Text="Session Date: "
+                   FontSize="18"
+                   FontWeight="Bold"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left"
+                   Margin="5,0"
+                   />
+        <TextBlock Grid.Row="2"
+                   Grid.Column="0"
+                   Text="Trial: "
+                   FontSize="18"
+                   FontWeight="Bold"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left"
+                   Margin="5,0"
+                   />
+
+        <TextBlock Grid.Row="0"
+                   Grid.Column="1"
+                   Text="{Binding Path=RatName, FallbackValue=Unknown}"
+                   FontSize="18"
+                   FontWeight="Bold"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left"
+                   Margin="5,0"
+                   />
+        <TextBlock Grid.Row="1"
+                   Grid.Column="1"
+                   Text="{Binding Path=SessionStartTime, FallbackValue=Unknown}"
+                   FontSize="18"
+                   FontWeight="Bold"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left"
+                   Margin="5,0"
+                   />
+        <TextBlock Grid.Row="2"
+                   Grid.Column="1"
+                   Text="{Binding Path=TrialNumber, FallbackValue=Unknown}"
+                   FontSize="18"
+                   FontWeight="Bold"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Left"
+                   Margin="5,0"
+                   />
+
+        <Button Grid.Row="0"
+                Grid.Column="2"
+                Margin="2,2,5,2"
+                Width="180"
+                Content="Open Session"
+                FontSize="18"
+                FontWeight="Bold"
+                HorizontalAlignment="Right"
+                Command="{Binding Path=OpenSessionCommand}"
+                />
+
+        <Button Grid.Row="1"
+                Grid.Column="2"
+                Margin="2,2,5,2"
+                Width="180"
+                Content="Save Plot (PNG)"
+                FontSize="18"
+                FontWeight="Bold"
+                HorizontalAlignment="Right"
+                Command="{Binding Path=SavePlotCommand}"
+                />
+
+        <Button Grid.Row="2"
+                Grid.Column="2"
+                Margin="2,2,5,2"
+                Width="180"
+                Content="Toggle session view"
+                FontSize="18"
+                FontWeight="Bold"
+                HorizontalAlignment="Right"
+                Command="{Binding Path=ToggleSessionViewCommand}"
+                />
+
+        <Grid Grid.Row="3"
+              Grid.Column="0"
+              Grid.ColumnSpan="3"
+              >
+
+            <!-- OxyPlot WPF plot -->
+            <oxy:PlotView MinHeight="250"
+                          Margin="5"
+                          VerticalAlignment="Stretch" 
+                          HorizontalAlignment="Stretch" 
+                          Model="{Binding Path=TrialPlotModel}"
+                          Name="TrialViewerPlotObject"
+                          />
+
+
+            <!-- Height 100, Width 150 -->
+            <oxy:PlotView MinHeight="100"
+                    MinWidth="150"
+                    Margin="5"
+                    VerticalAlignment="Top"
+                    HorizontalAlignment="Right"      
+                    Name="SessionViewerPlotObject"
+                    Model="{Binding Path=SessionPlotModel}"
+                    Visibility="{Binding Path=SessionViewerPlotVisibility, FallbackValue=Visible}"
+                    />
+
+        </Grid>
+
+        <ScrollBar Grid.Row="4"
+                   Grid.Column="0"
+                   Grid.ColumnSpan="3"
+                   Margin="5"
+                   Orientation="Horizontal"
+                   Height="20"
+                   SmallChange="1"
+                   LargeChange="1"
+                   Minimum="1"
+                   Name="TrialViewerScrollBar"
+                   ValueChanged="TrialViewerScrollBar_ValueChanged"
+                   ViewportSize="{Binding Path=ScrollBarViewportSize}"
+                   Maximum="{Binding Path=TotalTrials}"
+                   IsEnabled="{Binding Path=IsScrollBarEnabled}"
+                   />
+
+        
+
+
+    </Grid>
+</Window>
