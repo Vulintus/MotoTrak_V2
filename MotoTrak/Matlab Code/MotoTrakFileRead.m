@@ -172,6 +172,9 @@ else
     return;
 end
 
+    %Close the data file.
+    fclose(fid);
+    
 end
 
 %% mototrak_read_trial - a subfunction that reads in individual trials from the MotoTrak session file
@@ -243,7 +246,5 @@ function [trial, trial_number] = mototrak_read_trial ( fid, num_streams )
     for i=1:num_streams
         trial.signal(i, :) = fread(fid, N, '*float32');
     end
-
+    
 end
-
-fclose(fid);                                                                %Close the data file.
