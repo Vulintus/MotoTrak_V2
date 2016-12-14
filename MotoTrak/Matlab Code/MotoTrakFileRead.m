@@ -246,30 +246,4 @@ function [trial, trial_number] = mototrak_read_trial ( fid, num_streams )
 
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+fclose(fid);                                                                %Close the data file.
