@@ -14,7 +14,6 @@
             <Button Name="Calibrate" Click="Calibrate_Click" Content="Calibrate booth" Margin="5,5" Height="50" FontSize="24" FontWeight="Bold" />
             <Button Name="StageDesigner" Click="StageDesigner_Click" Content="Create or edit stage" Margin="5,5" Height="50" FontSize="24" FontWeight="Bold" />
             <Button Name="ViewSession" Click="ViewSession_Click" Content="View previous session" Margin="5,5" Height="50" FontSize="24" FontWeight="Bold" />
-            <Button Name="Analysis" Click="Analysis_Click" Content="Analyze data" Margin="5,5" Height="50" FontSize="24" FontWeight="Bold" />
             <Button Name="OpenConfigFolder" Click="OpenConfigFolder_Click" Content="Open configuration folder" Margin="5,5" Height="50" FontSize="24" FontWeight="Bold" />
             <Button Name="ExitButton" Click="ExitButton_Click" Content="Exit" Margin="5,5" Height="50" FontSize="24" FontWeight="Bold" />
         </StackPanel>

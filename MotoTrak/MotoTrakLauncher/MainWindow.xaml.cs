@@ -44,19 +44,10 @@ namespace MotoTrakLauncher
             this.Close();
         }
 
-        private void Analysis_Click(object sender, RoutedEventArgs e)
-        {
-            //not yet implemented
-        }
-
-        private void ExitButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.Close();
-        }
-
         private void ViewSession_Click(object sender, RoutedEventArgs e)
         {
-
+            Process.Start(@"SessionViewer.exe");
+            this.Close();
         }
 
         private void OpenConfigFolder_Click(object sender, RoutedEventArgs e)
@@ -64,6 +55,11 @@ namespace MotoTrakLauncher
             var config = MotoTrakBase.MotoTrakConfiguration.GetInstance();
             string folder_to_open = config.GetLocalApplicationDataFolder();
             Process.Start(folder_to_open);
+        }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }

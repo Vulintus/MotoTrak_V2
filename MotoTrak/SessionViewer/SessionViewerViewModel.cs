@@ -374,6 +374,42 @@ namespace SessionViewer
 
                             signal_series.Points.Clear();
                             signal_series.Points.AddRange(datapoints_collection);
+
+                            //Add annotations around the trial for the hit window
+                            var starting_index = SessionModel.SelectedStage.SamplesPerSecond * SessionModel.Trials[trial_index].PreTrialSamplingPeriodInSeconds;
+                            var ending_index = SessionModel.SelectedStage.SamplesPerSecond * (SessionModel.Trials[trial_index].PreTrialSamplingPeriodInSeconds + SessionModel.Trials[trial_index].HitWindowDurationInSeconds);
+
+                            LinearAxis y_axis = TrialPlotModel.Axes.Where(x => x.Position == AxisPosition.Left).FirstOrDefault() as LinearAxis;
+                            if (y_axis != null)
+                            {
+                                //Clear the existing annotations
+                                TrialPlotModel.Annotations.Clear();
+
+                                //Create line annotations for the hit window
+                                LineAnnotation start_line = new LineAnnotation()
+                                {
+                                    Type = LineAnnotationType.Vertical,
+                                    X = starting_index,
+                                    MinimumY = y_axis.AbsoluteMinimum,
+                                    MaximumY = y_axis.AbsoluteMaximum,
+                                    Color = OxyColors.Black,
+                                    StrokeThickness = 2
+                                };
+
+                                LineAnnotation end_line = new LineAnnotation()
+                                {
+                                    Type = LineAnnotationType.Vertical,
+                                    X = ending_index,
+                                    MinimumY = y_axis.AbsoluteMinimum,
+                                    MaximumY = y_axis.AbsoluteMaximum,
+                                    Color = OxyColors.Black,
+                                    StrokeThickness = 2
+                                };
+
+                                //Add the annotations to the trial plot
+                                TrialPlotModel.Annotations.Add(start_line);
+                                TrialPlotModel.Annotations.Add(end_line);
+                            }
                         }
                     }
                 }
