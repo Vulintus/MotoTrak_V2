@@ -34,25 +34,25 @@ if (version == -5)
     N = fread(fid, 1, 'uint8');
     
     %Read the rat name
-    data.rat_name = fread(fid, N, '*char')';
+    data.subject = fread(fid, N, '*char')';
     
     %Read the number of characters in the booth name
     N = fread(fid, 1, 'uint8');
     
     %Read the booth name
-    data.booth_name = fread(fid, N, '*char')';
+    data.booth = fread(fid, N, '*char')';
     
     %Read the number of characters in the stage title
     N = fread(fid, 1, 'uint8');
     
     %Read the stage title
-    data.stage_name = fread(fid, N, '*char')';
+    data.stage = fread(fid, N, '*char')';
     
     %Read the number of characters in the device name
     N = fread(fid, 1, 'uint8');
     
     %Read the device name
-    data.device_name = fread(fid, N, '*char')';
+    data.device = fread(fid, N, '*char')';
     
     %Read the number of calibration coefficients that exist
     N = fread(fid, 1, 'uint8');
@@ -172,6 +172,9 @@ else
     return;
 end
 
+    %Close the data file.
+    fclose(fid);
+    
 end
 
 %% mototrak_read_trial - a subfunction that reads in individual trials from the MotoTrak session file
@@ -243,33 +246,5 @@ function [trial, trial_number] = mototrak_read_trial ( fid, num_streams )
     for i=1:num_streams
         trial.signal(i, :) = fread(fid, N, '*float32');
     end
-
+    
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

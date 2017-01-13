@@ -33,8 +33,9 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
     Turn_Angle_Threshold_List = []
 
     Autopositioner_Trial_Interval = 50
+    Autopositioner_Trial_Count_Handled = []
     Ending_Value_Of_Last_Trial = 0
-
+    
     #Declare string parameters for this stage
     TaskDefinition = MotorTaskDefinition()
 
@@ -63,6 +64,8 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
         return
 
     def AdjustBeginningStageParameters(self, recent_behavior_sessions, current_session_stage):
+
+        PythonKnobStageImplementation.Autopositioner_Trial_Count_Handled = []
 
         #Take only recent behavior sessions that have at least 50 successful trials
         total_hits = 0
@@ -280,9 +283,11 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
             hit_count = all_trials.Select(lambda t: t.Result == MotorTrialResult.Hit).Count()
             hit_count_modulus = hit_count % PythonKnobStageImplementation.Autopositioner_Trial_Interval
             if hit_count > 0 and hit_count_modulus is 0:
-                if stage.Position.CurrentValue < 2.0:
-                    stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
-                    MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+                if not PythonKnobStageImplementation.Autopositioner_Trial_Count_Handled.Contains(hit_count):
+                    if stage.Position.CurrentValue < 2.0:
+                        PythonKnobStageImplementation.Autopositioner_Trial_Count_Handled.append(hit_count)
+                        stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
+                        MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
             
         return
 

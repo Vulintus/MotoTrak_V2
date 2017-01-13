@@ -32,12 +32,13 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
     Inter_Press_Interval_List = []
     Inter_Press_Interval_Threshold_List = []
     Press_Count_List = []
-
+    
     inter_press_interval = 0
     press_count = 0
 
     Autopositioner_Between_Session_Trial_Interval = 40
     Autopositioner_Trial_Interval = 30
+    Autopositioner_Trial_Count_Handled = []
 
     #Declare string parameters for this stage
     TaskDefinition = MotorTaskDefinition()
@@ -75,6 +76,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         PythonLeverStageImplementation.Inter_Press_Interval_List = []
         PythonLeverStageImplementation.Inter_Press_Interval_Threshold_List = []
         PythonLeverStageImplementation.Press_Count_List = []
+        PythonLeverStageImplementation.Autopositioner_Trial_Count_Handled = []
 
         position_to_set = -1.0
 
@@ -327,11 +329,13 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
             hit_count = all_trials.Where(lambda t: t.Result == MotorTrialResult.Hit).Count()
             hit_count_modulus = hit_count % PythonLeverStageImplementation.Autopositioner_Trial_Interval
             if hit_count > 0 and hit_count_modulus is 0:
-                if stage.Position.CurrentValue < 2.0:
-                    stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
-                    if stage.Position.CurrentValue is -0.5 or stage.Position.CurrentValue is 0:
-                        stage.Position.CurrentValue = 0.5
-                    MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+                if not PythonLeverStageImplementation.Autopositioner_Trial_Count_Handled.Contains(hit_count):
+                    if stage.Position.CurrentValue < 2.0:
+                        PythonLeverStageImplementation.Autopositioner_Trial_Count_Handled.append(hit_count)
+                        stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
+                        if stage.Position.CurrentValue is -0.5 or stage.Position.CurrentValue is 0:
+                            stage.Position.CurrentValue = 0.5
+                        MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
 
         return
 

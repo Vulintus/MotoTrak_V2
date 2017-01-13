@@ -31,6 +31,7 @@ class PythonPullStageImplementation (IMotorStageImplementation):
 
     #Variables used by this task
     Autopositioner_Trial_Interval = 50
+    Autopositioner_Trial_Count_Handled = []
     Maximal_Force_List = []
     Force_Threshold_List = []
 
@@ -59,6 +60,7 @@ class PythonPullStageImplementation (IMotorStageImplementation):
 
         PythonPullStageImplementation.Maximal_Force_List = []
         PythonPullStageImplementation.Force_Threshold_List = []
+        PythonPullStageImplementation.Autopositioner_Trial_Count_Handled = []
 
         #Take only recent behavior sessions that have at least 50 successful trials
         total_hits = 0
@@ -68,14 +70,18 @@ class PythonPullStageImplementation (IMotorStageImplementation):
                 total_hits += this_session_hits
                 
         #Now, based off the total number of hits that have occurred in previous sessions, set the position of the autopositioner
-        position = 0.0
+        position = -1.0
         if total_hits >= 50 and total_hits < 100:
-            position = 0.5
+            position = -0.5
         elif total_hits >= 100 and total_hits < 150:
-            position = 1.0
+            position = 0.0
         elif total_hits >= 150 and total_hits < 200:
+            position = 0.5
+        elif total_hits >= 200 and total_hits < 250:
+            position = 1.0
+        elif total_hits >= 250 and total_hits < 300:
             position = 1.5
-        elif total_hits >= 200:
+        elif total_hits >= 300:
             position = 2.0
         
         #Set the position of the autopositioner if it is supposed to be adaptively set
@@ -259,9 +265,11 @@ class PythonPullStageImplementation (IMotorStageImplementation):
             hit_count = all_trials.Where(lambda t: t.Result == MotorTrialResult.Hit).Count()
             hit_count_modulus = hit_count % PythonPullStageImplementation.Autopositioner_Trial_Interval
             if hit_count > 0 and hit_count_modulus is 0:
-                if stage.Position.CurrentValue < 2.0:
-                    stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
-                    MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+                if not PythonPullStageImplementation.Autopositioner_Trial_Count_Handled.Contains(hit_count):
+                    if stage.Position.CurrentValue < 2.0:
+                        PythonPullStageImplementation.Autopositioner_Trial_Count_Handled.append(hit_count)
+                        stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
+                        MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
                 
         return
 
