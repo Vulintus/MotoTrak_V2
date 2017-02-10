@@ -39,10 +39,20 @@ namespace MotoTrakBase
         #region Private properties
 
         private double _increment = double.NaN;
-        
+
         #endregion
 
         #region Properties
+
+        /// <summary>
+        /// A boolean value indicating whether this is a quantitative stage parameter
+        /// </summary>
+        public bool IsQuantitative = true;
+
+        /// <summary>
+        /// A string representing the value of this parameter for "nominal" parameters (i.e. parameters that are not quantitative)
+        /// </summary>
+        public string NominalValue = string.Empty;
 
         /// <summary>
         /// A string representing the name of this parameter

@@ -177,9 +177,19 @@ namespace StageDesigner
                         {
                             ParameterName = p.ParameterName,
                             ParameterUnits = p.ParameterUnits,
+                            IsQuantitative = p.IsQuantitative,
                             InitialValue = 0,
                             CurrentValue = 0
                         };
+
+                        //Set a default value for the parameter if it is a nominal parameter
+                        if (!p.IsQuantitative)
+                        {
+                            if (p.PossibleValues.Count > 0)
+                            {
+                                new_param.NominalValue = p.PossibleValues[0];
+                            }
+                        }
 
                         //Add it to our dictionary of stage parameters
                         StageModel.StageParameters[new_param.ParameterName] = new_param;

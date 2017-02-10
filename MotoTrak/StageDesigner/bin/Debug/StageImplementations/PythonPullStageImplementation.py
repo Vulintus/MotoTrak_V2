@@ -22,6 +22,7 @@ from MotoTrakBase import MotoTrakAutopositioner
 from MotoTrakBase import MotorStageParameter
 from MotoTrakBase import MotorTaskDefinition
 from MotoTrakBase import MotorTaskParameter
+from MotoTrakBase import MotoTrakSession
 
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
@@ -29,7 +30,8 @@ from MotoTrakUtilities import MotorMath
 class PythonPullStageImplementation (IMotorStageImplementation):
 
     #Variables used by this task
-    Autopositioner_Trial_Interval = 10
+    Autopositioner_Trial_Interval = 50
+    Autopositioner_Trial_Count_Handled = []
     Maximal_Force_List = []
     Force_Threshold_List = []
 
@@ -58,6 +60,34 @@ class PythonPullStageImplementation (IMotorStageImplementation):
 
         PythonPullStageImplementation.Maximal_Force_List = []
         PythonPullStageImplementation.Force_Threshold_List = []
+        PythonPullStageImplementation.Autopositioner_Trial_Count_Handled = []
+
+        #Take only recent behavior sessions that have at least 50 successful trials
+        total_hits = 0
+        for i in recent_behavior_sessions:
+            this_session_hits = i.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count()
+            if this_session_hits >= 1:
+                total_hits += this_session_hits
+                
+        #Now, based off the total number of hits that have occurred in previous sessions, set the position of the autopositioner
+        position = -1.0
+        if total_hits >= 50 and total_hits < 100:
+            position = -0.5
+        elif total_hits >= 100 and total_hits < 150:
+            position = 0.0
+        elif total_hits >= 150 and total_hits < 200:
+            position = 0.5
+        elif total_hits >= 200 and total_hits < 250:
+            position = 1.0
+        elif total_hits >= 250 and total_hits < 300:
+            position = 1.5
+        elif total_hits >= 300:
+            position = 2.0
+        
+        #Set the position of the autopositioner if it is supposed to be adaptively set
+        if current_session_stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
+            current_session_stage.Position.CurrentValue = position
+            MotoTrakAutopositioner.GetInstance().SetPosition(position)
 
         return
 
@@ -147,7 +177,8 @@ class PythonPullStageImplementation (IMotorStageImplementation):
                 result.Add(new_action)
 
                 #If stimulation is on for this stage, stimulate the animal
-                if stage.OutputTriggerType is MotorStageStimulationType.All:
+                output_trigger_type = str(stage.OutputTriggerType)
+                if output_trigger_type.lower() == "On".lower():
                     new_stim_action = MotorTrialAction()
                     new_stim_action.ActionType = MotorTrialActionType.SendStimulationTrigger
                     result.Add(new_stim_action)
@@ -160,6 +191,7 @@ class PythonPullStageImplementation (IMotorStageImplementation):
 
     def CreateEndOfTrialMessage(self, trial_number, trial, stage):
         msg = ""
+        msg += System.DateTime.Now.ToShortTimeString() + ", "
 
         #Get the device stream data
         device_stream = trial.TrialData[1]
@@ -179,10 +211,15 @@ class PythonPullStageImplementation (IMotorStageImplementation):
             hit_threshold_parameter_name = PythonPullStageImplementation.TaskDefinition.TaskParameters[0].ParameterName
 
             if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
-                if stage.StageParameters[hit_threshold_parameter_name].AdaptiveThresholdType is MotorStageAdaptiveThresholdType.Median:
-                    current_hit_threshold = stage.StageParameters[hit_threshold_parameter_name].CurrentValue
-                    PythonPullStageImplementation.Force_Threshold_List.append(current_hit_threshold)
-                    msg += "(Hit threshold = " + Math.Floor(current_hit_threshold).ToString() + " grams)"
+                #Grab the hit threshold for the current trial
+                current_hit_threshold = stage.StageParameters[hit_threshold_parameter_name].CurrentValue
+
+                #Add the hit threshold to the list of all hit thresholds that we are maintaining for this session
+                PythonPullStageImplementation.Force_Threshold_List.append(current_hit_threshold)
+
+                #If this is an adaptive stage, then display the hit threshold of the current trial in the "end-of-trial" message to the user
+                if stage.StageParameters[hit_threshold_parameter_name].ParameterType == MotorStageParameter.StageParameterType.Variable:
+                    msg += " (Hit threshold = " + System.Math.Floor(current_hit_threshold).ToString() + " grams)"
             
             return msg
         except ValueError:
@@ -229,8 +266,11 @@ class PythonPullStageImplementation (IMotorStageImplementation):
             hit_count = all_trials.Where(lambda t: t.Result == MotorTrialResult.Hit).Count()
             hit_count_modulus = hit_count % PythonPullStageImplementation.Autopositioner_Trial_Interval
             if hit_count > 0 and hit_count_modulus is 0:
-                stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
-                MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+                if not PythonPullStageImplementation.Autopositioner_Trial_Count_Handled.Contains(hit_count):
+                    if stage.Position.CurrentValue < 2.0:
+                        PythonPullStageImplementation.Autopositioner_Trial_Count_Handled.append(hit_count)
+                        stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
+                        MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
                 
         return
 

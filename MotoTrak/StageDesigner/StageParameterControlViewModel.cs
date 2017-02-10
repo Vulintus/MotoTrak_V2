@@ -59,7 +59,7 @@ namespace StageDesigner
         #endregion
 
         #region Properties
-
+        
         /// <summary>
         /// All the adaptive modes that can be selected for a motor stage parameter
         /// </summary>
@@ -98,6 +98,53 @@ namespace StageDesigner
             set
             {
                 _model_task_parameter = value;
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether this is a quantitative parameter
+        /// </summary>
+        public bool IsParameterQuantitative
+        {
+            get
+            {
+                return ModelTaskParameter.IsQuantitative;
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether quantitiative parameter fields are visible
+        /// </summary>
+        public Visibility QuantitativeParameterVisibility
+        {
+            get
+            {
+                if (IsParameterQuantitative)
+                {
+                    return Visibility.Visible;
+                }
+                else
+                {
+                    return Visibility.Collapsed;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether nominal parameter fields are visible
+        /// </summary>
+        public Visibility NominalParameterVisibility
+        {
+            get
+            {
+                if (!IsParameterQuantitative)
+                {
+                    return Visibility.Visible;
+                }
+                else
+                {
+                    return Visibility.Collapsed;
+                }
             }
         }
 
@@ -350,6 +397,44 @@ namespace StageDesigner
                 {
                     return "History size:";
                 }
+            }
+        }
+
+        /// <summary>
+        /// The list of possible parameter values for a nominal task parameter
+        /// </summary>
+        public List<string> PossibleNominalValues
+        {
+            get
+            {
+                return ModelTaskParameter.PossibleValues;
+            }
+        }
+
+        /// <summary>
+        /// The index of the selected nominal parameter value
+        /// </summary>
+        public int SelectedNominalValue
+        {
+            get
+            {
+                int result = 0;
+
+                if (!IsParameterQuantitative)
+                {
+                    result = ModelTaskParameter.PossibleValues.IndexOf(ModelParameter.NominalValue);
+                    if (result == -1)
+                    {
+                        result = 0;
+                    }
+                }
+                
+                return result;
+            }
+            set
+            {
+                ModelParameter.NominalValue = ModelTaskParameter.PossibleValues[value];
+                NotifyPropertyChanged("SelectedNominalValue");
             }
         }
 

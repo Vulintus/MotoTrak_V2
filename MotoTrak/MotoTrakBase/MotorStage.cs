@@ -491,7 +491,7 @@ namespace MotoTrakBase
                     try
                     {
                         Uri google_sheets_url = new Uri(config.StageWebPath);
-                        stages = RetrieveAllStages_V1(google_sheets_url);
+                        stages = RetrieveAllStage_Web(google_sheets_url);
                     }
                     catch (Exception e)
                     {
@@ -721,6 +721,7 @@ namespace MotoTrakBase
         /// <summary>
         /// Returns a list of all motor stages found in a spreadsheet.  The spreadsheet location is the URI that is
         /// passed as a parameter to this function.
+        /// THIS FUNCTION IS DEPRECATED AND NO LONGER USED.
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
@@ -921,6 +922,269 @@ namespace MotoTrakBase
             return stages;
         }
 
+        private static List<MotorStage> RetrieveAllStage_Web (Uri address)
+        {
+            //Read in all the stages from Google Docs
+            List<List<string>> stageDocument = null;
+
+            try
+            {
+                //Read the list of stages
+                stageDocument = ReadGoogleSpreadsheet.Read(address);
+            }
+            catch
+            {
+                //If an error occurred, notify the user using the MotoTrak messaging system
+                MotoTrakMessaging.GetInstance().AddMessage("Unable to read Stage spreadsheet!");
+
+                //Return an empty list of stages
+                return new List<MotorStage>();
+            }
+
+            //Store the first line in an array called "headers", and then remove it from the stageDocument variable
+            List<string> headers = stageDocument[0];
+            stageDocument.RemoveAt(0);
+            
+            //Create a list we will use to store all the stages
+            List<MotorStage> stages = new List<MotorStage>();
+
+            foreach (var line in stageDocument)
+            {
+                MotorStage new_stage = ReadSingleStage_Web(headers, line);
+                stages.Add(new_stage);
+            }
+
+            return stages;
+        }
+
+        private static MotorStage ReadSingleStage_Web (List<string> headers, List<string> stage_params)
+        {
+            //Otherwise, set the variables for the new stage appropriately.
+            MotorStage stage = new MotorStage();
+
+            //Create a variable that will be used often in this function
+            bool success = false;
+
+            //Create stage parameter objects that will be needed by the end
+            bool use_hit_ceiling = false;
+            bool use_ir = false;
+            MotorTaskTypeV1 hit_thresh_type = MotorTaskTypeV1.Undefined;
+            MotorStageParameter hit_thresh = new MotorStageParameter();
+            MotorStageParameter init_thresh = new MotorStageParameter();
+            MotorStageParameter hit_ceiling = new MotorStageParameter();
+
+            for (int i = 0; i < headers.Count; i++)
+            {
+                //Get the key and value
+                var h = headers[i];
+                var val = stage_params[i];
+
+                //Figure out which parameter is being set
+                MotoTrak_V1_StageParameters p = MotoTrak_V1_StageParameters_Converter.ConvertToMotorStageParameterType(h);
+                
+                switch (p)
+                {
+                    case MotoTrak_V1_StageParameters.StageNumber:
+                        stage.StageName = val.Trim(new char[] {'\'', ' ', '\n', '\r', '\t' });
+                        break;
+                    case MotoTrak_V1_StageParameters.Description:
+                        stage.Description = val.Trim(new char[] { '\'', ' ', '\n', '\r', '\t' });
+                        break;
+                    case MotoTrak_V1_StageParameters.InputDevice:
+                        stage.DeviceType = MotorDeviceTypeConverter.ConvertToMotorDeviceType(val);
+                        break;
+                    case MotoTrak_V1_StageParameters.Constraint:
+                        //Do nothing with this.  It is deprecated.
+                        break;
+                    case MotoTrak_V1_StageParameters.Position:
+                        MotorStageParameter position = new MotorStageParameter();
+                        position.InitialValue = Double.Parse(val);
+                        position.CurrentValue = position.InitialValue;
+                        position.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Static;
+                        stage.Position = position;
+                        break;
+                    case MotoTrak_V1_StageParameters.HitThresholdType:
+                        hit_thresh.AdaptiveThresholdType = MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdType(val);
+                        break;
+                    case MotoTrak_V1_StageParameters.HitThresholdMinimum:
+                        //Read in the hit threshold minimum value
+                        double hit_min = double.NaN;
+                        success = Double.TryParse(val, out hit_min);
+                        hit_thresh.MinimumValue = hit_min;
+                        break;
+                    case MotoTrak_V1_StageParameters.HitThresholdMaximum:
+                        //Read in the hit threshold maximum value
+                        double hit_max = double.NaN;
+                        success = Double.TryParse(val, out hit_max);
+                        hit_thresh.MaximumValue = hit_max;
+                        break;
+                    case MotoTrak_V1_StageParameters.HitThresholdIncrement:
+                        //Read in the hit threshold incremental value
+                        double hit_inc = double.NaN;
+                        success = Double.TryParse(val, out hit_inc);
+                        hit_thresh.Increment = hit_inc;
+                        break;
+                    case MotoTrak_V1_StageParameters.TrialInitiationThreshold:
+                        //Read in the trial initiation threshold
+                        double trial_init = double.NaN;
+                        success = Double.TryParse(val, out trial_init);
+                        init_thresh.InitialValue = trial_init;
+                        init_thresh.CurrentValue = init_thresh.InitialValue;
+                        init_thresh.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Static;
+                        break;
+                    case MotoTrak_V1_StageParameters.ThresholdUnits:
+                        //Read in the hit threshold type
+                        hit_thresh_type = MotorTaskTypeV1Converter.ConvertToMotorStageHitThresholdType(val);
+                        break;
+                    case MotoTrak_V1_StageParameters.HitWindow:
+                        //Read in the duration of the hit window
+                        MotorStageParameter hit_win = new MotorStageParameter();
+                        hit_win.InitialValue = Double.Parse(val);
+                        hit_win.CurrentValue = hit_win.InitialValue;
+                        hit_win.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Static;
+                        stage.HitWindowInSeconds = hit_win;
+                        break;
+                    case MotoTrak_V1_StageParameters.SamplePeriod:
+                        //Read in the sampling rate (the number of milliseconds inbetween each sample we read from the MotoTrak controller board)
+                        stage.SamplePeriodInMilliseconds = Int32.Parse(val);
+                        break;
+                    case MotoTrak_V1_StageParameters.HitThresholdCeiling:
+
+                        double ceiling = double.NaN;
+                        success = Double.TryParse(val, out ceiling);
+                        if (success)
+                        {
+                            use_hit_ceiling = true;
+                            hit_ceiling.InitialValue = ceiling;
+                            hit_ceiling.CurrentValue = hit_ceiling.InitialValue;
+                            hit_ceiling.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Static;
+                        }
+                        else
+                        {
+                            use_hit_ceiling = false;
+                        }
+
+                        break;
+                    case MotoTrak_V1_StageParameters.IRTrialInitiation:
+
+                        string nominal_ir_value = val.Trim();
+                        if (nominal_ir_value.Equals("YES", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            use_ir = true;
+                        }
+                        else
+                        {
+                            use_ir = false;
+                        }
+
+                        break;
+                    case MotoTrak_V1_StageParameters.StimulateOnHit:
+
+                        stage.OutputTriggerType = val.Trim();
+
+                        break;
+                    default:
+                        break;
+                }
+            }
+            
+            //Set the initial and current value of the hit threshold
+            hit_thresh.InitialValue = hit_thresh.MinimumValue;
+            hit_thresh.CurrentValue = hit_thresh.InitialValue;
+            
+            //Decide on a "task implementation" / "stage implementation" based on the parameters found in the spreadsheet.
+            switch (hit_thresh_type)
+            {
+                case MotorTaskTypeV1.PeakForce:
+
+                    if (use_hit_ceiling || use_ir)
+                    {
+                        //Set the parameters of this stage
+                        stage.StageParameters.Clear();
+                        stage.StageParameters["Lower bound force threshold"] = hit_thresh;
+                        stage.StageParameters["Initiation Threshold"] = init_thresh;
+                        
+                        MotorStageParameter use_hit_ceiling_param = new MotorStageParameter();
+                        use_hit_ceiling_param.ParameterName = "Use upper force boundary";
+                        use_hit_ceiling_param.IsQuantitative = false;
+                        use_hit_ceiling_param.NominalValue = use_hit_ceiling ? "Yes" : "No";
+
+                        MotorStageParameter ir_sensor_param = new MotorStageParameter();
+                        ir_sensor_param.ParameterName = "Use swipe sensor for trial initiations";
+                        ir_sensor_param.IsQuantitative = false;
+                        ir_sensor_param.NominalValue = use_ir ? "Yes" : "No";
+                        
+                        stage.StageParameters["Upper bound force threshold"] = hit_ceiling;
+                        stage.StageParameters["Use upper force boundary"] = use_hit_ceiling_param;
+                        stage.StageParameters["Use swipe sensor for trial initiations"] = ir_sensor_param;
+
+                        //Set the implementation of this stage
+                        stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonPullStageImplementation_FWIR.py"];
+                    }
+                    else
+                    {
+                        //Set the implementation of this stage
+                        stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonPullStageImplementation.py"];
+
+                        //Set the parameters of this stage
+                        stage.StageParameters.Clear();
+                        stage.StageParameters["Hit Threshold"] = hit_thresh;
+                        stage.StageParameters["Initiation Threshold"] = init_thresh;
+                    }
+                    
+                    break;
+                case MotorTaskTypeV1.SustainedForce:
+
+                    //Set the implementation of this stage
+                    stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonSustainedPullStageImplementation.py"];
+
+                    //Set the parameters of this stage
+                    stage.StageParameters.Clear();
+                    stage.StageParameters["Initiation Threshold"] = init_thresh;
+                    stage.StageParameters["Minimum Force"] = new MotorStageParameter() { InitialValue = 35, CurrentValue = 35 };
+                    stage.StageParameters["Hold Duration"] = hit_thresh;
+
+                    break;
+                case MotorTaskTypeV1.TotalDegrees:
+
+                    //Set the implementation of this stage
+                    stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonKnobStageImplementation.py"];
+
+                    //Set the parameters of this stage
+                    stage.StageParameters.Clear();
+                    stage.StageParameters["Hit Threshold"] = hit_thresh;
+                    stage.StageParameters["Initiation Threshold"] = init_thresh;
+
+                    break;
+                case MotorTaskTypeV1.LeverPresses:
+
+                    //Set the implementation of this stage
+                    stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonLeverStageImplementation.py"];
+
+                    //Set the parameters for this stage
+                    stage.StageParameters.Clear();
+                    stage.StageParameters["Full Press"] = new MotorStageParameter() { CurrentValue = 9.75, InitialValue = 9.75 };
+                    stage.StageParameters["Release Point"] = new MotorStageParameter() { CurrentValue = 6.5, InitialValue = 6.5 };
+                    stage.StageParameters["Initiation Threshold"] = new MotorStageParameter() { CurrentValue = 3, InitialValue = 3 };
+                    stage.StageParameters["Hit Threshold"] = hit_thresh;
+
+                    break;
+                default:
+
+                    //Set the implementation of this stage
+                    stage.StageImplementation = null;
+
+                    //Set the parameters of this stage
+                    stage.StageParameters.Clear();
+                    stage.StageParameters["Hit Threshold"] = hit_thresh;
+                    stage.StageParameters["Initiation Threshold"] = init_thresh;
+
+                    break;
+            }
+            
+            return stage;
+        }
+
         /// <summary>
         /// Retrieves all motor stages on the local disk at the specified location
         /// </summary>
@@ -953,32 +1217,6 @@ namespace MotoTrakBase
             return result;
         }
 
-        /// <summary>
-        /// Parses out a motor stage parameter from a string that contains all the parts
-        /// </summary>
-        /// <param name="parts">The string containing the stage parameter parts</param>
-        /// <returns>The motor stage parameter</returns>
-        private static MotorStageParameter ParseMotorStageParameter(string parts)
-        {
-            string[] parts_array = parts.Split(new char[] { ',' }, 6);
-
-            MotorStageParameter p = new MotorStageParameter()
-            {
-                ParameterType = (parts_array[0].Trim().Equals("Fixed")) ?
-                    MotorStageParameter.StageParameterType.Fixed : MotorStageParameter.StageParameterType.Variable,
-                AdaptiveThresholdType =
-                    MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdType(parts_array[1].Trim()),
-                InitialValue = Double.Parse(parts_array[2]),
-                MinimumValue = Double.Parse(parts_array[3]),
-                MaximumValue = Double.Parse(parts_array[4]),
-                Increment = Double.Parse(parts_array[5]),
-            };
-
-            p.CurrentValue = p.InitialValue;
-
-            return p;
-        }
-
         private static MotorStageParameter ParseMotorStageParameterWithName(string parts)
         {
             string[] parts_array = parts.Split(new char[] { ',' }, 8);
@@ -991,19 +1229,36 @@ namespace MotoTrakBase
                     MotorStageParameter.StageParameterType.Fixed : MotorStageParameter.StageParameterType.Variable,
                 AdaptiveThresholdType =
                     MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdType(parts_array[3].Trim()),
-                InitialValue = Double.Parse(parts_array[4]),
                 MinimumValue = Double.Parse(parts_array[5]),
                 MaximumValue = Double.Parse(parts_array[6]),
                 Increment = Double.Parse(parts_array[7]),
             };
 
+            if (p.ParameterUnits.Equals("nominal", StringComparison.OrdinalIgnoreCase))
+            {
+                p.IsQuantitative = false;
+                p.NominalValue = parts_array[4].Trim();
+                p.InitialValue = double.NaN;
+            }
+            else
+            {
+                p.IsQuantitative = true;
+                p.NominalValue = string.Empty;
+                p.InitialValue = Double.Parse(parts_array[4]);
+            }
+            
             p.CurrentValue = p.InitialValue;
 
             return p;
         }
 
-        private static string FormMotorStageParameter (MotorStageParameter p, bool save_name_as_part_of_it)
+        private static string FormMotorStageParameter (MotorStageParameter p, bool save_name_as_part_of_it = true)
         {
+            if (!p.IsQuantitative)
+            {
+                p.ParameterUnits = "nominal";
+            }
+
             string output = string.Empty;
             if (save_name_as_part_of_it)
             {
@@ -1014,7 +1269,16 @@ namespace MotoTrakBase
             output += (p.ParameterType == MotorStageParameter.StageParameterType.Fixed) ? "Fixed" : "Variable";
             output += ", ";
             output += MotorStageAdaptiveThresholdTypeConverter.ConvertToDescription(p.AdaptiveThresholdType) + ", ";
-            output += p.InitialValue.ToString() + ", ";
+
+            if (!p.IsQuantitative)
+            {
+                output += p.NominalValue + ", ";
+            }
+            else
+            {
+                output += p.InitialValue.ToString() + ", ";
+            }
+            
             output += p.MinimumValue.ToString() + ", ";
             output += p.MaximumValue.ToString() + ", ";
             output += p.Increment.ToString();

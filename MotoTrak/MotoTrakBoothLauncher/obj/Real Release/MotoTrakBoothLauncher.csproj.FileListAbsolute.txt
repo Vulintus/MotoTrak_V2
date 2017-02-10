@@ -31,6 +31,8 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBoothLauncher\bin\Rea
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBoothLauncher\bin\Real Release\MotoTrakBase.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBoothLauncher\bin\Real Release\MotoTrakUtilities.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBoothLauncher\bin\Real Release\Dynamitey.pdb
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\MotoTrakBoothLauncher.dll
+C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\MotoTrakBoothLauncher.pdb
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBoothLauncher\obj\Real Release\MotoTrakBoothLauncher.csprojResolveAssemblyReference.cache
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBoothLauncher\obj\Real Release\PortSelectionUI.g.cs
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBoothLauncher\obj\Real Release\MotoTrakBoothLauncher_MarkupCompile.cache
@@ -41,5 +43,3 @@ C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBoothLauncher\obj\Rea
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBoothLauncher\obj\Real Release\MotoTrakBoothLauncher.csproj.GenerateResource.Cache
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBoothLauncher\obj\Real Release\MotoTrakBoothLauncher.dll
 C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\MotoTrakBoothLauncher\obj\Real Release\MotoTrakBoothLauncher.pdb
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\MotoTrakBoothLauncher.dll
-C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Release\MotoTrakBoothLauncher.pdb

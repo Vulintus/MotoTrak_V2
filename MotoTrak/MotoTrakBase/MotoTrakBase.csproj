@@ -64,6 +64,9 @@
     <Compile Include="IMotorBoard.cs" />
     <Compile Include="MotorBoardSimulator.cs" />
     <Compile Include="MotoTrakBoothPairing.cs" />
+    <Compile Include="MotoTrak_V1_SpreadsheetColumnHeadingAttribute.cs" />
+    <Compile Include="MotoTrak_V1_StageParameters.cs" />
+    <Compile Include="MotoTrak_V1_StageParameters_Converter.cs" />
     <Compile Include="MultipleEventsAllowedAttribute.cs" />
     <Compile Include="ErrorLoggingService.cs" />
     <Compile Include="IMotorStageImplementation.cs" />

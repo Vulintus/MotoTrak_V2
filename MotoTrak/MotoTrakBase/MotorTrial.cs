@@ -31,7 +31,8 @@ namespace MotoTrakBase
         private List<DateTime> _hit_times = new List<DateTime>();
         private List<DateTime> _output_trigger_times = new List<DateTime>();
 
-        private Dictionary<string, double> _variable_parameters = new Dictionary<string, double>();
+        private Dictionary<string, double> _quantitative_parameters = new Dictionary<string, double>();
+        private Dictionary<string, string> _nominal_parameters = new Dictionary<string, string>();
 
         private List<MotorTrialEvent> _trial_events = new List<MotorTrialEvent>();
         
@@ -247,18 +248,33 @@ namespace MotoTrakBase
         }
 
         /// <summary>
-        /// Values of variable parameters that are defined by the user for this trial.
+        /// Values of quantitative parameters that are defined by the user for this trial.
         /// </summary>
-        public Dictionary<string, double> VariableParameters
+        public Dictionary<string, double> QuantitativeParameters
         {
             get
             {
-                return _variable_parameters;
+                return _quantitative_parameters;
             }
 
             set
             {
-                _variable_parameters = value;
+                _quantitative_parameters = value;
+            }
+        }
+
+        /// <summary>
+        /// Values of nominal parameters that are defined by the user for this trial.
+        /// </summary>
+        public Dictionary<string, string> NominalParameters
+        {
+            get
+            {
+                return _nominal_parameters;
+            }
+            set
+            {
+                _nominal_parameters = value;
             }
         }
 

@@ -1325,9 +1325,16 @@ namespace MotoTrak
                     
                     foreach (var k in CurrentSession.SelectedStage.StageParameters)
                     {
-                        CurrentTrial.VariableParameters[k.Key] = k.Value.CurrentValue;
+                        if (k.Value.IsQuantitative)
+                        {
+                            CurrentTrial.QuantitativeParameters[k.Key] = k.Value.CurrentValue;
+                        }
+                        else
+                        {
+                            CurrentTrial.NominalParameters[k.Key] = k.Value.NominalValue;
+                        }
                     }
-
+                    
                     //Get the number of minutes into the session that this trial occurred at
                     double minutes_passed = CurrentTrial.StartTime.Subtract(CurrentSession.StartTime).TotalMinutes;
 

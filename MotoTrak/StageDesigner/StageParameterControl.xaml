@@ -21,7 +21,9 @@
             <TextBlock FontSize="12" FontWeight="Normal" Text="{Binding Path=ParameterDescription, FallbackValue=Description}" />
         </StackPanel>
         
-        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="40,0,0,0">
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="40,0,0,0"
+                    Visibility="{Binding Path=QuantitativeParameterVisibility, FallbackValue=Visible}"
+                    >
             <TextBlock Text="Initial value:" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center" />
             <TextBox Width="50" Margin="5,0" Text="{Binding Path=ParameterInitialValue, FallbackValue=0}" FontSize="10" />
             
@@ -55,6 +57,15 @@
             </StackPanel>
         </StackPanel>
 
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="40,0,0,0"
+                    Visibility="{Binding Path=NominalParameterVisibility, FallbackValue=Collapsed}">
+            <ComboBox FontSize="12" 
+                      FontWeight="Normal" 
+                      ItemsSource="{Binding Path=PossibleNominalValues}"
+                      SelectedIndex="{Binding Path=SelectedNominalValue}" 
+                      Width="200"
+                      />
+        </StackPanel>
 
     </Grid>
 </UserControl>

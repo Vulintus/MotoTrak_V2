@@ -102,10 +102,11 @@ namespace MotoTrakBase
                 {
                     return ReadArdyMotorVersion2File(file_bytes);
                 }
-                if (version == -5)
+                if (version == -5 || version == -6)
                 {
-                    return ReadMotoTrakFile(file_bytes);
+                    return ReadMotoTrakFile(file_bytes, version);
                 }
+
             }
             catch
             {
@@ -116,7 +117,7 @@ namespace MotoTrakBase
             return null;
         }
 
-        private static MotoTrakSession ReadMotoTrakFile (byte[] file_bytes)
+        private static MotoTrakSession ReadMotoTrakFile (byte[] file_bytes, SByte version)
         {
             //Create a session object that will be returned to the caller
             MotoTrakSession session = new MotoTrakSession();
@@ -134,14 +135,14 @@ namespace MotoTrakBase
             try
             {
                 //Read in the MotoTrak file header
-                ReadMotoTrakFileHeader(session, reader);
+                var stage_params = ReadMotoTrakFileHeader(session, reader);
 
                 //Read in each trial
                 while (reader.BaseStream.Position < reader.BaseStream.Length)
                 {
                     try
                     {
-                        ReadMotoTrakFileEvent(session, reader);
+                        ReadMotoTrakFileEvent(session, reader, version, stage_params);
                     }
                     catch
                     {
@@ -160,14 +161,16 @@ namespace MotoTrakBase
             return session;
         }
 
-        private static void ReadMotoTrakFileHeader (MotoTrakSession session, BinaryReader reader)
+        private static List<List<string>> ReadMotoTrakFileHeader (MotoTrakSession session, BinaryReader reader)
         {
+            List<List<string>> return_params = new List<List<string>>();
+
             if (reader != null && session != null)
             {
                 //First, read the file version
                 SByte file_version = reader.ReadSByte();
 
-                if (file_version == -5)
+                if (file_version == -5 || file_version == -6)
                 {
                     //Next, read the session start time
                     double session_start_time = reader.ReadDouble();
@@ -236,10 +239,11 @@ namespace MotoTrakBase
                         session.SelectedStage.DataStreamTypes.Add(MotorBoardDataStreamTypeConverter.ConvertToMotorBoardDataStreamType(stream_desc));
                     }
 
-                    //Read in the number of stage parameters that exist
+                    //Read in the number of QUANTITATIVE stage parameters that exist
                     UInt32 n_params = reader.ReadUInt32();
+                    List<string> quant_params_list = new List<string>();
 
-                    //Read in each stage parameter
+                    //Read in each stage quantitative parameter
                     for (UInt32 i = 0; i < n_params; i++)
                     {
                         //Read in the number of characters in the name of each stage parameter
@@ -254,12 +258,46 @@ namespace MotoTrakBase
 
                         //Add the parameter to the stage
                         session.SelectedStage.StageParameters.TryAdd(param_name, k);
+                        quant_params_list.Add(param_name);
                     }
+
+                    List<string> nominal_params_list = new List<string>();
+
+                    //The following code is for file version -6
+                    if (file_version == -6)
+                    {
+                        //Read in the number of NOMINAL stage parameters that exist
+                        UInt32 n_nominal_params = reader.ReadUInt32();
+
+                        //Read in each nominal stage parameter
+                        for (UInt32 i = 0; i < n_nominal_params; i++)
+                        {
+                            //Read in the number of characters in the name of each stage parameter
+                            N = reader.ReadByte();
+
+                            //Read in the parameter name itself
+                            string param_name = new string(reader.ReadChars(N));
+
+                            //Create a new MotorStageParameter object
+                            MotorStageParameter k = new MotorStageParameter();
+                            k.IsQuantitative = false;
+                            k.ParameterName = param_name;
+
+                            //Add the parameter to the stage
+                            session.SelectedStage.StageParameters.TryAdd(param_name, k);
+                            nominal_params_list.Add(param_name);
+                        }
+                    }
+
+                    return_params.Add(quant_params_list);
+                    return_params.Add(nominal_params_list);
                 }
             }
+
+            return return_params;
         }
 
-        private static void ReadMotoTrakFileTrial (MotoTrakSession session, MotorTrial trial, BinaryReader reader)
+        private static void ReadMotoTrakFileTrial (MotoTrakSession session, MotorTrial trial, BinaryReader reader, SByte version, List<List<string>> stage_params)
         {
             if (trial != null && reader != null)
             {
@@ -298,6 +336,7 @@ namespace MotoTrakBase
 
                 //Read in the number of variable parameters that exist for this trial
                 Byte N = reader.ReadByte();
+                List<string> quant_params = stage_params[0];
 
                 //Read in each parameter
                 for (Byte i = 0; i < N; i++)
@@ -306,8 +345,29 @@ namespace MotoTrakBase
                     float variable_param_value = reader.ReadSingle();
 
                     //Add the value to the trial
-                    string stage_parameter_name = session.SelectedStage.StageParameters.Keys.ToList()[i];
-                    trial.VariableParameters[stage_parameter_name] = variable_param_value;
+                    string stage_parameter_name = quant_params[i];
+                    trial.QuantitativeParameters[stage_parameter_name] = variable_param_value;
+                }
+
+                //Read in the number of nominal parameters that exist for this trial
+                if (version == -6)
+                {
+                    N = reader.ReadByte();
+                    List<string> nominal_params = stage_params[1];
+
+                    //Read in each nominal parameter
+                    for (Byte i = 0; i < N; i++)
+                    {
+                        //Read in number of characters
+                        Byte n_chars = reader.ReadByte();
+
+                        //Read in the number of chars for this value
+                        string nominal_value = new string(reader.ReadChars(n_chars));
+
+                        //Add this to the trial
+                        string stage_parameter_name = nominal_params[i];
+                        trial.NominalParameters[stage_parameter_name] = nominal_value;
+                    }
                 }
 
                 //Read in the number of hits that occurred during this trial
@@ -352,7 +412,7 @@ namespace MotoTrakBase
             }
         }
         
-        private static void ReadMotoTrakFileEvent (MotoTrakSession session, BinaryReader reader)
+        private static void ReadMotoTrakFileEvent (MotoTrakSession session, BinaryReader reader, SByte version, List<List<string>> stage_params)
         {
             //Get the event type
             MotoTrakFileSave.BlockType event_type = (MotoTrakFileSave.BlockType)reader.ReadInt32();
@@ -362,7 +422,7 @@ namespace MotoTrakBase
                 case MotoTrakFileSave.BlockType.Trial:
 
                     MotorTrial new_trial = new MotorTrial();
-                    ReadMotoTrakFileTrial(session, new_trial, reader);
+                    ReadMotoTrakFileTrial(session, new_trial, reader, version, stage_params);
                     session.Trials.Add(new_trial);
 
                     break;
@@ -573,15 +633,15 @@ namespace MotoTrakBase
                         trial.HitWindowDurationInSeconds = Convert.ToDouble(reader.ReadSingle());
 
                         //Read in the trial initiation threshold
-                        trial.VariableParameters[MotoTrak_V1_CommonParameters.InitiationThreshold] = Convert.ToDouble(reader.ReadSingle());
+                        trial.QuantitativeParameters[MotoTrak_V1_CommonParameters.InitiationThreshold] = Convert.ToDouble(reader.ReadSingle());
 
                         //Read in the trial hit threshold
-                        trial.VariableParameters[MotoTrak_V1_CommonParameters.HitThreshold] = Convert.ToDouble(reader.ReadSingle());
+                        trial.QuantitativeParameters[MotoTrak_V1_CommonParameters.HitThreshold] = Convert.ToDouble(reader.ReadSingle());
                         
                         //If the file is version -4, then read in the hit threshold ceiling (I believe this is primarily for April's code)
                         if (version == -4)
                         {
-                            trial.VariableParameters[MotoTrak_V1_CommonParameters.HitThresholdCeiling] = Convert.ToDouble(reader.ReadSingle());
+                            trial.QuantitativeParameters[MotoTrak_V1_CommonParameters.HitThresholdCeiling] = Convert.ToDouble(reader.ReadSingle());
                         }
 
                         //Read in the number of hits that occurred during this trial

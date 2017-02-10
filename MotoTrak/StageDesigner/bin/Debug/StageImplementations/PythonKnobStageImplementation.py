@@ -29,13 +29,20 @@ from MotoTrakUtilities import MotorMath
 class PythonKnobStageImplementation (IMotorStageImplementation):
 
     #Variables needed to run this task
-    Autopositioner_Trial_Interval = 10
-    Ending_Value_Of_Last_Trial = 0
+    Maximal_Turn_Angle_List = []
+    Turn_Angle_Threshold_List = []
 
+    Autopositioner_Trial_Interval = 50
+    Autopositioner_Trial_Count_Handled = []
+    Ending_Value_Of_Last_Trial = 0
+    
     #Declare string parameters for this stage
     TaskDefinition = MotorTaskDefinition()
 
     def __init__(self):
+
+        PythonKnobStageImplementation.Maximal_Turn_Angle_List = []
+        PythonKnobStageImplementation.Turn_Angle_Threshold_List = []
 
         PythonKnobStageImplementation.TaskDefinition.TaskName = "Knob Task"
         PythonKnobStageImplementation.TaskDefinition.TaskDescription = "The knob task assesses an animal's ability to reach and the supinate with its forepaw."
@@ -57,6 +64,32 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
         return
 
     def AdjustBeginningStageParameters(self, recent_behavior_sessions, current_session_stage):
+
+        PythonKnobStageImplementation.Autopositioner_Trial_Count_Handled = []
+
+        #Take only recent behavior sessions that have at least 50 successful trials
+        total_hits = 0
+        for i in recent_behavior_sessions:
+            this_session_hits = i.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count()
+            if this_session_hits >= 1:
+                total_hits += this_session_hits
+                
+        #Now, based off the total number of hits that have occurred in previous sessions, set the position of the autopositioner
+        position = 0.5
+        if total_hits >= 50 and total_hits < 100:
+            position = 0.5
+        elif total_hits >= 100 and total_hits < 150:
+            position = 1.0
+        elif total_hits >= 150 and total_hits < 200:
+            position = 1.5
+        elif total_hits >= 200:
+            position = 2.0
+        
+        #Set the position of the autopositioner if it is supposed to be adaptively set
+        if current_session_stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
+            current_session_stage.Position.CurrentValue = position
+            MotoTrakAutopositioner.GetInstance().SetPosition(position)
+
         return
 
     def TransformSignals(self, new_data_from_controller, stage, device):
@@ -158,11 +191,13 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
 
     def CreateEndOfTrialMessage(self, trial_number, trial, stage):
         msg = ""
+        msg += System.DateTime.Now.ToShortTimeString() + ", "
 
         #Get the device stream data
         device_stream = trial.TrialData[1]
         try:
             peak_turn_angle = device_stream.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max()
+            PythonKnobStageImplementation.Maximal_Turn_Angle_List.append(peak_turn_angle)
 
             msg += "Trial " + str(trial_number) + " "
             if trial.Result == MotorTrialResult.Hit:
@@ -176,9 +211,15 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
             hit_threshold_parameter_name = PythonKnobStageImplementation.TaskDefinition.TaskParameters[0].ParameterName
 
             if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
-                if stage.StageParameters[hit_threshold_parameter_name].AdaptiveThresholdType is MotorStageAdaptiveThresholdType.Median:
-                    current_hit_threshold = stage.StageParameters[hit_threshold_parameter_name].CurrentValue
-                    msg += "(Hit threshold = " + Math.Floor(current_hit_threshold).ToString() + " degrees)"
+                #Get the current hit theshold
+                current_hit_threshold = stage.StageParameters[hit_threshold_parameter_name].CurrentValue
+
+                #Append the current hit threshold to the list of thresholds for this session
+                PythonKnobStageImplementation.Turn_Angle_Threshold_List.append(current_hit_threshold)
+
+                #Show the current hit threshold in the message to the user if this is an adaptive stage
+                if stage.StageParameters[hit_threshold_parameter_name].ParameterType == MotorStageParameter.StageParameterType.Variable:
+                    msg += " (Hit threshold = " + System.Math.Floor(current_hit_threshold).ToString() + " degrees)"
             
             return msg
         except ValueError:
@@ -242,10 +283,50 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
             hit_count = all_trials.Select(lambda t: t.Result == MotorTrialResult.Hit).Count()
             hit_count_modulus = hit_count % PythonKnobStageImplementation.Autopositioner_Trial_Interval
             if hit_count > 0 and hit_count_modulus is 0:
-                stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
-                MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+                if not PythonKnobStageImplementation.Autopositioner_Trial_Count_Handled.Contains(hit_count):
+                    if stage.Position.CurrentValue < 2.0:
+                        PythonKnobStageImplementation.Autopositioner_Trial_Count_Handled.append(hit_count)
+                        stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
+                        MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
             
         return
 
     def CreateEndOfSessionMessage(self, current_session):
-        return List[System.String]()
+        #Get the name of the hit threshold parameter
+        hit_threshold_parameter_name = PythonKnobStageImplementation.TaskDefinition.TaskParameters[0].ParameterName
+
+        # Find the percentage of trials that exceeded the maximum possible hit threshold in this session
+        maximal_hit_threshold = current_session.SelectedStage.StageParameters[hit_threshold_parameter_name].MaximumValue
+        number_of_trials_greater_than_max = sum(i >= maximal_hit_threshold for i in PythonKnobStageImplementation.Maximal_Turn_Angle_List)
+        total_trials = len(PythonKnobStageImplementation.Maximal_Turn_Angle_List)
+        percent_trials_greater_than_max = 0        
+        if len(PythonKnobStageImplementation.Maximal_Turn_Angle_List) > 0:
+            percent_trials_greater_than_max = (System.Double(number_of_trials_greater_than_max) / System.Double(total_trials)) * 100
+        
+        # Find the number of feedings that occurred in this session
+        number_of_feedings = current_session.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count();
+
+        # Find the median maximal force from the sesion
+        net_max_turn_angle_list = List[System.Double]()
+        for i in PythonKnobStageImplementation.Maximal_Turn_Angle_List:
+            net_max_turn_angle_list.Add(i)
+        median_peak_turn_angle = MotorMath.Median(net_max_turn_angle_list)
+        if (System.Double.IsNaN(median_peak_turn_angle)):
+            median_peak_turn_angle = 0
+
+        # Find the median force threshold from this session
+        net_threshold_list = List[System.Double]()
+        for i in PythonKnobStageImplementation.Turn_Angle_Threshold_List:
+            net_threshold_list.Add(i)
+        median_turn_angle_threshold = MotorMath.Median(net_threshold_list)
+        if (System.Double.IsNaN(median_turn_angle_threshold)):
+            median_turn_angle_threshold = 0
+
+        end_of_session_messages = List[System.String]()
+        end_of_session_messages.Add(System.DateTime.Now.ToShortTimeString() + " - Session ended.")
+        end_of_session_messages.Add("Pellets fed: " + System.Convert.ToInt32(number_of_feedings).ToString())
+        end_of_session_messages.Add("Median Peak Turn Angle: " + System.Convert.ToInt32(median_peak_turn_angle).ToString())
+        end_of_session_messages.Add("% Trials > Maximum turn angle threshold: " + System.Convert.ToInt32(percent_trials_greater_than_max).ToString())
+        end_of_session_messages.Add("Median Force Threshold: " + System.Convert.ToInt32(median_turn_angle_threshold).ToString())
+
+        return end_of_session_messages

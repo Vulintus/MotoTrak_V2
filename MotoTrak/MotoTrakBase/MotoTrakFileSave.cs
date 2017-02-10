@@ -18,7 +18,7 @@ namespace MotoTrakBase
         /// <summary>
         /// The MotoTrak file version
         /// </summary>
-        public const int FileVersion = -5;
+        public const int FileVersion = -6;
 
         #endregion
 
@@ -48,7 +48,8 @@ namespace MotoTrakBase
         private string _file_path = string.Empty;
         private FileStream _file_stream = null;
         private BinaryWriter _binary_writer = null;
-        private List<string> keys = new List<string>();
+        private List<string> quantitative_keys = new List<string>();
+        private List<string> nominal_keys = new List<string>();
 
         #endregion
 
@@ -341,23 +342,50 @@ namespace MotoTrakBase
                     _binary_writer.Write(units.ToCharArray());
                 }
 
-                //Save the number of stage parameters that exist
-                UInt32 n_stage_params = Convert.ToUInt32(current_session.SelectedStage.StageParameters.Count);
-                _binary_writer.Write(n_stage_params);
+                //Save the number of QUANTITATIVE stage parameters that exist
+                var quant_params = current_session.SelectedStage.StageParameters.Where(x => x.Value.IsQuantitative).ToList();
+                UInt32 n_quant_params = Convert.ToUInt32(quant_params.Count);
+                _binary_writer.Write(n_quant_params);
 
                 //Save each stage parameter to the file
-                foreach (var k in current_session.SelectedStage.StageParameters)
+                foreach (var k in quant_params)
                 {
-                    //Get the parameter name
-                    string parameter_name = k.Key;
+                    if (k.Value.IsQuantitative)
+                    {
+                        //Get the parameter name
+                        string parameter_name = k.Key;
 
-                    //Add this parameter name to our ordered list of keys
-                    keys.Add(parameter_name);
+                        //Add this parameter name to our ordered list of keys
+                        quantitative_keys.Add(parameter_name);
 
-                    //Save the parameter name to the file
-                    N = Convert.ToByte(parameter_name.Length);
-                    _binary_writer.Write(N);
-                    _binary_writer.Write(parameter_name.ToCharArray());
+                        //Save the parameter name to the file
+                        N = Convert.ToByte(parameter_name.Length);
+                        _binary_writer.Write(N);
+                        _binary_writer.Write(parameter_name.ToCharArray());
+                    }
+                }
+
+                //Save the number of NOMINAL stage parameters that exist
+                var nominal_params = current_session.SelectedStage.StageParameters.Where(x => !x.Value.IsQuantitative).ToList();
+                UInt32 n_nominal_params = Convert.ToUInt32(nominal_params.Count);
+                _binary_writer.Write(n_nominal_params);
+
+                //Save each stage parameter to the file
+                foreach (var k in nominal_params)
+                {
+                    if (!k.Value.IsQuantitative)
+                    {
+                        //Get the parameter name
+                        string parameter_name = k.Key;
+
+                        //Add this parameter name to our ordered list of keys
+                        nominal_keys.Add(parameter_name);
+
+                        //Save the parameter name to the file
+                        N = Convert.ToByte(parameter_name.Length);
+                        _binary_writer.Write(N);
+                        _binary_writer.Write(parameter_name.ToCharArray());
+                    }
                 }
 
                 //Make sure the data is actually written to the file before continuing
@@ -415,20 +443,39 @@ namespace MotoTrakBase
                 _binary_writer.Write(position);
 
                 //Save the number of variable parameters that exist for this trial
-                Byte N = Convert.ToByte(trial.VariableParameters.Count);
+                Byte N = Convert.ToByte(trial.QuantitativeParameters.Count);
                 _binary_writer.Write(N);
 
                 //Save each of the variable parameters for this trial
-                foreach (var k in keys)
+                foreach (var k in quantitative_keys)
                 {
                     //Save the parameter value
                     float parameter_value = float.NaN;
-                    if (trial.VariableParameters.Keys.Contains(k))
+                    if (trial.QuantitativeParameters.Keys.Contains(k))
                     {
-                        parameter_value = Convert.ToSingle(trial.VariableParameters[k]);
+                        parameter_value = Convert.ToSingle(trial.QuantitativeParameters[k]);
                     }
                     
                     _binary_writer.Write(parameter_value);
+                }
+
+                //Save the number of nominal parameters that exist for this trial
+                N = Convert.ToByte(trial.NominalParameters.Count);
+                _binary_writer.Write(N);
+
+                //Save each of the nominal parameters for this trial
+                foreach (var k in nominal_keys)
+                {
+                    //Save the parameter value
+                    string nominal_value = string.Empty;
+                    if (trial.NominalParameters.Keys.Contains(k))
+                    {
+                        nominal_value = trial.NominalParameters[k];
+                        N = Convert.ToByte(nominal_value.Length);
+
+                        _binary_writer.Write(N);
+                        _binary_writer.Write(nominal_value.ToCharArray());
+                    }
                 }
                 
                 //Save the number of hits that occurred during this trial
