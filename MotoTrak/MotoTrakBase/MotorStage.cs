@@ -950,8 +950,15 @@ namespace MotoTrakBase
 
             foreach (var line in stageDocument)
             {
-                MotorStage new_stage = ReadSingleStage_Web(headers, line);
-                stages.Add(new_stage);
+                try
+                { 
+                    MotorStage new_stage = ReadSingleStage_Web(headers, line);
+                    stages.Add(new_stage);
+                }
+                catch (Exception e)
+                {
+                    //empty
+                }
             }
 
             return stages;
@@ -1113,7 +1120,11 @@ namespace MotoTrakBase
                         ir_sensor_param.ParameterName = "Use swipe sensor for trial initiations";
                         ir_sensor_param.IsQuantitative = false;
                         ir_sensor_param.NominalValue = use_ir ? "Yes" : "No";
-                        
+
+                        hit_ceiling.ParameterName = "Upper bound force threshold";
+                        use_hit_ceiling_param.ParameterName = "Use upper force boundary";
+                        ir_sensor_param.ParameterName = "Use swipe sensor for trial initiations";
+
                         stage.StageParameters["Upper bound force threshold"] = hit_ceiling;
                         stage.StageParameters["Use upper force boundary"] = use_hit_ceiling_param;
                         stage.StageParameters["Use swipe sensor for trial initiations"] = ir_sensor_param;
@@ -1128,6 +1139,10 @@ namespace MotoTrakBase
 
                         //Set the parameters of this stage
                         stage.StageParameters.Clear();
+
+                        hit_thresh.ParameterName = "Hit Threshold";
+                        init_thresh.ParameterName = "Initiation Threshold";
+
                         stage.StageParameters["Hit Threshold"] = hit_thresh;
                         stage.StageParameters["Initiation Threshold"] = init_thresh;
                     }
@@ -1138,10 +1153,13 @@ namespace MotoTrakBase
                     //Set the implementation of this stage
                     stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonSustainedPullStageImplementation.py"];
 
+                    hit_thresh.ParameterName = "Hold Duration";
+                    init_thresh.ParameterName = "Initiation Threshold";
+                    
                     //Set the parameters of this stage
                     stage.StageParameters.Clear();
                     stage.StageParameters["Initiation Threshold"] = init_thresh;
-                    stage.StageParameters["Minimum Force"] = new MotorStageParameter() { InitialValue = 35, CurrentValue = 35 };
+                    stage.StageParameters["Minimum Force"] = new MotorStageParameter() { InitialValue = 35, CurrentValue = 35, ParameterName = "Minimum Force" };
                     stage.StageParameters["Hold Duration"] = hit_thresh;
 
                     break;
@@ -1149,6 +1167,9 @@ namespace MotoTrakBase
 
                     //Set the implementation of this stage
                     stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonKnobStageImplementation.py"];
+
+                    hit_thresh.ParameterName = "Hit Threshold";
+                    init_thresh.ParameterName = "Initiation Threshold";
 
                     //Set the parameters of this stage
                     stage.StageParameters.Clear();
@@ -1163,9 +1184,9 @@ namespace MotoTrakBase
 
                     //Set the parameters for this stage
                     stage.StageParameters.Clear();
-                    stage.StageParameters["Full Press"] = new MotorStageParameter() { CurrentValue = 9.75, InitialValue = 9.75 };
-                    stage.StageParameters["Release Point"] = new MotorStageParameter() { CurrentValue = 6.5, InitialValue = 6.5 };
-                    stage.StageParameters["Initiation Threshold"] = new MotorStageParameter() { CurrentValue = 3, InitialValue = 3 };
+                    stage.StageParameters["Full Press"] = new MotorStageParameter() { CurrentValue = 9.75, InitialValue = 9.75, ParameterName = "Full Press" };
+                    stage.StageParameters["Release Point"] = new MotorStageParameter() { CurrentValue = 6.5, InitialValue = 6.5, ParameterName = "Release Point" };
+                    stage.StageParameters["Initiation Threshold"] = new MotorStageParameter() { CurrentValue = 3, InitialValue = 3, ParameterName = "Initiation Threshold" };
                     stage.StageParameters["Hit Threshold"] = hit_thresh;
 
                     break;
@@ -1173,6 +1194,8 @@ namespace MotoTrakBase
 
                     //Set the implementation of this stage
                     stage.StageImplementation = null;
+
+                    hit_thresh.ParameterName = "Hit Threshold";
 
                     //Set the parameters of this stage
                     stage.StageParameters.Clear();

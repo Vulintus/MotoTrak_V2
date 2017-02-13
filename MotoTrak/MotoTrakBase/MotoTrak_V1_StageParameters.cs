@@ -15,7 +15,7 @@ namespace MotoTrakBase
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "description" })]
         Description,
 
-        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "device", "primary input device" })]
+        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "device", "primary input device", "input device" })]
         InputDevice,
 
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "position" })]
@@ -42,10 +42,10 @@ namespace MotoTrakBase
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "threshold units" })]
         ThresholdUnits,
 
-        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "ir trial initiation" })]
+        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "ir trial initiation", "IR Trial Initiation (\"YES\" or \"NO\")" })]
         IRTrialInitiation,
 
-        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "sample period" })]
+        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "sample period", "sample period (ms)" })]
         SamplePeriod,
 
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "pre-trial sampling time" })]
@@ -54,7 +54,7 @@ namespace MotoTrakBase
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "post-trial sampling time" })]
         PostTrialSamplingTime,
 
-        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "hit window" })]
+        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "hit window", "hit window (s)" })]
         HitWindow,
 
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "session duration" })]
@@ -63,7 +63,7 @@ namespace MotoTrakBase
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "force stop at end of session" })]
         ForceStopAtEndOfSession,
 
-        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "vns default", "stimulation" })]
+        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "vns default", "stimulation", "VNS Default (\"ON\", \"OFF\", or \"RANDOM\")" })]
         StimulateOnHit,
 
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "trial initiation threshold" })]

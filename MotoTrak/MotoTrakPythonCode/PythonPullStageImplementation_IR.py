@@ -67,7 +67,7 @@ class PythonPullStageImplementation_IR (IMotorStageImplementation):
         PythonPullStageImplementation_IR.Autopositioner_Trial_Count_Handled = []
         PythonPullStageImplementation_IR.MinimumIR = System.Int32.MaxValue
         PythonPullStageImplementation_IR.MaximumIR = 0
-        PythonPullStageImplementation_IR.ThresholdIR = System.Int32.MaxValue
+        PythonPullStageImplementation_IR.ThresholdIR = System.Int32.MinValue
 
         #Take only recent behavior sessions that have at least 50 successful trials
         total_hits = 0
@@ -150,14 +150,13 @@ class PythonPullStageImplementation_IR (IMotorStageImplementation):
 
                 #Retrieve the maximal value for the signal
                 maximal_value = stream_data_to_use.Max()
-                maximal_ir_value = ir_data_to_use.Max();
-
+                
                 if maximal_value >= init_thresh:
                     #Trial initiated based on force
                     return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
-                elif maximal_ir_value <= PythonPullStageImplementation_IR.ThresholdIR:
+                elif min_ir_data <= PythonPullStageImplementation_IR.ThresholdIR:
                     #Trial initiated based on IR sensor value
-                    return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
+                    return_value = stream_data_to_use.IndexOf(min_ir_data) + difference_in_size
                 
         return return_value
 

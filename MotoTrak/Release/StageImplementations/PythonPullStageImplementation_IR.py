@@ -155,7 +155,7 @@ class PythonPullStageImplementation_IR (IMotorStageImplementation):
                 if maximal_value >= init_thresh:
                     #Trial initiated based on force
                     return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
-                elif maximal_ir_value >= PythonPullStageImplementation_IR.ThresholdIR:
+                elif maximal_ir_value <= PythonPullStageImplementation_IR.ThresholdIR:
                     #Trial initiated based on IR sensor value
                     return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
                 

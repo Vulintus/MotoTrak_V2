@@ -22,7 +22,7 @@ fseek(fid, 0, -1);
 %Get the file version
 version = fread(fid, 1, 'int8');
 
-if (version == -5)
+if (version == -5 || version == -6)
     
     %If the file version is -5, then go ahead and attempt to read it
     data.version = version;
@@ -82,7 +82,7 @@ if (version == -5)
     
     number_of_streams = length(data.data_streams);
     
-    %Read in the number of stage parameters that exist for this session
+    %Read in the number of quantitative stage parameters that exist for this session
     N = fread(fid, 1, 'uint32');
     
     %Read in the stage parameters for this stage
@@ -91,6 +91,24 @@ if (version == -5)
         n_param_name = fread(fid, 1, 'uint8');
         param_name = fread(fid, n_param_name, '*char')';
         data.parameters{end+1} = param_name;
+    end
+    
+    %Read in the number of nominal stage parameters that exist for this session
+    data.nominal_parameters = {};
+    
+    %Nominal parameters only exist for file version -6 and later.  Not for -5.
+    if (version == -6)
+        
+        %Read in the number of nominal parameters
+        N = fread(fid, 1, 'uint32');
+        
+        %Read in the name of each nominal parameter
+        for i=1:N
+            n_param_name = fread(fid, 1, 'uint8');
+            param_name = fread(fid, n_param_name, '*char');
+            data.nominal_parameters{end+1} = param_name;
+        end
+        
     end
     
     %Define block id types:
@@ -118,7 +136,7 @@ if (version == -5)
         if (block_id == BlockID_Trial)
             
             %Read in the trial from the file
-            [new_trial, ~] = mototrak_read_trial(fid, number_of_streams);
+            [new_trial, ~] = mototrak_read_trial(fid, number_of_streams, version);
             data.trial = [data.trial new_trial];
             
         elseif (block_id == BlockID_ManualFeed)
@@ -179,7 +197,7 @@ end
 
 %% mototrak_read_trial - a subfunction that reads in individual trials from the MotoTrak session file
 
-function [trial, trial_number] = mototrak_read_trial ( fid, num_streams )
+function [trial, trial_number] = mototrak_read_trial ( fid, num_streams, version )
 
     %Read in the trial number
     trial_number = fread(fid, 1, 'uint32');
@@ -213,10 +231,10 @@ function [trial, trial_number] = mototrak_read_trial ( fid, num_streams )
     %Read in the manipulandum position
     trial.position = fread(fid, 1, 'float32');
 
-    %Read in the number of variable parameters that exist for the trial
+    %Read in the number of quantitative parameters that exist for the trial
     N = fread(fid, 1, 'uint8');
 
-    %Read in each variable parameter
+    %Read in each quantitative parameter value
     variable_params = [];
     for i=1:N
         %Read in the parameter value
@@ -224,7 +242,25 @@ function [trial, trial_number] = mototrak_read_trial ( fid, num_streams )
         variable_params(end+1) = param_value;
     end
     trial.parameters = variable_params;
-
+    
+    %Declare an empty list of nominal parameters
+    trial.nominal_parameters = {};
+    
+    %If this is file version -6 or later, read in any nominal parameters for this trial
+    if (version == -6)
+        
+        %Read the number of nominal parameters
+        N = fread(fid, 1, 'uint8');
+        
+        %Read in each nominal parameter
+        for i=1:N
+            n_chars = fread(fid, 1, 'uint8');
+            nominal_param_value = fread(fid, n_chars, '*char');
+            trial.nominal_parameters{end+1} = nominal_param_value;
+        end
+        
+    end
+    
     %Read in the number of hits that occurred during this trial
     N = fread(fid, 1, 'uint8');
 

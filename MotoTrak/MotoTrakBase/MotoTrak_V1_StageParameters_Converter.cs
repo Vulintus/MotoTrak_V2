@@ -25,14 +25,16 @@ namespace MotoTrakBase
             {
                 var attribute = Attribute.GetCustomAttribute(field,
                     typeof(MotoTrak_V1_SpreadsheetColumnHeadingAttribute)) as MotoTrak_V1_SpreadsheetColumnHeadingAttribute;
-
-                if (attribute.SpreadsheetColumnHeading != null)
+                if (attribute != null)
                 {
-                    foreach (var a in attribute.SpreadsheetColumnHeading)
+                    if (attribute.SpreadsheetColumnHeading != null)
                     {
-                        if (description.Equals(a, StringComparison.InvariantCultureIgnoreCase))
+                        foreach (var a in attribute.SpreadsheetColumnHeading)
                         {
-                            return (MotoTrak_V1_StageParameters)field.GetValue(null);
+                            if (description.Trim().Equals(a.Trim(), StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                return (MotoTrak_V1_StageParameters)field.GetValue(null);
+                            }
                         }
                     }
                 }

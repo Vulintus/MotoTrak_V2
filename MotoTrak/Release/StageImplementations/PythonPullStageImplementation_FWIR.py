@@ -59,10 +59,15 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
         lower_bound_parameter = MotorTaskParameter("Lower bound force threshold", "grams", True, True, True)
         upper_bound_parameter = MotorTaskParameter("Upper bound force threshold", "grams", True, True, True)
         initiation_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.InitiationThreshold, "grams", True, True, True)
+
+        allow_upper_bound = MotorTaskParameter("Use upper force boundary", "nominal", False, False, False, False, List[System.String](["Yes", "No"]))
+        swipe_sensor_trial_initiations = MotorTaskParameter("Use swipe sensor for trial initiations", "nominal", False, False, False, False, List[System.String](["Yes", "No"]))
         
         PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters.Add(lower_bound_parameter)
         PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters.Add(upper_bound_parameter)
         PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters.Add(initiation_threshold_parameter)
+        PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters.Add(allow_upper_bound)
+        PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters.Add(swipe_sensor_trial_initiations)
 
         return
 
@@ -75,6 +80,18 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
         PythonPullStageImplementation_FWIR.MinimumIR = System.Int32.MaxValue
         PythonPullStageImplementation_FWIR.MaximumIR = 0
         PythonPullStageImplementation_FWIR.ThresholdIR = System.Int32.MaxValue
+
+        #Get the name of the "swipe sensor trial initiation" parameter
+        use_upper_force_boundary_parameter_name = PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters[3].ParameterName
+
+        #Get the value of the "swipe sensor trial initiation" parameter
+        use_upper_force_boundary = current_session_stage.StageParameters[use_upper_force_boundary_parameter_name].NominalValue
+
+        #Decide whether to display the "upper force boundary" when plotting in MotoTrak
+        if (use_upper_force_boundary == "Yes"):
+            PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters[1].DisplayOnPlot = True
+        else:
+            PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters[1].DisplayOnPlot = False
 
         #Take only recent behavior sessions that have at least 50 successful trials
         total_hits = 0
@@ -124,6 +141,12 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
         #Get the name of the initiation threshold parameter
         initiation_threshold_parameter_name = PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters[2].ParameterName
 
+        #Get the name of the "swipe sensor trial initiation" parameter
+        swipe_sensor_trial_initiation_parameter_name = PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters[4].ParameterName
+
+        #Get the value of the "swipe sensor trial initiation" parameter
+        use_swipe_sensor = stage.StageParameters[swipe_sensor_trial_initiation_parameter_name].NominalValue
+
         #Look to see if the Initiation Threshold key exists
         if stage.StageParameters.ContainsKey(initiation_threshold_parameter_name):
             #Get the stage's initiation threshold
@@ -162,11 +185,12 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
                     return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
                     PythonPullStageImplementation_FWIR.Position_Of_Last_Trough = return_value
                     PythonPullStageImplementation_FWIR.Position_Of_Hit = -1
-                elif maximal_ir_value >= PythonPullStageImplementation_FWIR.ThresholdIR:
-                    #Trial initiated based on IR sensor value
-                    return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
-                    PythonPullStageImplementation_FWIR.Position_Of_Last_Trough = return_value
-                    PythonPullStageImplementation_FWIR.Position_Of_Hit = -1
+                elif use_swipe_sensor == "Yes":
+                    if maximal_ir_value <= PythonPullStageImplementation_FWIR.ThresholdIR:
+                        #Trial initiated based on IR sensor value
+                        return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
+                        PythonPullStageImplementation_FWIR.Position_Of_Last_Trough = return_value
+                        PythonPullStageImplementation_FWIR.Position_Of_Hit = -1
                 
         return return_value
 
@@ -182,6 +206,12 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
 
         #Get the name of the initiation threshold parameter
         initiation_threshold_parameter_name = PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters[2].ParameterName
+
+        #Get the name of the "swipe sensor trial initiation" parameter
+        use_upper_force_boundary_parameter_name = PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters[3].ParameterName
+
+        #Get the value of the "swipe sensor trial initiation" parameter
+        use_upper_force_boundary = stage.StageParameters[use_upper_force_boundary_parameter_name].NominalValue
 
         #Calculate the IR min/max/threshold
         ir_data = trial.TrialData[2]
@@ -216,7 +246,7 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
                 #Only look at samples within the hit window
                 if (i >= stage.TotalRecordedSamplesBeforeHitWindow) and (i < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow)):
                     
-                    if (stream_data[i] >= current_upper_bound):
+                    if (stream_data[i] >= current_upper_bound and use_upper_force_boundary == "Yes"):
                         #If this datapoint is above the upper bound, set the pull state to be "invalid"
                         pull_state = -1
                     elif (stream_data[i] < current_initiation_threshold):
@@ -225,8 +255,17 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
                         PythonPullStageImplementation_FWIR.Position_Of_Last_Trough = i
                     elif (pull_state == 0):
                         #Otherwise, if the pull state is unknown, and the pull is between the lower and upper bounds, set it to be valid
-                        if (stream_data[i] >= current_lower_bound and stream_data[i] < current_upper_bound):
-                            pull_state = 1
+                        if (stream_data[i] >= current_lower_bound):
+                            if (use_upper_force_boundary == "Yes"):
+                                if (stream_data[i] < current_upper_bound):
+                                    pull_state = 1
+                            else:
+                                #Add the point at which the success occurred to the result
+                                result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, i))
+                                PythonPullStageImplementation_FWIR.Position_Of_Hit = i
+
+                                #Break out of the loop to return the result immediately
+                                break
                     
                     #Check to see if a hit has occurred
                     if (pull_state == 1 and stream_data[i] < current_lower_bound):
@@ -301,10 +340,18 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
             return System.String.Empty;
 
     def CalculateYValueForSessionOverviewPlot(self, trial, stage):
-        if PythonPullStageImplementation_FWIR.Position_Of_Hit > -1:
+        #Get the name of the hit threshold parameter
+        hit_threshold_parameter_name = PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters[0].ParameterName
+
+        #Adjust the hit threshold if necessary
+        if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
+            #Grab the device signal for this trial
+            stream_data = trial.TrialData[1]
+
+            #Find the maximal force of the current trial
             max_force = stream_data.Where(lambda val, index: \
-                (index >= PythonPullStageImplementation_FWIR.Position_Of_Last_Trough) and \
-                (index < PythonPullStageImplementation_FWIR.Position_Of_Hit)).Max()
+                    (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \
+                    (index < (stage.TotalRecordedSamplesBeforeHitWindow + stage.TotalRecordedSamplesDuringHitWindow))).Max()
 
             return max_force
 
