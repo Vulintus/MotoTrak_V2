@@ -105,7 +105,7 @@ if (version == -5 || version == -6)
         %Read in the name of each nominal parameter
         for i=1:N
             n_param_name = fread(fid, 1, 'uint8');
-            param_name = fread(fid, n_param_name, '*char');
+            param_name = fread(fid, n_param_name, '*char')';
             data.nominal_parameters{end+1} = param_name;
         end
         
@@ -255,7 +255,7 @@ function [trial, trial_number] = mototrak_read_trial ( fid, num_streams, version
         %Read in each nominal parameter
         for i=1:N
             n_chars = fread(fid, 1, 'uint8');
-            nominal_param_value = fread(fid, n_chars, '*char');
+            nominal_param_value = fread(fid, n_chars, '*char')';
             trial.nominal_parameters{end+1} = nominal_param_value;
         end
         

@@ -296,5 +296,27 @@ namespace MotoTrakBase
         }
 
         #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Converts trial timestamps from raw microseconds to milliseconds.
+        /// </summary>
+        public void ConvertTimestamps (int index, MotorStage stage)
+        {
+            int index_of_hit_window_start = Convert.ToInt32(_pre_trial_sampling_period_in_seconds * Convert.ToDouble(stage.SamplesPerSecond));
+            
+            if (_trial_data.Count > index)
+            {
+                if (_trial_data[index].Count > index_of_hit_window_start)
+                {
+                    double value_to_subtract = _trial_data[index][index_of_hit_window_start];
+                    var result = _trial_data[index].Select(x => (x - value_to_subtract) / 1000).ToList();
+                    _trial_data[index] = result;
+                }
+            }   
+        }
+
+        #endregion
     }
 }

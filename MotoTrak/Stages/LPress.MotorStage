@@ -2,7 +2,7 @@ Stage File Version: 1
 Stage Name: LPress
 Stage Description: Lever - Shape to feed on first press
 Stage Implementation: PythonLeverStageImplementation.py
-Stage Output Trigger: OFF
+Stage Output Trigger: Off
 Stage Device: Lever
 Stage Sampling Rate: 10
 Stage Parameter: Pre-Trial Duration, seconds, Fixed, Undefined, 1, NaN, NaN, NaN

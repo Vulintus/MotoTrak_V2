@@ -123,8 +123,7 @@ namespace StageDesigner
         {
             //Create a new stage, a view-model for the new stage, and add the view-model
             //to the list of "Open Stages" in the GUI.
-            MotorStage new_stage = new MotorStage();
-            this.OpenStages.Add(new StageViewModel(new_stage));
+            this.OpenStages.Add(new StageViewModel(null));
 
             //Change the selected stage index to be that of the new stage
             this.SelectedStageIndex = this.OpenStages.Count - 1;

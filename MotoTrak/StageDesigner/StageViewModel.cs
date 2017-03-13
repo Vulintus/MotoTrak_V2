@@ -21,20 +21,32 @@ namespace StageDesigner
         /// </summary>
         public StageViewModel(MotorStage stage_to_edit)
         {
-            //Choose a default stage implementation if the MotorStage object doesn't already have one
-            if (stage_to_edit.StageImplementation == null)
+            if (stage_to_edit == null)
             {
-                var list_of_tasks = GetOrderedListOfPythonStageImplementations();
-                if (list_of_tasks != null && list_of_tasks.Count > 0)
-                {
-                    stage_to_edit.StageImplementation = list_of_tasks.FirstOrDefault().Item2;
-                }
+                StageModel = new MotorStage();
+                StageParameters.CollectionChanged += StageParameters_CollectionChanged;
+                RefreshViewAfterNewTaskSelection();
             }
+            else
+            {
+                //Choose a default stage implementation if the MotorStage object doesn't already have one
+                if (stage_to_edit.StageImplementation == null)
+                {
+                    var list_of_tasks = GetOrderedListOfPythonStageImplementations();
+                    if (list_of_tasks != null && list_of_tasks.Count > 0)
+                    {
+                        stage_to_edit.StageImplementation = list_of_tasks.FirstOrDefault().Item2;
+                    }
+                }
 
-            StageModel = stage_to_edit;
-            StageParameters.CollectionChanged += StageParameters_CollectionChanged;
+                StageModel = stage_to_edit;
 
-            RefreshViewAfterNewTaskSelection();
+                StageParameters.CollectionChanged += StageParameters_CollectionChanged;
+
+                SetSelectedTaskIndex();
+
+                RefreshView();
+            }
         }
 
         #endregion
@@ -73,11 +85,8 @@ namespace StageDesigner
 
         #region Private methods
 
-        private void RefreshViewAfterNewTaskSelection ()
+        private void RefreshView ()
         {
-            //Set the stage implementation in the model stage object
-            SetStageImplementation();
-
             //Get the task parameters
             PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
             if (k != null)
@@ -98,15 +107,35 @@ namespace StageDesigner
 
             //Subscribe to timing parameter view-model changes
             SubscribeToTimingParameterViewModelChanges();
-            
-            //Instantiate required stage parameters for this stage, based on the stage implementation
-            InstantiateRequiredStageParameters();
+
+            //Create view-models for each stage parameter
+            InstantiateStageParameterViewModels();
 
             //Set the recommended device for this stage, based on the stage implementation
             SetDeviceToRecommendedDeviceForStageImplementation();
+            
+            NotifyPropertyChanged("SelectedTaskIndex");
+            NotifyPropertyChanged("TaskDescriptionVisibility");
+            NotifyPropertyChanged("TaskDescription");
+            NotifyPropertyChanged("DevicePositionWarningVisibility");
+            NotifyPropertyChanged("OutputTriggerOptions");
+            NotifyPropertyChanged("OutputTriggerSelectedIndex");
+        }
+
+        private void RefreshViewAfterNewTaskSelection ()
+        {
+            //Set the stage implementation in the model stage object
+            SetStageImplementation();
+
+            //Clear the stage parameters dictionary in preparation to repopulate it with new stage parameters
+            StageModel.StageParameters.Clear();
+
+            //Instantiate required stage parameters for this stage, based on the stage implementation
+            InstantiateRequiredStageParameters();
 
             //Reset the output trigger type
             StageModel.OutputTriggerType = string.Empty;
+            PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
             if (k != null)
             {
                 if (k.TaskDefinition.OutputTriggerOptions != null && k.TaskDefinition.OutputTriggerOptions.Count > 0)
@@ -115,12 +144,7 @@ namespace StageDesigner
                 }
             }
 
-            NotifyPropertyChanged("SelectedTaskIndex");
-            NotifyPropertyChanged("TaskDescriptionVisibility");
-            NotifyPropertyChanged("TaskDescription");
-            NotifyPropertyChanged("DevicePositionWarningVisibility");
-            NotifyPropertyChanged("OutputTriggerOptions");
-            NotifyPropertyChanged("OutputTriggerSelectedIndex");
+            RefreshView();
         }
 
         private List<Tuple<string, PythonStageImplementation>> GetOrderedListOfPythonStageImplementations ()
@@ -156,14 +180,23 @@ namespace StageDesigner
             return null;
         }
 
+        private int GetIndexOfModelStageImplementation ()
+        {
+            var ordered_list_of_stage_impls = GetOrderedListOfPythonStageImplementations();
+            if (ordered_list_of_stage_impls != null)
+            {
+                int index = ordered_list_of_stage_impls.Select(x => x.Item2).ToList().IndexOf(StageModel.StageImplementation as PythonStageImplementation);
+                return index;
+            }
+
+            return -1;
+        }
+
         /// <summary>
         /// Creates the required stage parameters on the StageModel object for the currently selected stage.
         /// </summary>
         private void InstantiateRequiredStageParameters ()
         {
-            //Clear the stage parameters dictionary in preparation to repopulate it with new stage parameters
-            StageModel.StageParameters.Clear();
-
             var currently_selected_stage_impl = GetCurrentlySelectedPythonStageImplementation();
             if (currently_selected_stage_impl != null)
             {
@@ -196,9 +229,6 @@ namespace StageDesigner
                     }
                 }
             }
-
-            //Create view-models for each stage parameter
-            InstantiateStageParameterViewModels();
         }
 
         /// <summary>
@@ -253,6 +283,12 @@ namespace StageDesigner
             {
                 StageModel.StageImplementation = stage_impls[_selected_task_index].Item2;
             }
+        }
+
+        private void SetSelectedTaskIndex ( )
+        {
+            _selected_task_index = GetIndexOfModelStageImplementation();
+            NotifyPropertyChanged("SelectedTaskIndex");
         }
 
         #endregion

@@ -1366,6 +1366,9 @@ namespace MotoTrak
                         ErrorLoggingService.GetInstance().LogExceptionError(e);
                         MotoTrakMessaging.GetInstance().AddMessage("Error in stage implementation: CreateEndOfTrialMessage function");
                     }
+
+                    //Convert timestamps for this trial
+                    CurrentTrial.ConvertTimestamps(0, CurrentSession.SelectedStage);
                     
                     //First, add the trial to our collection of total trials for the currently running session.
                     CurrentSession.Trials.Add(CurrentTrial);
@@ -1666,7 +1669,7 @@ namespace MotoTrak
                 }    
             }
         }
-
+        
         #endregion
 
         #region Background property changed

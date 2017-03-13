@@ -79,7 +79,7 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
 
         PythonPullStageImplementation_FWIR.MinimumIR = System.Int32.MaxValue
         PythonPullStageImplementation_FWIR.MaximumIR = 0
-        PythonPullStageImplementation_FWIR.ThresholdIR = System.Int32.MaxValue
+        PythonPullStageImplementation_FWIR.ThresholdIR = System.Int32.MinValue
 
         #Get the name of the "swipe sensor trial initiation" parameter
         use_upper_force_boundary_parameter_name = PythonPullStageImplementation_FWIR.TaskDefinition.TaskParameters[3].ParameterName
@@ -179,16 +179,15 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
 
                 #Retrieve the maximal value for the signal
                 maximal_value = stream_data_to_use.Max()
-                maximal_ir_value = ir_data_to_use.Max();
 
                 if maximal_value >= init_thresh:
                     return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
                     PythonPullStageImplementation_FWIR.Position_Of_Last_Trough = return_value
                     PythonPullStageImplementation_FWIR.Position_Of_Hit = -1
                 elif use_swipe_sensor == "Yes":
-                    if maximal_ir_value <= PythonPullStageImplementation_FWIR.ThresholdIR:
+                    if min_ir_data <= PythonPullStageImplementation_FWIR.ThresholdIR:
                         #Trial initiated based on IR sensor value
-                        return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
+                        return_value = stream_data_to_use.IndexOf(min_ir_data) + difference_in_size
                         PythonPullStageImplementation_FWIR.Position_Of_Last_Trough = return_value
                         PythonPullStageImplementation_FWIR.Position_Of_Hit = -1
                 
