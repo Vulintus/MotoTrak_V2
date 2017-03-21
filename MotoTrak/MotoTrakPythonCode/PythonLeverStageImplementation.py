@@ -165,6 +165,12 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
         #Get the name of the feed-on-press/feed-on-release parameter
         press_counting_parameter_name = PythonLeverStageImplementation.TaskDefinition.TaskParameters[4].ParameterName
 
+        #Get the value of the press counting parameter
+        press_counting_parameter_value = 0
+
+        if stage.StageParameters.ContainsKey(press_counting_parameter_name):
+            press_counting_parameter_value = stage.StageParameters[press_counting_parameter_name].CurrentValue
+
         #Only proceed if a hit threshold has been defined for this stage
         if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
             #Get the stream data from the device
@@ -193,7 +199,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
                                 press_state = 1
 
                                 #If we are counting presses based on downward motion
-                                if (stage.StageParameters[press_counting_parameter_name].CurrentValue != 1):
+                                if (press_counting_parameter_value != 1):
                                     PythonLeverStageImplementation.press_count = PythonLeverStageImplementation.press_count + 1
                                     indices_of_presses.Add(i)
 
@@ -203,7 +209,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
                                 press_state = 0
 
                                 #If we are counting presses based on releasing motion
-                                if (stage.StageParameters[press_counting_parameter_name].CurrentValue == 1):
+                                if (press_counting_parameter_value == 1):
                                     PythonLeverStageImplementation.press_count = PythonLeverStageImplementation.press_count + 1
                                     indices_of_presses.Add(i)
 

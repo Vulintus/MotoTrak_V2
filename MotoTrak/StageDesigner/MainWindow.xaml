@@ -40,119 +40,125 @@
 
         <!-- This is the data template for all the stage definition documents that will be shown in tabs in this window. -->
         <DataTemplate x:Key="StageDefinitionDataTemplate">
-            <StackPanel Orientation="Vertical">
-                <GroupBox Header="Basic stage information">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="30" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="100" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+            <ScrollViewer Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContentPresenter}}">
+                <StackPanel Orientation="Vertical">
+                    <GroupBox Header="Basic stage information">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="30" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="30" />
+                                <RowDefinition Height="30" />
+                                <RowDefinition Height="30" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Stage Task: " VerticalAlignment="Center" />
-                        <ComboBox Grid.Row="0" Grid.Column="1" Width="400" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0"
-                          SelectedIndex="{Binding Path=SelectedTaskIndex, Mode=TwoWay}" 
-                          ItemsSource="{Binding Path=TaskNames}" />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Stage Task: " VerticalAlignment="Center" />
+                            <ComboBox Grid.Row="0" Grid.Column="1" Width="400" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0"
+                              SelectedIndex="{Binding Path=SelectedTaskIndex, Mode=TwoWay}" 
+                              ItemsSource="{Binding Path=TaskNames}" />
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
-                           VerticalAlignment="Center" HorizontalAlignment="Left" 
-                           TextWrapping="Wrap" Margin="0,5"
-                           Visibility="{Binding Path=TaskDescriptionVisibility, FallbackValue=Collapsed}"
-                           Text="{Binding Path=TaskDescription}" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                               VerticalAlignment="Center" HorizontalAlignment="Left" 
+                               TextWrapping="Wrap" Margin="0,5"
+                               Visibility="{Binding Path=TaskDescriptionVisibility, FallbackValue=Collapsed}"
+                               Text="{Binding Path=TaskDescription}" />
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Stage Name: " VerticalAlignment="Center" />
-                        <TextBox Grid.Row="2" Grid.Column="1" Width="400" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0"
-                         ToolTip="{Binding Path=StageNameTooltip}"
-                         Text="{Binding Path=StageName, Mode=TwoWay}" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Stage Name: " VerticalAlignment="Center" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Width="400" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0"
+                             ToolTip="{Binding Path=StageNameTooltip}"
+                             Text="{Binding Path=StageName, Mode=TwoWay}" />
 
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Stage Description: " VerticalAlignment="Center" />
-                        <TextBox Grid.Row="3" Grid.Column="1" Width="400" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0"
-                                 Text="{Binding Path=StageDescription}" 
-                                 ToolTip="{Binding Path=StageDescriptionTooltip}" />
-                    </Grid>
-                </GroupBox>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Stage Description: " VerticalAlignment="Center" />
+                            <TextBox Grid.Row="3" Grid.Column="1" Width="400" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0"
+                                     Text="{Binding Path=StageDescription}" 
+                                     ToolTip="{Binding Path=StageDescriptionTooltip}" />
+                        </Grid>
+                    </GroupBox>
 
-                <GroupBox Header="Device settings">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="25" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="25" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="400" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+                    <GroupBox Header="Device settings">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="25" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="25" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="400" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center">
-                            <TextBlock Text="The selected task for this stage uses the " />
-                            <TextBlock Text="{Binding Path=SelectedDeviceString}" FontWeight="Bold" />
-                            <TextBlock Text=" device." />
-                        </StackPanel>
+                            <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock Text="The selected task for this stage uses the " />
+                                <TextBlock Text="{Binding Path=SelectedDeviceString}" FontWeight="Bold" />
+                                <TextBlock Text=" device." />
+                            </StackPanel>
                         
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="How fast would you like to sample the device? (ms/sample)" HorizontalAlignment="Left" VerticalAlignment="Center" />
-                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Path=SamplingRate, FallbackValue=10}" HorizontalAlignment="Left" VerticalAlignment="Center" Width="100" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="How fast would you like to sample the device? (ms/sample)" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Path=SamplingRate, FallbackValue=10}" HorizontalAlignment="Left" VerticalAlignment="Center" Width="100" />
 
-                        <local:StageParameterControl Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" x:Name="DevicePositionStageParameterControl"
-                                                     DataContext="{Binding Path=DevicePositionViewModel}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="Please note: for the knob device, we recommend a minimum position of 0.5 cm."
-                                   Foreground="Red" FontWeight="Bold" FontSize="10" Visibility="{Binding Path=DevicePositionWarningVisibility}" />
+                            <local:StageParameterControl Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" x:Name="DevicePositionStageParameterControl"
+                                                         DataContext="{Binding Path=DevicePositionViewModel}" />
+                            <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="Please note: for the knob device, we recommend a minimum position of 0.5 cm."
+                                       Foreground="Red" FontWeight="Bold" FontSize="10" Visibility="{Binding Path=DevicePositionWarningVisibility}" />
 
-                    </Grid>
+                        </Grid>
                     
                     
-                </GroupBox>
+                    </GroupBox>
 
-                <GroupBox Header="Trial timing settings">
-                    <StackPanel Orientation="Vertical">
-                        <local:StageParameterControl x:Name="PreTrialRecordingDurationStageParameterControl" DataContext="{Binding Path=PreTrialRecordingDurationViewModel}" />
-                        <local:StageParameterControl x:Name="HitWindowDurationStageParameterControl" DataContext="{Binding Path=HitWindowDurationViewModel}" />
-                        <local:StageParameterControl x:Name="PostHitWindowRecordingDurationStageParameterControl" DataContext="{Binding Path=PostHitWindowRecordingDurationViewModel}" />
-                        <local:StageParameterControl x:Name="PostTrialTimeoutDurationStageParameterControl" DataContext="{Binding Path=PostTrialTimeoutDurationViewModel}" />
-                        <TextBlock Text="{Binding Path=StageTimingMessage}" FontSize="12" FontWeight="Normal" Margin="0,5,0,5"/>
-                    </StackPanel>
-                </GroupBox>
+                    <GroupBox Header="Trial timing settings">
+                        <StackPanel Orientation="Vertical">
+                            <local:StageParameterControl x:Name="PreTrialRecordingDurationStageParameterControl" DataContext="{Binding Path=PreTrialRecordingDurationViewModel}" />
+                            <local:StageParameterControl x:Name="HitWindowDurationStageParameterControl" DataContext="{Binding Path=HitWindowDurationViewModel}" />
+                            <local:StageParameterControl x:Name="PostHitWindowRecordingDurationStageParameterControl" DataContext="{Binding Path=PostHitWindowRecordingDurationViewModel}" />
+                            <local:StageParameterControl x:Name="PostTrialTimeoutDurationStageParameterControl" DataContext="{Binding Path=PostTrialTimeoutDurationViewModel}" />
+                            <TextBlock Text="{Binding Path=StageTimingMessage}" FontSize="12" FontWeight="Normal" Margin="0,5,0,5"/>
+                        </StackPanel>
+                    </GroupBox>
 
-                <GroupBox Header="Stage parameters">
-                    <ItemsControl ItemsSource="{Binding Path=StageParameters}" Name="StageParametersItemsControl">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <local:StageParameterControl />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </GroupBox>
+                    <GroupBox Header="Stage parameters">
+                        <ItemsControl ItemsSource="{Binding Path=StageParameters}" Name="StageParametersItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <local:StageParameterControl />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </GroupBox>
 
-                <GroupBox Header="Stage output trigger settings">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Output trigger: " 
-                                   FontWeight="Bold"
-                                   VerticalAlignment="Center" 
-                                   Margin="2,0,10,0" />
-                        <ComboBox Name="OutputTriggerComboBox"
-                                  VerticalAlignment="Center"
-                                  Width="75"
-                                  ItemsSource="{Binding Path=OutputTriggerOptions}" 
-                                  SelectedIndex="{Binding Path=OutputTriggerSelectedIndex, Mode=TwoWay}" 
-                                  />
-                    </StackPanel>
-                </GroupBox>
-                
-            </StackPanel>
+                    <GroupBox Header="Stage output trigger settings">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Output trigger: " 
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Center" 
+                                       Margin="2,0,10,0" />
+                            <ComboBox Name="OutputTriggerComboBox"
+                                      VerticalAlignment="Center"
+                                      Width="75"
+                                      ItemsSource="{Binding Path=OutputTriggerOptions}" 
+                                      SelectedIndex="{Binding Path=OutputTriggerSelectedIndex, Mode=TwoWay}" 
+                                      />
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </ScrollViewer>
         </DataTemplate>
         
     </Window.Resources>
     
-    <StackPanel Orientation="Vertical">
-        <DockPanel Height="25" VerticalAlignment="Top">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        
+        <DockPanel Height="25" VerticalAlignment="Top" Grid.Row="0">
             <Menu DockPanel.Dock="Top">
                 <MenuItem Header="_File">
                     <MenuItem Header="_New Stage" Click="NewStage_Click" />
@@ -166,17 +172,20 @@
             </Menu>
         </DockPanel>
 
-        <TabControl Name="StageFileTabControl" 
+        <TabControl Name="StageFileTabControl"
                     SelectedIndex="{Binding Path=SelectedStageIndex, FallbackValue=0}"
                     ItemTemplate="{StaticResource StageHeaderDataTemplate}" 
                     ContentTemplate="{StaticResource StageDefinitionDataTemplate}" 
                     ItemsSource="{Binding Path=OpenStages}"
                     Visibility="{Binding Path=StageFileTabControlVisibility, FallbackValue=Collapsed}"
+                    Grid.Row="1"
                     >
             <!-- Stage files will become tabs in this tab control when they are opened. -->
         </TabControl>
 
-        <Grid Height="800" Visibility="{Binding Path=NoStagesOpenMessageVisibility}">
+        <Grid Visibility="{Binding Path=NoStagesOpenMessageVisibility}"
+              Grid.Row="1"
+              >
             <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock FontSize="24"
                    FontWeight="Bold"
@@ -190,5 +199,5 @@
         </Grid>
         
 
-    </StackPanel>
+    </Grid>
 </Window>
