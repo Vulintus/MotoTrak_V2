@@ -1,0 +1,16 @@
+Stage File Version: 1
+Stage Name: LDavid Test
+Stage Description: LDavid Test Description
+Stage Implementation: PythonLeverStageImplementation.py
+Stage Output Trigger: Beginning of every trial
+Stage Device: Lever
+Stage Sampling Rate: 10
+Stage Parameter: Pre-Trial Duration, seconds, Fixed, Undefined, 1, NaN, NaN, NaN
+Stage Parameter: Hit Window Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Post-Trial Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Post-Trial Timeout Period, seconds, Fixed, Undefined, 0, NaN, NaN, NaN
+Stage Parameter: Device Position, centimeters, Fixed, Undefined, -1, NaN, NaN, NaN
+Stage Parameter: Release Point, degrees, Fixed, Undefined, 6.5, NaN, NaN, NaN
+Stage Parameter: Full Press, degrees, Fixed, Undefined, 9.5, NaN, NaN, NaN
+Stage Parameter: Initiation Threshold, degrees, Fixed, Undefined, 3, NaN, NaN, NaN
+Stage Parameter: Hit Threshold, presses, Fixed, Undefined, 1, NaN, NaN, NaN
