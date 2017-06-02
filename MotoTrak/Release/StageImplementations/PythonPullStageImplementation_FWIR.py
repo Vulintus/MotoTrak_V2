@@ -51,7 +51,7 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
         PythonPullStageImplementation_FWIR.TaskDefinition.TaskName = "Pull Task with force window and swipe-sensor initiated trials"
         PythonPullStageImplementation_FWIR.TaskDefinition.TaskDescription = "This version of the pull task has both an upper/lower bound force criterion and swipe-sensor initiated trials."
         PythonPullStageImplementation_FWIR.TaskDefinition.RequiredDeviceType = MotorDeviceType.Pull
-        PythonPullStageImplementation_FWIR.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On"])
+        PythonPullStageImplementation_FWIR.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On", "Beginning of every trial"])
 
         PythonPullStageImplementation_FWIR.TaskDefinition.DevicePosition.IsAdaptive = True
         PythonPullStageImplementation_FWIR.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False

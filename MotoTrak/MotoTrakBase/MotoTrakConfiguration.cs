@@ -63,6 +63,7 @@ namespace MotoTrakBase
         public string DataPath { get; set; }
         public string SecondaryDataPath { get; set; }
         public bool DebuggingMode = false;
+        public double TimeLimitInMinutes = Double.NaN;
 
         public string PreSpecifiedComPort = string.Empty;
 
@@ -271,6 +272,15 @@ namespace MotoTrakBase
                     else if (key.Equals("COM"))
                     {
                         PreSpecifiedComPort = value;
+                    }
+                    else if (key.Equals("TIME LIMIT"))
+                    {
+                        double time_limit = double.NaN;
+                        bool success = Double.TryParse(value, out time_limit);
+                        if (success)
+                        {
+                            TimeLimitInMinutes = time_limit;
+                        }
                     }
                 }
 

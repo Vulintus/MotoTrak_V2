@@ -48,7 +48,7 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
         PythonPullStageImplementation_Sustained.TaskDefinition.TaskName = "Pull Task with sustained force"
         PythonPullStageImplementation_Sustained.TaskDefinition.TaskDescription = "This version of the pull task tests whether subjects can sustain force for a long duration."
         PythonPullStageImplementation_Sustained.TaskDefinition.RequiredDeviceType = MotorDeviceType.Pull
-        PythonPullStageImplementation_Sustained.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On"])
+        PythonPullStageImplementation_Sustained.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On", "Beginning of every trial"])
 
         PythonPullStageImplementation_Sustained.TaskDefinition.DevicePosition.IsAdaptive = True
         PythonPullStageImplementation_Sustained.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
@@ -211,6 +211,16 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
         for evt in trial_events:
             event_type = evt.EventType
             evt.Handled = True
+
+            #If a trial has been initiated, and the output trigger type is set to trigger on every trial initiation,
+            #then send an output trigger
+            if event_type.value__ is MotorTrialEventType.TrialInitiation.value__:
+                output_trigger_type = str(stage.OutputTriggerType)
+                if output_trigger_type.lower() == "Beginning of every trial".lower():
+                    new_stim_action = MotorTrialAction()
+                    new_stim_action.ActionType = MotorTrialActionType.SendStimulationTrigger
+                    result.Add(new_stim_action)
+
             if event_type.value__ is MotorTrialEventType.SuccessfulTrial.value__:
                 #If a successful trial happened, then feed the animal
                 new_action = MotorTrialAction()

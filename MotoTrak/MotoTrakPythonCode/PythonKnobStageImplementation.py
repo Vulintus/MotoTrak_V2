@@ -47,7 +47,7 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
         PythonKnobStageImplementation.TaskDefinition.TaskName = "Knob Task"
         PythonKnobStageImplementation.TaskDefinition.TaskDescription = "The knob task assesses an animal's ability to reach and the supinate with its forepaw."
         PythonKnobStageImplementation.TaskDefinition.RequiredDeviceType = MotorDeviceType.Knob
-        PythonKnobStageImplementation.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On"])
+        PythonKnobStageImplementation.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On", "Beginning of every trial"])
 
         PythonKnobStageImplementation.TaskDefinition.DevicePosition.IsAdaptive = True
         PythonKnobStageImplementation.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
@@ -66,6 +66,7 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
     def AdjustBeginningStageParameters(self, recent_behavior_sessions, current_session_stage):
 
         PythonKnobStageImplementation.Autopositioner_Trial_Count_Handled = []
+        PythonKnobStageImplementation.Ending_Value_Of_Last_Trial = 0
 
         #Take only recent behavior sessions that have at least 50 successful trials
         total_hits = 0
@@ -98,7 +99,7 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
             stream_data = new_data_from_controller[i]
             transformed_stream_data = List[System.Double]()
             if (i is 1):
-                transformed_stream_data = List[System.Double](stream_data.Select(lambda x: -System.Double(device.Slope * (x - device.Baseline))).ToList())
+                transformed_stream_data = List[System.Double](stream_data.Select(lambda x: -System.Double(device.Slope * (x - device.Baseline)) - PythonKnobStageImplementation.Ending_Value_Of_Last_Trial).ToList())
             else:
                 transformed_stream_data = List[System.Double](stream_data.Select(lambda x: System.Double(x)).ToList())
             result.Add(transformed_stream_data)
@@ -111,6 +112,9 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
         #Get the name of the initiation threshold parameter
         initiation_threshold_parameter_name = PythonKnobStageImplementation.TaskDefinition.TaskParameters[1].ParameterName 
 
+        #Get the weight parameter name
+        weight_parameter_name = PythonKnobStageImplementation.TaskDefinition.TaskParameters[2].ParameterName
+
         #Look to see if the Initiation Threshold key exists
         if stage.StageParameters.ContainsKey(initiation_threshold_parameter_name):
             #Get the stage's initiation threshold
@@ -118,6 +122,13 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
 
             #Get the data stream itself
             stream_data = signal[1]
+
+            if stage.StageParameters.ContainsKey(weight_parameter_name):
+                #Get the weight value for this stage
+                weight_grams = stage.StageParameters[weight_parameter_name].CurrentValue
+                if weight_grams < 1:
+                    #stream_data = MotorMath.SubtractScalarFromList(stream_data, PythonKnobStageImplementation.Ending_Value_Of_Last_Trial)
+                    stream_data = MotorMath.AbsList(stream_data)
 
             #Check to make sure we actually have new data to work with before going on
             if new_datapoint_count > 0 and new_datapoint_count <= stream_data.Count:
@@ -142,10 +153,20 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
         #Get the hit threshold parameter name
         hit_threshold_parameter_name = PythonKnobStageImplementation.TaskDefinition.TaskParameters[0].ParameterName
 
+        #Get the weight parameter name
+        weight_parameter_name = PythonKnobStageImplementation.TaskDefinition.TaskParameters[2].ParameterName
+
         #Only proceed if a hit threshold has been defined for this stage
         if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
             #Get the stream data from the device
             stream_data = trial.TrialData[1]
+
+            if stage.StageParameters.ContainsKey(weight_parameter_name):
+                #Get the weight value for this stage
+                weight_grams = stage.StageParameters[weight_parameter_name].CurrentValue
+                if weight_grams < 1:
+                    #stream_data = MotorMath.SubtractScalarFromList(stream_data, PythonKnobStageImplementation.Ending_Value_Of_Last_Trial)
+                    stream_data = MotorMath.AbsList(stream_data)
             
             #Check to see if the hit threshold has been exceeded
             current_hit_thresh = stage.StageParameters[hit_threshold_parameter_name].CurrentValue
@@ -171,6 +192,16 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
         for evt in trial_events:
             event_type = evt.EventType
             evt.Handled = True
+
+            #If a trial has been initiated, and the output trigger type is set to trigger on every trial initiation,
+            #then send an output trigger
+            if event_type.value__ is MotorTrialEventType.TrialInitiation.value__:
+                output_trigger_type = str(stage.OutputTriggerType)
+                if output_trigger_type.lower() == "Beginning of every trial".lower():
+                    new_stim_action = MotorTrialAction()
+                    new_stim_action.ActionType = MotorTrialActionType.SendStimulationTrigger
+                    result.Add(new_stim_action)
+
             if event_type.value__ is MotorTrialEventType.SuccessfulTrial.value__:
                 #If a successful trial happened, then feed the animal
                 new_action = MotorTrialAction()
@@ -193,8 +224,18 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
         msg = ""
         msg += System.DateTime.Now.ToShortTimeString() + ", "
 
+        #Get the weight parameter name
+        weight_parameter_name = PythonKnobStageImplementation.TaskDefinition.TaskParameters[2].ParameterName
+
         #Get the device stream data
         device_stream = trial.TrialData[1]
+
+        if stage.StageParameters.ContainsKey(weight_parameter_name):
+            #Get the weight value for this stage
+            weight_grams = stage.StageParameters[weight_parameter_name].CurrentValue
+            if weight_grams < 1:
+                device_stream = MotorMath.AbsList(device_stream)
+
         try:
             peak_turn_angle = device_stream.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max()
             PythonKnobStageImplementation.Maximal_Turn_Angle_List.append(peak_turn_angle)
@@ -230,10 +271,19 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
         #Get the hit threshold parameter name
         hit_threshold_parameter_name = PythonKnobStageImplementation.TaskDefinition.TaskParameters[0].ParameterName
 
+        #Get the weight parameter name
+        weight_parameter_name = PythonKnobStageImplementation.TaskDefinition.TaskParameters[2].ParameterName
+
         #Adjust the hit threshold if necessary
         if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
             #Grab the device signal for this trial
             stream_data = trial.TrialData[1]
+
+            if stage.StageParameters.ContainsKey(weight_parameter_name):
+                #Get the weight value for this stage
+                weight_grams = stage.StageParameters[weight_parameter_name].CurrentValue
+                if weight_grams < 1:
+                    stream_data = MotorMath.AbsList(stream_data)
 
             #Find the maximal force of the current trial
             max_force = stream_data.Where(lambda val, index: \
@@ -255,20 +305,21 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
         #Get the weight parameter name
         weight_parameter_name = PythonKnobStageImplementation.TaskDefinition.TaskParameters[2].ParameterName
 
+        #Grab the device signal for this trial
+        stream_data = current_trial.TrialData[1]
+
         #Adjust the initiation threshold and hit threshold for the case in which we have 0 grams of weight
         if stage.StageParameters.ContainsKey(weight_parameter_name):
             #Get the weight value for this stage
             weight_grams = stage.StageParameters[weight_parameter_name].CurrentValue
             if weight_grams < 1:
                 #Adjust the hit threshold and initiation threshold based on the knob's position
-                stage.StageParameters[hit_threshold_parameter_name].CurrentValue = PythonKnobStageImplementation.Ending_Value_Of_Last_Trial + stage.StageParameters[hit_threshold_parameter_name].InitialValue
-                stage.StageParameters[initiation_threshold_parameter_name].CurrentValue = PythonKnobStageImplementation.Ending_Value_Of_Last_Trial + stage.StageParameters[initiation_threshold_parameter_name].InitialValue        
+                PythonKnobStageImplementation.Ending_Value_Of_Last_Trial += stream_data.Last()
+                #stage.StageParameters[hit_threshold_parameter_name].CurrentValue = PythonKnobStageImplementation.Ending_Value_Of_Last_Trial + stage.StageParameters[hit_threshold_parameter_name].InitialValue
+                #stage.StageParameters[initiation_threshold_parameter_name].CurrentValue = PythonKnobStageImplementation.Ending_Value_Of_Last_Trial + stage.StageParameters[initiation_threshold_parameter_name].InitialValue
 
         #Adjust the hit threshold
         if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
-            #Grab the device signal for this trial
-            stream_data = current_trial.TrialData[1]
-        
             #Find the maximal force from the current trial
             max_force = stream_data.Where(lambda val, index: \
                 (index >= stage.TotalRecordedSamplesBeforeHitWindow) and \

@@ -316,5 +316,26 @@ namespace MotoTrakUtilities
         {
             return t.Where(x => !Double.IsNaN(x)).Max();
         }
+
+        /// <summary>
+        /// Calculates the absolute value of every element in a list, and returns the result.
+        /// </summary>
+        /// <param name="t">A list of doubles</param>
+        /// <returns>A list of doubles, but all values are the absolute value of their respective input value</returns>
+        public static List<double> AbsList ( List<double> t )
+        {
+            return t.Select(x => Math.Abs(x)).ToList();
+        }
+
+        /// <summary>
+        /// Substracts a scalar value from all elements in a list, and returns the result.
+        /// </summary>
+        /// <param name="a">A list of doubles</param>
+        /// <param name="b">The value to subtract</param>
+        /// <returns>A list of doubles, with all elements equal to their original value minus the value of b</returns>
+        public static List<double> SubtractScalarFromList ( List<double> a, double b )
+        {
+            return a.Select(x => x - b).ToList();
+        }
     }
 }

@@ -43,7 +43,7 @@ class PythonPullStageImplementation (IMotorStageImplementation):
         PythonPullStageImplementation.TaskDefinition.TaskName = "Pull Task"
         PythonPullStageImplementation.TaskDefinition.TaskDescription = "The pull task is a straightforward task in which subjects must pull a handle to receive a reward."
         PythonPullStageImplementation.TaskDefinition.RequiredDeviceType = MotorDeviceType.Pull
-        PythonPullStageImplementation.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On"])
+        PythonPullStageImplementation.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On", "Beginning of every trial"])
 
         PythonPullStageImplementation.TaskDefinition.DevicePosition.IsAdaptive = True
         PythonPullStageImplementation.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
@@ -166,6 +166,16 @@ class PythonPullStageImplementation (IMotorStageImplementation):
         for evt in trial_events:
             event_type = evt.EventType
             evt.Handled = True
+
+            #If a trial has been initiated, and the output trigger type is set to trigger on every trial initiation,
+            #then send an output trigger
+            if event_type.value__ is MotorTrialEventType.TrialInitiation.value__:
+                output_trigger_type = str(stage.OutputTriggerType)
+                if output_trigger_type.lower() == "Beginning of every trial".lower():
+                    new_stim_action = MotorTrialAction()
+                    new_stim_action.ActionType = MotorTrialActionType.SendStimulationTrigger
+                    result.Add(new_stim_action)
+
             if event_type.value__ is MotorTrialEventType.SuccessfulTrial.value__:
                 #If a successful trial happened, then feed the animal
                 new_action = MotorTrialAction()

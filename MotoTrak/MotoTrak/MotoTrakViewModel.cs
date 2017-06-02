@@ -806,6 +806,12 @@ namespace MotoTrak
             SessionNotesViewVisibility = Visibility.Visible;
         }
 
+        private void ReactToAutoStop ()
+        {
+            StageChangeRequired = true;
+            SessionNotesViewVisibility = Visibility.Visible;
+        }
+
         /// <summary>
         /// Finalizes a MotoTrak session.  This session is called after the user has both
         /// ended the session AND entered notes for the session.
@@ -933,6 +939,10 @@ namespace MotoTrak
                 {
                     Model.CurrentSession.PropertyChanged += ExecuteReactionsToModelPropertyChanged;
                 }
+            }
+            else if (prop_name.Equals("AutoStop"))
+            {
+                ReactToAutoStop();
             }
 
             //Update other user interface components

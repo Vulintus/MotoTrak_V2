@@ -1476,6 +1476,20 @@ namespace MotoTrak
                     TrialState = TrialRunState.TrialSetup;
 
                     break;
+                case SessionRunState.SessionRunning:
+
+                    //Check to see if we need to automatically stop the session.
+                    if (!Double.IsNaN(MotoTrakConfiguration.GetInstance().TimeLimitInMinutes))
+                    {
+                        if (_session_timer.Elapsed.TotalMinutes >= MotoTrakConfiguration.GetInstance().TimeLimitInMinutes)
+                        {
+                            SessionState = SessionRunState.SessionEnd;
+                            BackgroundPropertyChanged("AutoStop");
+                        }
+                    }
+
+                    break;
+
                 case SessionRunState.SessionEnd:
 
                     //Do any work to finish up a session here.
