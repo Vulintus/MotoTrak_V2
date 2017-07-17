@@ -178,7 +178,7 @@ class PythonPullStageImplementation_ForceWindow (IMotorStageImplementation):
                     if (stream_data[i] >= current_upper_bound):
                         #If this datapoint is above the upper bound, set the pull state to be "invalid"
                         pull_state = -1
-                    elif (stream_data[i] < current_initiation_threshold):
+                    elif (pull_state != 1 and stream_data[i] < current_initiation_threshold):
                         #Otherwise, if it is below the initiation threshold, set the pull state to be "unknown"    
                         pull_state = 0
                         PythonPullStageImplementation_ForceWindow.Position_Of_Last_Trough = i

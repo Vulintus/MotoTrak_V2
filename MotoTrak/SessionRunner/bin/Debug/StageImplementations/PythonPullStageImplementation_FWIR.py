@@ -51,7 +51,7 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
         PythonPullStageImplementation_FWIR.TaskDefinition.TaskName = "Pull Task with force window and swipe-sensor initiated trials"
         PythonPullStageImplementation_FWIR.TaskDefinition.TaskDescription = "This version of the pull task has both an upper/lower bound force criterion and swipe-sensor initiated trials."
         PythonPullStageImplementation_FWIR.TaskDefinition.RequiredDeviceType = MotorDeviceType.Pull
-        PythonPullStageImplementation_FWIR.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On"])
+        PythonPullStageImplementation_FWIR.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On", "Beginning of every trial"])
 
         PythonPullStageImplementation_FWIR.TaskDefinition.DevicePosition.IsAdaptive = True
         PythonPullStageImplementation_FWIR.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
@@ -248,7 +248,7 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
                     if (stream_data[i] >= current_upper_bound and use_upper_force_boundary == "Yes"):
                         #If this datapoint is above the upper bound, set the pull state to be "invalid"
                         pull_state = -1
-                    elif (stream_data[i] < current_initiation_threshold):
+                    elif (pull_state != 1 and stream_data[i] < current_initiation_threshold):
                         #Otherwise, if it is below the initiation threshold, set the pull state to be "unknown"    
                         pull_state = 0
                         PythonPullStageImplementation_FWIR.Position_Of_Last_Trough = i
