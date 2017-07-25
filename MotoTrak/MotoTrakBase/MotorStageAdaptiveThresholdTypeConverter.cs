@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Reflection;
+using System.Linq;
 
 namespace MotoTrakBase
 {
@@ -25,6 +26,34 @@ namespace MotoTrakBase
                 if (attribute != null)
                 {
                     if (attribute.Description == description)
+                        return (MotorStageAdaptiveThresholdType)field.GetValue(null);
+                }
+                else
+                {
+                    if (field.Name == description)
+                        return (MotorStageAdaptiveThresholdType)field.GetValue(null);
+                }
+            }
+
+            return MotorStageAdaptiveThresholdType.Undefined;
+        }
+
+        /// <summary>
+        /// Converts a string to an adaptive threshold type.
+        /// </summary>
+        /// <param name="description">String description of an adaptive threshold type</param>
+        /// <returns>Adaptive threshold type</returns>
+        public static MotorStageAdaptiveThresholdType ConvertToMotorStageAdaptiveThresholdTypeFromSpreadsheetDescription(string description)
+        {
+            var type = typeof(MotorStageAdaptiveThresholdType);
+
+            foreach (var field in type.GetFields())
+            {
+                var attribute = Attribute.GetCustomAttribute(field,
+                    typeof(MotoTrak_V1_SpreadsheetColumnValueAttribute)) as MotoTrak_V1_SpreadsheetColumnValueAttribute;
+                if (attribute != null)
+                {
+                    if (attribute.SpreadsheetColumnValue.Contains(description, StringComparer.InvariantCultureIgnoreCase))
                         return (MotorStageAdaptiveThresholdType)field.GetValue(null);
                 }
                 else

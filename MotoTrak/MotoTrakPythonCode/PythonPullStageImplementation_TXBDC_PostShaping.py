@@ -27,50 +27,60 @@ from MotoTrakBase import MotoTrakSession
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
 
-class PythonPullStageImplementation_10hits (IMotorStageImplementation):
+class PythonPullStageImplementation_TXBDC_PostShaping (IMotorStageImplementation):
 
     #Variables used by this task
-    Autopositioner_Trial_Interval = 10
+    Autopositioner_Trial_Interval = 5
     Autopositioner_Trial_Count_Handled = []
     Maximal_Force_List = []
     Force_Threshold_List = []
+    LastTrialInitiatedTimestamp = System.DateTime.MinValue
+    HasTrialBeenInitiated = False    
 
     #Declare string parameters for this stage
     TaskDefinition = MotorTaskDefinition()
 
     def __init__(self):
 
-        PythonPullStageImplementation_10hits.TaskDefinition.TaskName = "Pull Task (Autopositioner moves every 10 hits for adaptively positioned stages)"
-        PythonPullStageImplementation_10hits.TaskDefinition.TaskDescription = "The pull task is a straightforward task in which subjects must pull a handle to receive a reward."
-        PythonPullStageImplementation_10hits.TaskDefinition.RequiredDeviceType = MotorDeviceType.Pull
-        PythonPullStageImplementation_10hits.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On", "Beginning of every trial"])
+        PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.TaskName = "Pull Task TXBDC"
+        PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.TaskDescription = "The pull task is a straightforward task in which subjects must pull a handle to receive a reward."
+        PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.RequiredDeviceType = MotorDeviceType.Pull
+        PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On", "Beginning of every trial"])
 
-        PythonPullStageImplementation_10hits.TaskDefinition.DevicePosition.IsAdaptive = True
-        PythonPullStageImplementation_10hits.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
+        PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.DevicePosition.IsAdaptive = True
+        PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
 
         hit_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.HitThreshold, "grams", True, True, True)
         initiation_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.InitiationThreshold, "grams", True, True, True)
         
-        PythonPullStageImplementation_10hits.TaskDefinition.TaskParameters.Add(hit_threshold_parameter)
-        PythonPullStageImplementation_10hits.TaskDefinition.TaskParameters.Add(initiation_threshold_parameter)
+        PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.TaskParameters.Add(hit_threshold_parameter)
+        PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.TaskParameters.Add(initiation_threshold_parameter)
 
         return
 
     def AdjustBeginningStageParameters(self, recent_behavior_sessions, current_session_stage):
 
-        PythonPullStageImplementation_10hits.Maximal_Force_List = []
-        PythonPullStageImplementation_10hits.Force_Threshold_List = []
-        PythonPullStageImplementation_10hits.Autopositioner_Trial_Count_Handled = []
+        PythonPullStageImplementation_TXBDC_PostShaping.Maximal_Force_List = []
+        PythonPullStageImplementation_TXBDC_PostShaping.Force_Threshold_List = []
+        PythonPullStageImplementation_TXBDC_PostShaping.Autopositioner_Trial_Count_Handled = []
+        PythonPullStageImplementation_TXBDC_PostShaping.LastTrialInitiatedTimestamp = System.DateTime.MinValue
+        PythonPullStageImplementation_TXBDC_PostShaping.HasTrialBeenInitiated = False
 
         #Take only recent behavior sessions that have at least 50 successful trials
-        total_hits = 0
+        final_position = 0.0
         for i in recent_behavior_sessions:
-            this_session_hits = i.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count()
-            if this_session_hits >= 1:
-                total_hits += this_session_hits
+            final_trial = i.Trials.LastOrDefault()
+            if final_trial is not None:
+                final_session_position = final_trial.DevicePosition
+                if final_session_position > final_position:
+                    final_position = final_session_position
+
+        final_position = final_position - 0.5
+        if final_position < 0.0:
+            final_position = 0.0
                 
         #Now, based off the total number of hits that have occurred in previous sessions, set the position of the autopositioner
-        position = -1.0
+        position = final_position
         
         #Set the position of the autopositioner if it is supposed to be adaptively set
         if current_session_stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
@@ -92,11 +102,23 @@ class PythonPullStageImplementation_10hits (IMotorStageImplementation):
         return result
 
     def CheckSignalForTrialInitiation(self, signal, new_datapoint_count, stage):
+        #For stages that move the handle back in after a period of time, let's check to see how much time it has been
+        #since the last trial initiation
+        if PythonPullStageImplementation_TXBDC_PostShaping.HasTrialBeenInitiated is True:
+            current_time = System.DateTime.Now
+            time_since_last_trial = current_time - PythonPullStageImplementation_TXBDC_PostShaping.LastTrialInitiatedTimestamp
+            if time_since_last_trial.TotalMinutes >= 10:
+                if stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
+                    PythonPullStageImplementation_TXBDC_PostShaping.LastTrialInitiatedTimestamp = System.DateTime.Now
+                    if stage.Position.CurrentValue > 0.0:
+                        stage.Position.CurrentValue = stage.Position.CurrentValue - 0.5
+                        MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+
         #Create the value that will be our return value
         return_value = -1
 
         #Get the name of the initiation threshold parameter
-        initiation_threshold_parameter_name = PythonPullStageImplementation_10hits.TaskDefinition.TaskParameters[1].ParameterName
+        initiation_threshold_parameter_name = PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.TaskParameters[1].ParameterName
 
         #Look to see if the Initiation Threshold key exists
         if stage.StageParameters.ContainsKey(initiation_threshold_parameter_name):
@@ -118,6 +140,8 @@ class PythonPullStageImplementation_10hits (IMotorStageImplementation):
                 maximal_value = stream_data_to_use.Max()
 
                 if maximal_value >= init_thresh:
+                    PythonPullStageImplementation_TXBDC_PostShaping.LastTrialInitiatedTimestamp = System.DateTime.Now
+                    PythonPullStageImplementation_TXBDC_PostShaping.HasTrialBeenInitiated = True
                     return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
                 
         return return_value
@@ -127,7 +151,7 @@ class PythonPullStageImplementation_10hits (IMotorStageImplementation):
         result = List[Tuple[MotorTrialEventType, System.Int32]]()
 
         #Get the name of the hit threshold parameter
-        hit_threshold_parameter_name = PythonPullStageImplementation_10hits.TaskDefinition.TaskParameters[0].ParameterName
+        hit_threshold_parameter_name = PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.TaskParameters[0].ParameterName
 
         #Only proceed if a hit threshold has been defined for this stage
         if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
@@ -195,7 +219,7 @@ class PythonPullStageImplementation_10hits (IMotorStageImplementation):
         device_stream = trial.TrialData[1]
         try:
             peak_force = device_stream.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max()
-            PythonPullStageImplementation_10hits.Maximal_Force_List.append(peak_force)
+            PythonPullStageImplementation_TXBDC_PostShaping.Maximal_Force_List.append(peak_force)
             
             msg += "Trial " + str(trial_number) + " "
             if trial.Result == MotorTrialResult.Hit:
@@ -206,14 +230,14 @@ class PythonPullStageImplementation_10hits (IMotorStageImplementation):
             msg += "maximal force = " + System.Convert.ToInt32(System.Math.Floor(peak_force)).ToString() + " grams."
 
             #Get the name of the hit threshold parameter
-            hit_threshold_parameter_name = PythonPullStageImplementation_10hits.TaskDefinition.TaskParameters[0].ParameterName
+            hit_threshold_parameter_name = PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.TaskParameters[0].ParameterName
 
             if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
                 #Grab the hit threshold for the current trial
                 current_hit_threshold = stage.StageParameters[hit_threshold_parameter_name].CurrentValue
 
                 #Add the hit threshold to the list of all hit thresholds that we are maintaining for this session
-                PythonPullStageImplementation_10hits.Force_Threshold_List.append(current_hit_threshold)
+                PythonPullStageImplementation_TXBDC_PostShaping.Force_Threshold_List.append(current_hit_threshold)
 
                 #If this is an adaptive stage, then display the hit threshold of the current trial in the "end-of-trial" message to the user
                 if stage.StageParameters[hit_threshold_parameter_name].ParameterType == MotorStageParameter.StageParameterType.Variable:
@@ -225,7 +249,7 @@ class PythonPullStageImplementation_10hits (IMotorStageImplementation):
 
     def CalculateYValueForSessionOverviewPlot(self, trial, stage):
         #Get the name of the hit threshold parameter
-        hit_threshold_parameter_name = PythonPullStageImplementation_10hits.TaskDefinition.TaskParameters[0].ParameterName
+        hit_threshold_parameter_name = PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.TaskParameters[0].ParameterName
 
         #Adjust the hit threshold if necessary
         if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
@@ -243,7 +267,7 @@ class PythonPullStageImplementation_10hits (IMotorStageImplementation):
 
     def AdjustDynamicStageParameters(self, all_trials, current_trial, stage):
         #Get the name of the hit threshold parameter
-        hit_threshold_parameter_name = PythonPullStageImplementation_10hits.TaskDefinition.TaskParameters[0].ParameterName
+        hit_threshold_parameter_name = PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.TaskParameters[0].ParameterName
 
         #Adjust the hit threshold
         if stage.StageParameters.ContainsKey(hit_threshold_parameter_name):
@@ -261,38 +285,35 @@ class PythonPullStageImplementation_10hits (IMotorStageImplementation):
 
         #Adjust the position of the auto-positioner, according to the stage settings
         if stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
-            hit_count = all_trials.Where(lambda t: t.Result == MotorTrialResult.Hit).Count()
-            hit_count_modulus = hit_count % PythonPullStageImplementation_10hits.Autopositioner_Trial_Interval
-            if hit_count > 0 and hit_count_modulus is 0:
-                if not PythonPullStageImplementation_10hits.Autopositioner_Trial_Count_Handled.Contains(hit_count):
-                    if stage.Position.CurrentValue < 0.0:
-                        PythonPullStageImplementation_10hits.Autopositioner_Trial_Count_Handled.append(hit_count)
-                        stage.Position.CurrentValue = 0.0
+            trial_count = all_trials.Count
+            trial_count_modulus = trial_count % PythonPullStageImplementation_TXBDC_PostShaping.Autopositioner_Trial_Interval
+            if trial_count > 0 and trial_count_modulus is 0:
+                if not PythonPullStageImplementation_TXBDC_PostShaping.Autopositioner_Trial_Count_Handled.Contains(trial_count):
+                    if stage.Position.CurrentValue < 2.0:
+                        PythonPullStageImplementation_TXBDC_PostShaping.Autopositioner_Trial_Count_Handled.append(trial_count)
+                        stage.Position.CurrentValue = stage.Position.CurrentValue + 0.25
                         MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
-                    elif stage.Position.CurrentValue >= 0.0:
-                        PythonPullStageImplementation_10hits.Autopositioner_Trial_Count_Handled.append(hit_count)
-                        stage.Position.CurrentValue = 2.0
-                        MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
+                
         return
 
     def CreateEndOfSessionMessage(self, current_session):
         #Get the name of the hit threshold parameter
-        hit_threshold_parameter_name = PythonPullStageImplementation_10hits.TaskDefinition.TaskParameters[0].ParameterName
+        hit_threshold_parameter_name = PythonPullStageImplementation_TXBDC_PostShaping.TaskDefinition.TaskParameters[0].ParameterName
 
         # Find the percentage of trials that exceeded the maximum possible hit threshold in this session
         maximal_hit_threshold = current_session.SelectedStage.StageParameters[hit_threshold_parameter_name].MaximumValue
-        number_of_trials_greater_than_max = sum(i >= maximal_hit_threshold for i in PythonPullStageImplementation_10hits.Maximal_Force_List)
-        total_trials = len(PythonPullStageImplementation_10hits.Maximal_Force_List)        
+        number_of_trials_greater_than_max = sum(i >= maximal_hit_threshold for i in PythonPullStageImplementation_TXBDC_PostShaping.Maximal_Force_List)
+        total_trials = len(PythonPullStageImplementation_TXBDC_PostShaping.Maximal_Force_List)        
         percent_trials_greater_than_max = 0        
-        if len(PythonPullStageImplementation_10hits.Maximal_Force_List) > 0:
+        if len(PythonPullStageImplementation_TXBDC_PostShaping.Maximal_Force_List) > 0:
             percent_trials_greater_than_max = (System.Double(number_of_trials_greater_than_max) / System.Double(total_trials)) * 100
         
         # Find the number of feedings that occurred in this session
-        number_of_feedings = current_session.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count();
+        number_of_feedings = current_session.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count()
 
         # Find the median maximal force from the sesion
         net_max_force_list = List[System.Double]()
-        for i in PythonPullStageImplementation_10hits.Maximal_Force_List:
+        for i in PythonPullStageImplementation_TXBDC_PostShaping.Maximal_Force_List:
             net_max_force_list.Add(i)
         median_maximal_force = MotorMath.Median(net_max_force_list)
         if (System.Double.IsNaN(median_maximal_force)):
@@ -300,17 +321,27 @@ class PythonPullStageImplementation_10hits (IMotorStageImplementation):
 
         # Find the median force threshold from this session
         net_threshold_list = List[System.Double]()
-        for i in PythonPullStageImplementation_10hits.Force_Threshold_List:
+        for i in PythonPullStageImplementation_TXBDC_PostShaping.Force_Threshold_List:
             net_threshold_list.Add(i)
         median_force_threshold = MotorMath.Median(net_threshold_list)
         if (System.Double.IsNaN(median_force_threshold)):
             median_force_threshold = 0
 
+        # Find the number of trials performed at the final position
+        all_trials = current_session.Trials
+        final_trial = all_trials.LastOrDefault()
+        final_position = 0.0
+        if final_trial is not None:
+            final_position = final_trial.DevicePosition
+        trial_count_last_position = all_trials.Where(lambda x: x.DevicePosition == final_position).Count()
+        
         end_of_session_messages = List[System.String]()
         end_of_session_messages.Add(System.DateTime.Now.ToShortTimeString() + " - Session ended.")
         end_of_session_messages.Add("Pellets fed: " + System.Convert.ToInt32(number_of_feedings).ToString())
         end_of_session_messages.Add("Median Peak Force: " + System.Convert.ToInt32(median_maximal_force).ToString())
         end_of_session_messages.Add("% Trials > Maximum force threshold: " + System.Convert.ToInt32(percent_trials_greater_than_max).ToString())
         end_of_session_messages.Add("Median Force Threshold: " + System.Convert.ToInt32(median_force_threshold).ToString())
+        end_of_session_messages.Add("Final position: " + System.Convert.ToDouble(final_position).ToString())
+        end_of_session_messages.Add("Trials performed at final position: " + System.Convert.ToInt32(trial_count_last_position).ToString())
 
         return end_of_session_messages

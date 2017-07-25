@@ -636,7 +636,7 @@ namespace MotoTrak
             {
                 if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
                 {
-                    return Model.CurrentSession.SelectedStage.Position.CurrentValue.ToString("0.0");
+                    return Model.CurrentSession.SelectedStage.Position.CurrentValue.ToString("0.00");
                 }
                 else
                 {

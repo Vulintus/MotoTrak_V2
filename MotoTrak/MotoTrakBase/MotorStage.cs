@@ -1011,7 +1011,22 @@ namespace MotoTrakBase
                         stage.Position = position;
                         break;
                     case MotoTrak_V1_StageParameters.HitThresholdType:
-                        hit_thresh.AdaptiveThresholdType = MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdType(val);
+
+                        //Get the hit threshold type from the spreadsheet
+                        hit_thresh.AdaptiveThresholdType = MotorStageAdaptiveThresholdTypeConverter.ConvertToMotorStageAdaptiveThresholdTypeFromSpreadsheetDescription(val);
+
+                        //If the hit threshold type could not properly be parsed, then set it to be static
+                        if (hit_thresh.AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Undefined)
+                        {
+                            hit_thresh.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Static;
+                        }
+
+                        //If the hit threshold type is an adaptive threshold type, then set the parameter type to be "variable" instead of "fixed"
+                        if (hit_thresh.AdaptiveThresholdType != MotorStageAdaptiveThresholdType.Static)
+                        {
+                            hit_thresh.ParameterType = MotorStageParameter.StageParameterType.Variable;
+                        }
+
                         break;
                     case MotoTrak_V1_StageParameters.HitThresholdMinimum:
                         //Read in the hit threshold minimum value

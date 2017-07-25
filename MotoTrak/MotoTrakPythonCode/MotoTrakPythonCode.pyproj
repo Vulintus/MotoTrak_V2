@@ -32,6 +32,7 @@
     <Compile Include="PythonPullStageImplementation.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="PythonPullStageImplementation_10hits.py" />
     <Compile Include="PythonPullStageImplementation_ForceWindow.py">
       <SubType>Code</SubType>
     </Compile>
@@ -45,6 +46,7 @@
     <Compile Include="PythonPullStageImplementation_Sustained.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="PythonPullStageImplementation_TXBDC_PostShaping.py" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MotoTrakBase\MotoTrakBase.csproj">

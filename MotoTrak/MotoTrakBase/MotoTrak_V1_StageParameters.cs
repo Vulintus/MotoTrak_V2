@@ -18,7 +18,7 @@ namespace MotoTrakBase
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "device", "primary input device", "input device" })]
         InputDevice,
 
-        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "position" })]
+        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "position", "position (cm)" })]
         Position,
 
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "hit threshold - minimum", "hit threshold" })]
@@ -63,7 +63,7 @@ namespace MotoTrakBase
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "force stop at end of session" })]
         ForceStopAtEndOfSession,
 
-        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "vns default", "stimulation", "VNS Default (\"ON\", \"OFF\", or \"RANDOM\")" })]
+        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "vns default", "stimulation", "VNS Default (\"ON\", \"OFF\", or \"RANDOM\")", "Stimulation (\"ON\", \"OFF\", or \"RANDOM\")" })]
         StimulateOnHit,
 
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "trial initiation threshold" })]

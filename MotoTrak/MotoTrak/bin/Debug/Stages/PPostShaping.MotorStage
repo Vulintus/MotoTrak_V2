@@ -1,0 +1,14 @@
+Stage File Version: 1
+Stage Name: PNIPostShaping
+Stage Description: Post Lesion Shaping
+Stage Implementation: PythonPullStageImplementation_TXBDC_PostShaping.py
+Stage Output Trigger: Off
+Stage Device: Pull
+Stage Sampling Rate: 10
+Stage Parameter: Pre-Trial Duration, seconds, Fixed, Undefined, 1, NaN, NaN, NaN
+Stage Parameter: Hit Window Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Post-Trial Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Post-Trial Timeout Period, seconds, Fixed, Undefined, 0, NaN, NaN, NaN
+Stage Parameter: Device Position, centimeters, Variable, Undefined, 0, NaN, NaN, NaN
+Stage Parameter: Hit Threshold, grams, Fixed, Undefined, 5, NaN, NaN, NaN
+Stage Parameter: Initiation Threshold, grams, Fixed, Undefined, 5, NaN, NaN, NaN
