@@ -313,6 +313,12 @@ namespace MotoTrakBase
                     double value_to_subtract = _trial_data[index][index_of_hit_window_start];
                     var result = _trial_data[index].Select(x => (x - value_to_subtract) / 1000).ToList();
                     _trial_data[index] = result;
+
+                    var overflow_occurred = result.Where(x => Double.IsInfinity(x) || Double.IsNaN(x) || x == 0).Count();
+                    if (overflow_occurred > 10)
+                    {
+                        MotoTrakMessaging.GetInstance().AddMessage("Timing overflow");
+                    }
                 }
             }   
         }

@@ -607,11 +607,14 @@ namespace MotoTrak
 
         private void RunAnnotationLogic ()
         {
-            if (StreamIndex < Model.CurrentSession.SelectedStage.DataStreamTypes.Count)
+            if (Model != null && Model.CurrentSession != null && Model.CurrentSession.SelectedStage != null)
             {
-                ClearAllAnnotations();
-                DrawAnnotations_AlwaysOn();
-                DrawAnnotations_DisplayDuringTrial();
+                if (StreamIndex < Model.CurrentSession.SelectedStage.DataStreamTypes.Count)
+                {
+                    ClearAllAnnotations();
+                    DrawAnnotations_AlwaysOn();
+                    DrawAnnotations_DisplayDuringTrial();
+                }
             }
         }
 

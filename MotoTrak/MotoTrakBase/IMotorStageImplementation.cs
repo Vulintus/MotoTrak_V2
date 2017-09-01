@@ -24,7 +24,7 @@ namespace MotoTrakBase
         /// </summary>
         /// <param name="buffer"></param>
         /// <returns></returns>
-        List<List<double>> TransformSignals(List<List<int>> new_data_from_controller, MotorStage stage, MotorDevice device);
+        List<List<double>> TransformSignals(List<List<UInt32>> new_data_from_controller, MotorStage stage, MotorDevice device);
 
         /// <summary>
         /// This function takes the currently buffered signal as a parameter, and checks the signal to see if a trial initiation

@@ -165,6 +165,39 @@ namespace MotoTrakUtilities
         }
 
         /// <summary>
+        /// Smooths a signal using a simple running average. The smoothing factor defines how many elements before and after each element to include in the running average.
+        /// This function handles end-cases by duplicating the current element N times, where N is the smoothing factor.
+        /// </summary>
+        /// <param name="smoothing_factor"></param>
+        /// <returns></returns>
+        public static List<double> SmoothSignal (List<double> signal, int smoothing_factor = 3)
+        {
+            List<double> result_signal = new List<double>();
+
+            if (signal != null && signal.Count > 0)
+            {
+                //Create a small list of elements to be appended onto the beginning and end of the list
+                List<double> signal_ends = Enumerable.Repeat(signal[0], smoothing_factor).ToList();
+
+                //Make a copy of the signal
+                List<double> temp_signal = new List<double>();
+                temp_signal.AddRange(signal_ends);
+                temp_signal.AddRange(signal);
+                temp_signal.AddRange(signal_ends);
+
+                //Smooth the list
+                for (int i = 0; i < signal.Count; i++)
+                {
+                    int total_elements_to_take = (smoothing_factor * 2) + 1;
+                    var avg_of_elements = temp_signal.Skip(i).Take(total_elements_to_take).Average();
+                    result_signal.Add(avg_of_elements);
+                }
+            }
+
+            return result_signal;
+        }
+
+        /// <summary>
         /// Finds the position of local maxima through a signal.
         /// </summary>
         /// <param name="v">The signal to be analyzed, as a list of doubles.</param>
@@ -173,7 +206,7 @@ namespace MotoTrakUtilities
         public static List<Tuple<double, double>> FindPeaks(List<double> v)
         {
             List<Tuple<double, double>> peaks = new List<Tuple<double, double>>();
-
+            
             double mn = double.PositiveInfinity;
             double mx = double.NegativeInfinity;
             double mnpos = double.NaN;
@@ -218,7 +251,29 @@ namespace MotoTrakUtilities
 
             return peaks;
         }
-        
+
+        /// <summary>
+        /// Finds the standard deviation of all values within a list
+        /// </summary>
+        public static double StdDev (List<double> values)
+        {
+            double ret = double.NaN;
+
+            if (values.Count > 0)
+            {
+                //Compute the Average      
+                double avg = values.Average();
+
+                //Perform the Sum of (value-avg)_2_2      
+                double sum = values.Sum(d => Math.Pow(d - avg, 2));
+
+                //Put it all together      
+                ret = Math.Sqrt((sum) / (values.Count - 1));
+            }
+
+            return ret;
+        }
+
         /// <summary>
         /// A function which finds the median of an array of numbers.
         /// </summary>

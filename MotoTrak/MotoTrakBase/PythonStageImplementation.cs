@@ -106,7 +106,7 @@ namespace MotoTrakBase
                 recent_behavior_sessions, current_session_stage);
         }
 
-        public List<List<double>> TransformSignals(List<List<int>> new_data_from_controller, MotorStage stage, MotorDevice device)
+        public List<List<double>> TransformSignals(List<List<UInt32>> new_data_from_controller, MotorStage stage, MotorDevice device)
         {
             return Dynamic.InvokeMember(_pythonStageImplementationInstance, "TransformSignals", new_data_from_controller, stage, device);
         }

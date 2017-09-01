@@ -67,6 +67,9 @@ namespace MotoTrakBase
         StimulateOnHit,
 
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "trial initiation threshold" })]
-        TrialInitiationThreshold
+        TrialInitiationThreshold,
+
+        [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "stage definition", "task definition", "stage definition file", "task definition file"})]
+        TaskDefinitionFile
     }
 }

@@ -47,6 +47,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PythonPullStageImplementation_TXBDC_PostShaping.py" />
+    <Compile Include="PythonPullStageImplementation_TXBDC_PullWindowEric.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MotoTrakBase\MotoTrakBase.csproj">

@@ -301,7 +301,8 @@ class PythonPullStageImplementation_FWIR (IMotorStageImplementation):
                 result.Add(new_action)
 
                 #If stimulation is on for this stage, stimulate the animal
-                if stage.OutputTriggerType == "On":
+                output_trigger_type = str(stage.OutputTriggerType)
+                if output_trigger_type.lower() == "On".lower():
                     new_stim_action = MotorTrialAction()
                     new_stim_action.ActionType = MotorTrialActionType.SendStimulationTrigger
                     result.Add(new_stim_action)

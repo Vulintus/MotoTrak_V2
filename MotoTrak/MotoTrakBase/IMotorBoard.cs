@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO.Ports;
 
 namespace MotoTrakBase
@@ -34,7 +35,7 @@ namespace MotoTrakBase
         void KnobToggle(int toggle_value);
         int NPerCalGrams();
         int ReadDevice();
-        List<List<int>> ReadStream();
+        List<List<UInt32>> ReadStream();
         bool SerialConnectionHasCharactersToRead();
         void SetBaseline(int baseline);
         void SetBoothNumber(int boothNumber);

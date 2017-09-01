@@ -31,13 +31,13 @@ namespace MotoTrak
         {
             InitializeComponent();
 
-            //Read the MotoTrak configuration file
-            var config = MotoTrakConfiguration.GetInstance();
-            config.ReadConfigurationFile();
-
             //Set the data context of the window
             this.DataContext = new MotoTrakViewModel();
 
+            //Read the MotoTrak configuration file
+            var config = MotoTrakConfiguration.GetInstance();
+            config.ReadConfigurationFile();
+            
             //If a default com port was not specified in the configuration file, display a dialog
             //requesting the user to select a com port
             if (string.IsNullOrEmpty(config.PreSpecifiedComPort))
@@ -92,7 +92,7 @@ namespace MotoTrak
                 this.Close();
             }
         }
-        
+
         private void StartButtonClick(object sender, RoutedEventArgs e)
         {
             MotoTrakViewModel viewModel = DataContext as MotoTrakViewModel;

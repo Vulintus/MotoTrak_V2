@@ -183,13 +183,13 @@ namespace MotoTrakBase
             return 0;
         }
 
-        public List<List<int>> ReadStream()
+        public List<List<UInt32>> ReadStream()
         {
             Random gen = new Random(DateTime.Now.Millisecond);
-            List<List<int>> result = new List<List<int>>();
-            result.Add(new List<int>() { 0, gen.Next(-5, 5), 0 });
-            result.Add(new List<int>() { 0, gen.Next(-5, 5), 0 });
-            result.Add(new List<int>() { 0, gen.Next(-5, 5), 0 });
+            List<List<UInt32>> result = new List<List<UInt32>>();
+            result.Add(new List<UInt32>() { 0, Convert.ToUInt32(gen.Next(0, 10)), 0 });
+            result.Add(new List<UInt32>() { 0, Convert.ToUInt32(gen.Next(0, 10)), 0 });
+            result.Add(new List<UInt32>() { 0, Convert.ToUInt32(gen.Next(0, 10)), 0 });
 
             return result;
         }

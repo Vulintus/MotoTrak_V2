@@ -966,6 +966,9 @@ namespace MotoTrakBase
 
         private static MotorStage ReadSingleStage_Web (List<string> headers, List<string> stage_params)
         {
+            //Create a string variable to hold the task/stage definition if defined by the user
+            string user_defined_task_definition = string.Empty;
+
             //Otherwise, set the variables for the new stage appropriately.
             MotorStage stage = new MotorStage();
 
@@ -1105,6 +1108,11 @@ namespace MotoTrakBase
                         stage.OutputTriggerType = val.Trim();
 
                         break;
+                    case MotoTrak_V1_StageParameters.TaskDefinitionFile:
+
+                        user_defined_task_definition = val.Trim();
+
+                        break;
                     default:
                         break;
                 }
@@ -1113,6 +1121,19 @@ namespace MotoTrakBase
             //Set the initial and current value of the hit threshold
             hit_thresh.InitialValue = hit_thresh.MinimumValue;
             hit_thresh.CurrentValue = hit_thresh.InitialValue;
+
+            //Set the "task implementation" if it is defined by the user
+            if (!string.IsNullOrEmpty(user_defined_task_definition))
+            {
+                if(MotoTrakConfiguration.GetInstance().PythonStageImplementations.ContainsKey(user_defined_task_definition))
+                {
+                    stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations[user_defined_task_definition];
+                }
+                else
+                {
+                    user_defined_task_definition = string.Empty;
+                }
+            }
             
             //Decide on a "task implementation" / "stage implementation" based on the parameters found in the spreadsheet.
             switch (hit_thresh_type)
@@ -1145,13 +1166,43 @@ namespace MotoTrakBase
                         stage.StageParameters["Use swipe sensor for trial initiations"] = ir_sensor_param;
 
                         //Set the implementation of this stage
-                        stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonPullStageImplementation_FWIR.py"];
+                        if (string.IsNullOrEmpty(user_defined_task_definition))
+                        {
+                            stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonPullStageImplementation_FWIR.py"];
+                        }
+                        else if (user_defined_task_definition.Equals("PythonPullStageImplementation_TXBDC_PullWindowEric.py"))
+                        {
+                            MotorStageParameter lower_bound_temp = new MotorStageParameter()
+                            {
+                                InitialValue = hit_thresh.MinimumValue,
+                                CurrentValue = hit_thresh.MinimumValue
+                            };
+
+                            MotorStageParameter mean_temp = new MotorStageParameter()
+                            {
+                                InitialValue = hit_thresh.MaximumValue,
+                                CurrentValue = hit_thresh.MaximumValue
+                            };
+
+                            MotorStageParameter hit_thresh_inc_temp = new MotorStageParameter()
+                            {
+                                InitialValue = hit_thresh.Increment,
+                                CurrentValue = hit_thresh.Increment
+                            };
+                            
+                            stage.StageParameters["Lower bound force threshold"] = lower_bound_temp;
+                            stage.StageParameters["Mean force target"] = mean_temp;
+                            stage.StageParameters["Percent of standard deviation"] = hit_thresh_inc_temp;
+                        }
                     }
                     else
                     {
                         //Set the implementation of this stage
-                        stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonPullStageImplementation.py"];
-
+                        if (string.IsNullOrEmpty(user_defined_task_definition))
+                        {
+                            stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonPullStageImplementation.py"];
+                        }
+                            
                         //Set the parameters of this stage
                         stage.StageParameters.Clear();
 
@@ -1166,8 +1217,11 @@ namespace MotoTrakBase
                 case MotorTaskTypeV1.SustainedForce:
 
                     //Set the implementation of this stage
-                    stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonSustainedPullStageImplementation.py"];
-
+                    if (string.IsNullOrEmpty(user_defined_task_definition))
+                    {
+                        stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonSustainedPullStageImplementation.py"];
+                    }
+                        
                     hit_thresh.ParameterName = "Hold Duration";
                     init_thresh.ParameterName = "Initiation Threshold";
                     
@@ -1181,8 +1235,11 @@ namespace MotoTrakBase
                 case MotorTaskTypeV1.TotalDegrees:
 
                     //Set the implementation of this stage
-                    stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonKnobStageImplementation.py"];
-
+                    if (string.IsNullOrEmpty(user_defined_task_definition))
+                    {
+                        stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonKnobStageImplementation.py"];
+                    }
+                        
                     hit_thresh.ParameterName = "Hit Threshold";
                     init_thresh.ParameterName = "Initiation Threshold";
 
@@ -1195,8 +1252,11 @@ namespace MotoTrakBase
                 case MotorTaskTypeV1.LeverPresses:
 
                     //Set the implementation of this stage
-                    stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonLeverStageImplementation.py"];
-
+                    if (string.IsNullOrEmpty(user_defined_task_definition))
+                    {
+                        stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonLeverStageImplementation.py"];
+                    }
+                        
                     //Set the parameters for this stage
                     stage.StageParameters.Clear();
                     stage.StageParameters["Full Press"] = new MotorStageParameter() { CurrentValue = 9.75, InitialValue = 9.75, ParameterName = "Full Press" };
