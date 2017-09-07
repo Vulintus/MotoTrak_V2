@@ -35,7 +35,7 @@ namespace MotoTrakBase
         void KnobToggle(int toggle_value);
         int NPerCalGrams();
         int ReadDevice();
-        List<List<UInt32>> ReadStream();
+        List<List<Int64>> ReadStream();
         bool SerialConnectionHasCharactersToRead();
         void SetBaseline(int baseline);
         void SetBoothNumber(int boothNumber);

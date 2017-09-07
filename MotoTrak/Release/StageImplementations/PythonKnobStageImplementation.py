@@ -65,6 +65,8 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
 
     def AdjustBeginningStageParameters(self, recent_behavior_sessions, current_session_stage):
 
+        PythonKnobStageImplementation.Maximal_Turn_Angle_List = []
+        PythonKnobStageImplementation.Turn_Angle_Threshold_List = []
         PythonKnobStageImplementation.Autopositioner_Trial_Count_Handled = []
         PythonKnobStageImplementation.Ending_Value_Of_Last_Trial = 0
 

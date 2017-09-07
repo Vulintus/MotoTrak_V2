@@ -1048,7 +1048,7 @@ namespace MotoTrak
         }
 
         private void HandleTrialState (int device_signal_index, int number_of_new_data_points, int buffer_size, 
-            List<List<double>> stream_data_transformed, List<List<UInt32>> transposed_new_data, List<List<double>> transformed_new_data)
+            List<List<double>> stream_data_transformed, List<List<Int64>> transposed_new_data, List<List<double>> transformed_new_data)
         {
             //Perform actions based on which trial state we are in
             switch (TrialState)
@@ -1628,10 +1628,10 @@ namespace MotoTrak
             BackgroundPropertyChanged("MonitoredSignal");
         }
 
-        private List<List<UInt32>> ReadNewDataFromArduino()
+        private List<List<Int64>> ReadNewDataFromArduino()
         {
             //Read in new streaming data from the Arduino board
-            List<List<UInt32>> new_data_points = ControllerBoard.ReadStream();
+            List<List<Int64>> new_data_points = ControllerBoard.ReadStream();
             return new_data_points;
         }
 

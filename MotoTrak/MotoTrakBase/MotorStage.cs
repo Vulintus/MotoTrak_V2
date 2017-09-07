@@ -1175,19 +1175,22 @@ namespace MotoTrakBase
                             MotorStageParameter lower_bound_temp = new MotorStageParameter()
                             {
                                 InitialValue = hit_thresh.MinimumValue,
-                                CurrentValue = hit_thresh.MinimumValue
+                                CurrentValue = hit_thresh.MinimumValue,
+                                ParameterName = "Lower bound force threshold"
                             };
 
                             MotorStageParameter mean_temp = new MotorStageParameter()
                             {
                                 InitialValue = hit_thresh.MaximumValue,
-                                CurrentValue = hit_thresh.MaximumValue
+                                CurrentValue = hit_thresh.MaximumValue,
+                                ParameterName = "Mean force target"
                             };
 
                             MotorStageParameter hit_thresh_inc_temp = new MotorStageParameter()
                             {
                                 InitialValue = hit_thresh.Increment,
-                                CurrentValue = hit_thresh.Increment
+                                CurrentValue = hit_thresh.Increment,
+                                ParameterName = "Percent of standard deviation"
                             };
                             
                             stage.StageParameters["Lower bound force threshold"] = lower_bound_temp;
@@ -1234,20 +1237,50 @@ namespace MotoTrakBase
                     break;
                 case MotorTaskTypeV1.TotalDegrees:
 
+                    hit_thresh.ParameterName = "Hit Threshold";
+                    init_thresh.ParameterName = "Initiation Threshold";
+                    
+                    //Set the parameters of this stage
+                    stage.StageParameters.Clear();
+                    stage.StageParameters["Initiation Threshold"] = init_thresh;
+
                     //Set the implementation of this stage
                     if (string.IsNullOrEmpty(user_defined_task_definition))
                     {
+                        //Set the hit threshold parameter
+                        stage.StageParameters["Hit Threshold"] = hit_thresh;
+
+                        //Set the base knob implementation as the task definition
                         stage.StageImplementation = MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonKnobStageImplementation.py"];
                     }
-                        
-                    hit_thresh.ParameterName = "Hit Threshold";
-                    init_thresh.ParameterName = "Initiation Threshold";
+                    else if (user_defined_task_definition.Equals("PythonKnobStageImplementation_TXBDC_KnobWindow.py"))
+                    {
+                        //If the knob window task has been defined as the task definition...
 
-                    //Set the parameters of this stage
-                    stage.StageParameters.Clear();
-                    stage.StageParameters["Hit Threshold"] = hit_thresh;
-                    stage.StageParameters["Initiation Threshold"] = init_thresh;
+                        MotorStageParameter lower_bound_temp = new MotorStageParameter()
+                        {
+                            InitialValue = hit_thresh.MinimumValue,
+                            CurrentValue = hit_thresh.MinimumValue
+                        };
 
+                        MotorStageParameter mean_temp = new MotorStageParameter()
+                        {
+                            InitialValue = hit_thresh.MaximumValue,
+                            CurrentValue = hit_thresh.MaximumValue
+                        };
+
+                        MotorStageParameter hit_thresh_inc_temp = new MotorStageParameter()
+                        {
+                            InitialValue = hit_thresh.Increment,
+                            CurrentValue = hit_thresh.Increment
+                        };
+
+                        stage.StageParameters["Upper bound turn angle threshold"] = hit_ceiling;
+                        stage.StageParameters["Lower bound turn angle threshold"] = lower_bound_temp;
+                        stage.StageParameters["Mean turn angle target"] = mean_temp;
+                        stage.StageParameters["Percent of standard deviation"] = hit_thresh_inc_temp;
+                    }
+                    
                     break;
                 case MotorTaskTypeV1.LeverPresses:
 

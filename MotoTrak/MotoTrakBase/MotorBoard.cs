@@ -821,9 +821,9 @@ namespace MotoTrakBase
         /// [ [a1 b1 c1] [a2 b2 c2] [a3 b3 c3] ... [a_n b_n c_n] ]
         /// </summary>
         /// <returns>The streaming data as described in the function summary</returns>
-        public List<List<UInt32>> ReadStream()
+        public List<List<Int64>> ReadStream()
         {
-            List<List<UInt32>> output = new List<List<UInt32>>();
+            List<List<Int64>> output = new List<List<Int64>>();
 
             if (IsSerialConnectionValid)
             {
@@ -837,12 +837,12 @@ namespace MotoTrakBase
                             string[] splitString = lineOfData.Split(seps);
                             if (splitString.Length == 3)
                             {
-                                List<UInt32> integerData = new List<UInt32>();
+                                List<Int64> integerData = new List<Int64>();
 
-                                UInt32 parsedNumber = 0;
+                                Int64 parsedNumber = 0;
                                 for (int i = 0; i < 3; i++)
                                 {
-                                    UInt32.TryParse(splitString[i], out parsedNumber);
+                                    Int64.TryParse(splitString[i], out parsedNumber);
                                     integerData.Add(parsedNumber);
                                 }
 

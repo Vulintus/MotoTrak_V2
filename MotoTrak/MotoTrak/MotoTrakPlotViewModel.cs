@@ -804,7 +804,7 @@ namespace MotoTrak
                     var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
                     if (stage_impl != null)
                     {
-                        var task_parameter = stage_impl.TaskDefinition.TaskParameters.Where(x => x.ParameterName.Equals(sp.ParameterName)).FirstOrDefault();
+                        var task_parameter = stage_impl.TaskDefinition.TaskParameters.Where(x => x.ParameterName.Equals(k)).FirstOrDefault();
                         if (task_parameter == null || !task_parameter.DisplayOnPlot)
                         {
                             //If the stage implementation says to not create an annotation for this specific parameter,
