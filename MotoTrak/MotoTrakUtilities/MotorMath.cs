@@ -275,6 +275,28 @@ namespace MotoTrakUtilities
         }
 
         /// <summary>
+        /// Finds the deviation of all values around a specified "mean".
+        /// </summary>
+        /// <param name="values">A list of values</param>
+        /// <param name="mean">The mean</param>
+        /// <returns>The standard deviation of the list of values around the specified mean</returns>
+        public static double StdDevAroundMean (List<double> values, double mean)
+        {
+            double ret = double.NaN;
+
+            if (values.Count > 0)
+            {
+                //Perform the Sum of (value-avg)_2_2      
+                double sum = values.Sum(d => Math.Pow(d - mean, 2));
+
+                //Put it all together      
+                ret = Math.Sqrt((sum) / (values.Count - 1));
+            }
+
+            return ret;
+        }
+
+        /// <summary>
         /// A function which finds the median of an array of numbers.
         /// </summary>
         /// <param name="numbers">An array of numbers</param>

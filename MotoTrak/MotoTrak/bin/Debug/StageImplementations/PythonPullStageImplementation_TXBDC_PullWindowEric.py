@@ -36,6 +36,7 @@ class PythonPullStageImplementation_TXBDC_PullWindowEric (IMotorStageImplementat
     Maximal_Force_List = []
     Force_Threshold_List = []
     Mean_Peak_List_Last_Ten = []
+    Mean_Peak_List_All_Trials = []
     Std_Dev_List = []
 
     Position_Of_Last_Trough = 0
@@ -75,6 +76,7 @@ class PythonPullStageImplementation_TXBDC_PullWindowEric (IMotorStageImplementat
         PythonPullStageImplementation_TXBDC_PullWindowEric.Autopositioner_Trial_Count_Handled = []
         PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_Last_Ten = []
         PythonPullStageImplementation_TXBDC_PullWindowEric.Std_Dev_List = []
+        PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_All_Trials = []
 
         #Take only recent behavior sessions that have at least 50 successful trials
         total_hits = 0
@@ -246,10 +248,16 @@ class PythonPullStageImplementation_TXBDC_PullWindowEric (IMotorStageImplementat
         msg = ""
         msg += System.DateTime.Now.ToShortTimeString() + ", "
 
+        #Get the name of the mean force target parameter
+        mean_force_target_parameter_name = PythonPullStageImplementation_TXBDC_PullWindowEric.TaskDefinition.TaskParameters[3].ParameterName
+
+        #Grab the mean force target
+        mean_force_target = stage.StageParameters[mean_force_target_parameter_name].CurrentValue
+
         peaks_std_msg = "(StdDev not yet calculated)"
         if (len(PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_Last_Ten) == 10):
             peaks_list = List[System.Double](PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_Last_Ten)
-            peaks_std = MotorMath.StdDev(peaks_list)
+            peaks_std = MotorMath.StdDevAroundMean(peaks_list, mean_force_target)
             PythonPullStageImplementation_TXBDC_PullWindowEric.Std_Dev_List.append(peaks_std)
             peaks_std_msg = "(StdDev = " + System.Convert.ToInt32(System.Math.Floor(peaks_std)).ToString() + " grams)"
 
@@ -334,6 +342,7 @@ class PythonPullStageImplementation_TXBDC_PullWindowEric (IMotorStageImplementat
                         cur_peak_pos = p.Item2
                         cur_peak_mag = this_peak_mag
                 PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_Last_Ten.append(cur_peak_mag)
+                PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_All_Trials.append(cur_peak_mag)
                 if (len(PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_Last_Ten) > 10):
                     PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_Last_Ten.pop(0)
             
@@ -341,7 +350,7 @@ class PythonPullStageImplementation_TXBDC_PullWindowEric (IMotorStageImplementat
                     #Calculate the standard deviation of the peaks from the last 10 trials
                     peaks_list = List[System.Double](PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_Last_Ten)
                     #peaks_list = List[System.Double]([n for n in PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_Last_Ten])
-                    peaks_std = MotorMath.StdDev(peaks_list)
+                    peaks_std = MotorMath.StdDevAroundMean(peaks_list, mean_force_target)
                     
                     #Now calculate a fraction of the standard deviation, based on the stage definition
                     fractional_value = stage.StageParameters[percent_stddev_parameter_name].CurrentValue
@@ -353,10 +362,10 @@ class PythonPullStageImplementation_TXBDC_PullWindowEric (IMotorStageImplementat
                         lower_bound = mean_force_target - peaks_std
                         upper_bound = mean_force_target + peaks_std
                         
-                        if (lower_bound < stage.StageParameters[lower_bound_force_threshold_name].MinimumValue):
-                            lower_bound = stage.StageParameters[lower_bound_force_threshold_name].MinimumValue
-                        if (upper_bound > stage.StageParameters[upper_bound_force_threshold_name].MaximumValue):
-                            upper_bound = stage.StageParameters[upper_bound_force_threshold_name].MaximumValue
+                        if (lower_bound < stage.StageParameters[lower_bound_force_threshold_name].InitialValue):
+                            lower_bound = stage.StageParameters[lower_bound_force_threshold_name].InitialValue
+                        if (upper_bound > stage.StageParameters[upper_bound_force_threshold_name].InitialValue):
+                            upper_bound = stage.StageParameters[upper_bound_force_threshold_name].InitialValue
 
                         stage.StageParameters[lower_bound_force_threshold_name].CurrentValue = lower_bound
                         stage.StageParameters[upper_bound_force_threshold_name].CurrentValue = upper_bound
@@ -380,6 +389,13 @@ class PythonPullStageImplementation_TXBDC_PullWindowEric (IMotorStageImplementat
         return
 
     def CreateEndOfSessionMessage(self, current_session):
+
+        #Get the name of the mean force target parameter
+        mean_force_target_parameter_name = PythonPullStageImplementation_TXBDC_PullWindowEric.TaskDefinition.TaskParameters[3].ParameterName
+
+        #Grab the mean force target
+        mean_force_target = current_session.SelectedStage.StageParameters[mean_force_target_parameter_name].CurrentValue
+
         # Find the number of feedings that occurred in this session
         number_of_feedings = current_session.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count();
 
@@ -393,5 +409,12 @@ class PythonPullStageImplementation_TXBDC_PullWindowEric (IMotorStageImplementat
             med_std = MotorMath.Median(List[System.Double](PythonPullStageImplementation_TXBDC_PullWindowEric.Std_Dev_List))
             median_msg = "Median StdDev: " + System.Convert.ToInt32(med_std).ToString()
         end_of_session_messages.Add(median_msg)
+
+        #Overall std deviation
+        std_dev_msg = "No overall std dev calculated."
+        if (len(PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_All_Trials) > 0):
+            std_dev_all = MotorMath.StdDevAroundMean(List[System.Double](PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_All_Trials), mean_force_target)
+            std_dev_msg = "Overall StdDev: " + System.Convert.ToInt32(std_dev_all).ToString()
+        end_of_session_messages.Add(std_dev_msg)
 
         return end_of_session_messages
