@@ -326,10 +326,12 @@ class PythonPullStageImplementation_TXBDC_PullWindowEric (IMotorStageImplementat
             smoothed_hit_window_data = MotorMath.SmoothSignal(hit_window_stream_data, 3)
 
             #Find the peaks in the force data
-            peaks = MotorMath.FindPeaks(smoothed_hit_window_data)
+            #peaks = MotorMath.FindPeaks(smoothed_hit_window_data)
 
             #Throw out any peaks that are below the initiation threshold
-            peaks = peaks.Where(lambda x: x.Item1 > initiation_threshold).ToList();
+            #peaks = peaks.Where(lambda x: x.Item1 > initiation_threshold).ToList();
+
+            peaks = MotorMath.FindPeaksAboveInitiationThreshold(smoothed_hit_window_data, initiation_threshold)
 
             if peaks.Count > 0:
                 cur_peak_mag = peaks[0].Item1                
@@ -341,6 +343,7 @@ class PythonPullStageImplementation_TXBDC_PullWindowEric (IMotorStageImplementat
                     if (this_peak_diff < cur_peak_diff):
                         cur_peak_pos = p.Item2
                         cur_peak_mag = this_peak_mag
+
                 PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_Last_Ten.append(cur_peak_mag)
                 PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_All_Trials.append(cur_peak_mag)
                 if (len(PythonPullStageImplementation_TXBDC_PullWindowEric.Mean_Peak_List_Last_Ten) > 10):

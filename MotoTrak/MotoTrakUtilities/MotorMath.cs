@@ -197,6 +197,63 @@ namespace MotoTrakUtilities
             return result_signal;
         }
 
+        public static List<Tuple<double, double>> FindPeaksAboveInitiationThreshold (List<double> v, double init_thresh)
+        {
+            List<Tuple<double, double>> peaks = new List<Tuple<double, double>>();
+
+            var binary_signal = v.Select(x => (x >= init_thresh) ? 1 : 0).ToList();
+            var diff_binary_signal = MotorMath.DiffInt(binary_signal);
+
+            //Get all points where the signal rose above the initiation threshold and where it fell below
+            var rises = Enumerable.Range(0, diff_binary_signal.Count).Where(x => diff_binary_signal[x] == 1).ToList();
+            var falls = Enumerable.Range(0, diff_binary_signal.Count).Where(x => diff_binary_signal[x] == -1).ToList();
+
+            //If there is a fall before the first rise, then insert a rise at the very beginning
+            if (falls.Count > 0 && rises.Count > 0)
+            {
+                var first_rise = rises.FirstOrDefault();
+                var first_fall = falls.FirstOrDefault();
+
+                var last_rise = rises.LastOrDefault();
+                var last_fall = falls.LastOrDefault();
+
+                if (first_rise >= first_fall)
+                {
+                    rises.Insert(0, 0);
+                }
+
+                if (last_rise >= last_fall)
+                {
+                    falls.Add(diff_binary_signal.Count - 1);
+                }
+            }
+            else if (falls.Count > 0 && rises.Count == 0)
+            {
+                rises.Add(0);
+            }
+            else if (falls.Count == 0 && rises.Count > 0)
+            {
+                falls.Add(diff_binary_signal.Count - 1);
+            }
+            
+            //Get elements of the signal between each rise and fall
+            for (int i = 0; i < rises.Count && i < falls.Count; i++)
+            {
+                var r = rises[i];
+                var f = falls[i];
+
+                var s = v.Where((y, x) => x >= r && x < f).Select(x => x).ToList();
+                var s_max = s.Max();
+                var s_max_idx = s.IndexOf(s_max);
+                var real_index = r + s_max_idx;
+                Tuple<double, double> new_peak = new Tuple<double, double>(s_max, real_index);
+
+                peaks.Add(new_peak);
+            }
+
+            return peaks;
+        }
+
         /// <summary>
         /// Finds the position of local maxima through a signal.
         /// </summary>

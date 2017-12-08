@@ -1234,6 +1234,11 @@ namespace MotoTrak
                             {
                                 foreach (var a in event_actions)
                                 {
+                                    if (a.ActionType == MotorTrialActionType.SendStimulationTrigger)
+                                    {
+                                        CurrentTrial.OutputTriggers.Add(DateTime.Now);
+                                    }
+
                                     _trial_actions.Enqueue(a);
                                 }
                             }
@@ -1255,6 +1260,11 @@ namespace MotoTrak
                         {
                             foreach (var a in actions)
                             {
+                                if (a.ActionType == MotorTrialActionType.SendStimulationTrigger)
+                                {
+                                    CurrentTrial.OutputTriggers.Add(DateTime.Now);
+                                }
+
                                 _trial_actions.Enqueue(a);
                             }
                         }

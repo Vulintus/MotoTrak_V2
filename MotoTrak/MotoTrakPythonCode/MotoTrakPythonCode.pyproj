@@ -36,6 +36,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PythonPullStageImplementation_10hits.py" />
+    <Compile Include="PythonPullStageImplementation_20hits.py" />
     <Compile Include="PythonPullStageImplementation_ForceWindow.py">
       <SubType>Code</SubType>
     </Compile>
