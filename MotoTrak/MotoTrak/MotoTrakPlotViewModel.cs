@@ -48,7 +48,7 @@ namespace MotoTrak
             Plot.Updating += OnPlotUpdating;
             Plot.Updated += OnPlotUpdated;
             _plot_time_gui_update.Start();
-
+            
             //Set the MotoTrak model
             Model = model;
 
