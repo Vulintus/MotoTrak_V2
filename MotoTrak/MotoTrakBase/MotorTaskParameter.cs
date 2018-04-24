@@ -19,7 +19,7 @@ namespace MotoTrakBase
         }
 
         public MotorTaskParameter (string name, string units, bool display, bool adaptive, bool custom, 
-            bool is_quantitative = true, List<string> possible_values = null)
+            bool is_quantitative = true, List<string> possible_values = null, double default_quant_value = 0, string default_nominal_value = "")
         {
             ParameterName = name;
             ParameterUnits = units;
@@ -28,6 +28,8 @@ namespace MotoTrakBase
             IsAdaptabilityCustomizeable = custom;
             IsQuantitative = is_quantitative;
             PossibleValues = possible_values ?? new List<string>();
+            DefaultQuantitativeValue = default_quant_value;
+            DefaultNominalValue = default_nominal_value;
         }
         
         #endregion
@@ -42,6 +44,9 @@ namespace MotoTrakBase
         public bool IsAdaptabilityCustomizeable = false;
         public bool IsQuantitative = true;
         public List<string> PossibleValues = new List<string>();
+
+        public double DefaultQuantitativeValue = 0;
+        public string DefaultNominalValue = string.Empty;
 
         #endregion
     }

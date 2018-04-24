@@ -50,6 +50,9 @@
     <Compile Include="PythonPullStageImplementation_Sustained.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="PythonPullStageImplementation_TrialLimit.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PythonPullStageImplementation_TXBDC_PostShaping.py" />
     <Compile Include="PythonPullStageImplementation_TXBDC_PullWindowEric.py">
       <SubType>Code</SubType>

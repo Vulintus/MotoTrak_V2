@@ -366,13 +366,13 @@ namespace StageDesigner
         {
             get
             {
-                return Convert.ToInt32(ModelParameter.Increment).ToString();
+                return ModelParameter.Increment.ToString();
             }
             set
             {
                 string max_value_string = value;
-                int result = 0;
-                bool success = Int32.TryParse(max_value_string, out result);
+                double result = 0;
+                bool success = Double.TryParse(max_value_string, out result);
                 if (success)
                 {
                     ModelParameter.Increment = result;

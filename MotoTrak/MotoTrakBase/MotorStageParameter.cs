@@ -146,15 +146,29 @@ namespace MotoTrakBase
         /// <summary>
         /// This function calculates a new CurrentValue for this parameter based on the History property and the AdaptiveThresholdType.
         /// </summary>
-        public void CalculateAndSetBoundedCurrentValue ()
+        public void CalculateAndSetBoundedCurrentValue (bool successful_trial_result = false)
         {
             //Check to see if this parameter is supposed to change
             if (ParameterType == StageParameterType.Variable)
             {
                 if (AdaptiveThresholdType == MotorStageAdaptiveThresholdType.Linear)
                 {
-                    //Change the current value based on the increment
-                    CurrentValue += Increment;
+                    if (successful_trial_result)
+                    {
+                        //Change the current value based on the increment
+                        CurrentValue += Increment;
+
+                        //Make sure the current value is bounded by the min and max values. Only do this if a min and max are defined
+                        if (!Double.IsNaN(MaximumValue) && !Double.IsInfinity(MaximumValue))
+                        {
+                            CurrentValue = Math.Min(MaximumValue, CurrentValue);
+                        }
+
+                        if (!Double.IsNaN(MinimumValue) && !Double.IsInfinity(MinimumValue))
+                        {
+                            CurrentValue = Math.Max(MinimumValue, CurrentValue);
+                        }
+                    }
                 }
                 else
                 {
@@ -178,6 +192,30 @@ namespace MotoTrakBase
                     }
                 }
             }
+        }
+
+        #endregion
+
+        #region Static methods
+
+        /// <summary>
+        /// Creates a motor stage parameter based upon a motor task parameter
+        /// </summary>
+        public static MotorStageParameter CreateStageParameterFromTaskParameter (MotorTaskParameter tp)
+        {
+            MotorStageParameter sp = new MotorStageParameter()
+            {
+                ParameterName = tp.ParameterName,
+                ParameterUnits = tp.ParameterUnits,
+                IsQuantitative = tp.IsQuantitative,
+                ParameterType = tp.IsAdaptive ? StageParameterType.Variable : StageParameterType.Fixed,
+                AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Undefined,
+                NominalValue = tp.DefaultNominalValue,
+                InitialValue = tp.DefaultQuantitativeValue,
+                CurrentValue = tp.DefaultQuantitativeValue
+            };
+            
+            return sp;
         }
 
         #endregion

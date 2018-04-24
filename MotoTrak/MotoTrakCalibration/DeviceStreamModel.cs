@@ -85,13 +85,7 @@ namespace MotoTrakCalibration
 
             //Enable streaming on the motor board
             MotorBoard.GetInstance().EnableStreaming(1);
-
-            //Initialize the data buffer
-            for (int i = 0; i < BufferSize; i++)
-            {
-                DataBuffer.Add(0);
-            }
-
+            
             //Start a background thread to collect the incoming data
             _background_thread.WorkerSupportsCancellation = true;
             _background_thread.WorkerReportsProgress = true;

@@ -245,6 +245,18 @@ namespace StageDesigner
             {
                 var task_parameters = k.TaskDefinition.TaskParameters;
                 
+                //Create default stage parameters if there are any that do not exist
+                foreach (var tp in task_parameters)
+                {
+                    if (!_stage.StageParameters.ContainsKey(tp.ParameterName))
+                    {
+                        var sp = MotorStageParameter.CreateStageParameterFromTaskParameter(tp);
+                        StageParameterControlViewModel spvm = new StageParameterControlViewModel(sp, tp);
+                        _stage.StageParameters[tp.ParameterName] = sp;
+                    }
+                }
+
+                //Create a view-model for each stage parameter
                 foreach (var sp in _stage.StageParameters)
                 {
                     //Get the corresponding task parameter

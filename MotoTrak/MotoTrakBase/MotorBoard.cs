@@ -966,6 +966,7 @@ namespace MotoTrakBase
         {
             IMotorBoard new_motor_board = MotorBoard.GetNewInstance();
             bool success = new_motor_board.ConnectToArduino(com_port);
+            new_motor_board.SerialConnection.ReadTimeout = 2000;
             if (success)
             {
                 //Get the booth label
