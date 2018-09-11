@@ -29,6 +29,9 @@
     <Compile Include="PythonKnobStageImplementation_TXBDC_KnobWindow.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="PythonLeverIndividualPressStageImplementation.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PythonLeverStageImplementation.py">
       <SubType>Code</SubType>
     </Compile>

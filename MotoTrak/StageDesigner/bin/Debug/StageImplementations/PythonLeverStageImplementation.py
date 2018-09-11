@@ -318,6 +318,8 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
 
     def AdjustDynamicStageParameters(self, all_trials, current_trial, stage):        
 
+        was_successful_trial = current_trial.Result == MotorTrialResult.Hit
+
         #Get the name of the hit threshold parameter
         hit_threshold_parameter_name = PythonLeverStageImplementation.TaskDefinition.TaskParameters[0].ParameterName
 
@@ -333,7 +335,7 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
             if PythonLeverStageImplementation.press_count is 1 or PythonLeverStageImplementation.inter_press_interval is 0:
                 isi_to_add = stage.HitWindowInSeconds.MaximumValue * 1000
             stage.HitWindowInSeconds.History.Enqueue(System.Double(isi_to_add) / System.Double(1000))
-            stage.HitWindowInSeconds.CalculateAndSetBoundedCurrentValue()
+            stage.HitWindowInSeconds.CalculateAndSetBoundedCurrentValue(was_successful_trial)
 
         #Adjust the number of degrees that is considered a press and a release if necessary.
         if stage.StageParameters[full_press_parameter_name].ParameterType == MotorStageParameter.StageParameterType.Variable:
@@ -349,16 +351,16 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
 
             #Change the full press point as necessary
             stage.StageParameters[full_press_parameter_name].History.Enqueue(max_deg_press)
-            stage.StageParameters[full_press_parameter_name].CalculateAndSetBoundedCurrentValue()
+            stage.StageParameters[full_press_parameter_name].CalculateAndSetBoundedCurrentValue(was_successful_trial)
 
             #Change the release point as necessary
             stage.StageParameters[release_point_parameter_name].History.Enqueue(half_max_deg_press)
-            stage.StageParameters[release_point_parameter_name].CalculateAndSetBoundedCurrentValue()
+            stage.StageParameters[release_point_parameter_name].CalculateAndSetBoundedCurrentValue(was_successful_trial)
 
         #Adjust the number of presses hit threshold if necessary
         if stage.StageParameters[hit_threshold_parameter_name].ParameterType == MotorStageParameter.StageParameterType.Variable:
             stage.StageParameters[hit_threshold_parameter_name].History.Enqueue(PythonLeverStageImplementation.press_count)
-            stage.StageParameters[hit_threshold_parameter_name].CalculateAndSetBoundedCurrentValue()
+            stage.StageParameters[hit_threshold_parameter_name].CalculateAndSetBoundedCurrentValue(was_successful_trial)
             
         #Adjust the position of the auto-positioner, according to the stage settings
         if stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:

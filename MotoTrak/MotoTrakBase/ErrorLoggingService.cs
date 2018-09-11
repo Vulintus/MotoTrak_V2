@@ -91,14 +91,24 @@ namespace MotoTrakBase
         /// <summary>
         /// Logs a string to the error log file.
         /// </summary>
-        public void LogStringError(string msg)
+        public void LogStringError(string msg, bool include_timestamp = true)
         {
             lock (_error_log_lock)
             {
                 try
                 {
                     StreamWriter writer = new StreamWriter(GetErrorLogFileString(), true);
-                    writer.WriteLine(msg);
+                    var ts = DateTime.Now;
+                    string date_ts = ts.ToShortDateString();
+                    string time_ts = ts.ToLongTimeString();
+                    if (include_timestamp)
+                    {
+                        writer.WriteLine(date_ts + ", " + time_ts + ", " + msg);
+                    }
+                    else
+                    {
+                        writer.WriteLine(msg);
+                    }
                     writer.Close();
                 }
                 catch

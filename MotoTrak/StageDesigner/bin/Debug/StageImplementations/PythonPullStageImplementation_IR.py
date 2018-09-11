@@ -47,7 +47,7 @@ class PythonPullStageImplementation_IR (IMotorStageImplementation):
         PythonPullStageImplementation_IR.TaskDefinition.TaskName = "Pull Task with swipe sensor trial initiation"
         PythonPullStageImplementation_IR.TaskDefinition.TaskDescription = "This version of the classic pull tasks allows for initiation trials when a swipe occurs that does not contact the pull handle."
         PythonPullStageImplementation_IR.TaskDefinition.RequiredDeviceType = MotorDeviceType.Pull
-        PythonPullStageImplementation_IR.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On"])
+        PythonPullStageImplementation_IR.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On", "Beginning of every trial"])
 
         PythonPullStageImplementation_IR.TaskDefinition.DevicePosition.IsAdaptive = True
         PythonPullStageImplementation_IR.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
@@ -209,6 +209,16 @@ class PythonPullStageImplementation_IR (IMotorStageImplementation):
         for evt in trial_events:
             event_type = evt.EventType
             evt.Handled = True
+
+            #If a trial has been initiated, and the output trigger type is set to trigger on every trial initiation,
+            #then send an output trigger
+            if event_type.value__ is MotorTrialEventType.TrialInitiation.value__:
+                output_trigger_type = str(stage.OutputTriggerType)
+                if output_trigger_type.lower() == "Beginning of every trial".lower():
+                    new_stim_action = MotorTrialAction()
+                    new_stim_action.ActionType = MotorTrialActionType.SendStimulationTrigger
+                    result.Add(new_stim_action)
+
             if event_type.value__ is MotorTrialEventType.SuccessfulTrial.value__:
                 #If a successful trial happened, then feed the animal
                 new_action = MotorTrialAction()
@@ -216,7 +226,8 @@ class PythonPullStageImplementation_IR (IMotorStageImplementation):
                 result.Add(new_action)
 
                 #If stimulation is on for this stage, stimulate the animal
-                if stage.OutputTriggerType == "On":
+                output_trigger_type = str(stage.OutputTriggerType)
+                if output_trigger_type.lower() == "On".lower():
                     new_stim_action = MotorTrialAction()
                     new_stim_action.ActionType = MotorTrialActionType.SendStimulationTrigger
                     result.Add(new_stim_action)
