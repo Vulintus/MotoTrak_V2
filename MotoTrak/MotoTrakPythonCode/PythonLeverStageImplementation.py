@@ -155,10 +155,16 @@ class PythonLeverStageImplementation (IMotorStageImplementation):
                 #Calculate how many OLD elements there are
                 difference_in_size = stream_data.Count - stream_data_to_use.Count
 
+                #Check to see if the signal was below the initiation threshold within the last 200 ms
+                lookback_signal_to_use = stream_data.GetRange(stream_data.Count - 10, 10).ToList()
+                boolean_lookback_signal = List[System.Int32](lookback_signal_to_use.Select(lambda x: 1 if x >= init_thresh else 0).ToList())
+                diff_lookback_signal = MotorMath.DiffInt(boolean_lookback_signal)
+                did_cross_initiation_threshold = diff_lookback_signal.Any(lambda x: x > 0)
+                
                 #Retrieve the maximal value for the signal
                 maximal_value = stream_data_to_use.Max()
 
-                if maximal_value >= init_thresh:
+                if did_cross_initiation_threshold:
                     #Reset the inter-press-interval for the upcoming trial
                     PythonLeverStageImplementation.inter_press_interval = 0
 
