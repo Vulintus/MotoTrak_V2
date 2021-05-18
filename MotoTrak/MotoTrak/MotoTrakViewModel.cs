@@ -244,6 +244,9 @@ namespace MotoTrak
                         //Finally, let's change the selected stage itself
                         Model.CurrentSession.SelectedStage = new_stage;
 
+                        //Set a flag indicating a new stage was selected, so that the model can take any necessary actions
+                        Model.NewStageSelectedFlag = true;
+
                         //Move the autopositioner to the correct position for the new stage
                         MotoTrakAutopositioner.GetInstance().SetPosition(Model.CurrentSession.SelectedStage.Position.CurrentValue);
                         

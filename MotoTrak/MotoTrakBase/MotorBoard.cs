@@ -150,9 +150,6 @@ namespace MotoTrakBase
                 SerialConnection.DtrEnable = true;
 
                 SerialConnection.Open();
-                //SerialConnection.ReadExisting();
-                //SerialConnection.Close();
-                //SerialConnection.Open();
 
                 bool success = false;
                 string ardyResponse = SerialConnection.ReadLine().Trim();
@@ -1022,6 +1019,403 @@ namespace MotoTrakBase
             
             //Return the list of devices that were found
             return devices;
+        }
+
+        #endregion
+
+        #region MotoTrak Controller V2.1 Serial Functions
+
+        public void V21_TONES_PLAY_TONE (byte tone_index)
+        {
+            try
+            {
+                v2p0_send_uint8(180, tone_index, 0);
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to play tone.");
+            }
+        }
+
+        public void V21_TONES_STOP_TONE ()
+        {
+            try
+            {
+                v2p0_simple_command(181);
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to stop the tone.");
+            }
+        }
+
+        public void V21_TONES_SET_TONE_INDEX (byte tone_index)
+        {
+            try
+            {
+                v2p0_send_uint8(183, tone_index, 0);
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to set tone index.");
+            }
+        }
+
+        public int V21_TONES_RETURN_TONE_INDEX ()
+        {
+            int result = -1;
+
+            try
+            {
+                int? output = v2p0_simple_return_uint8(182);
+                if (output.HasValue)
+                {
+                    result = output.Value;
+                }
+                else
+                {
+                    throw new Exception("Error while attempting to get the tone index.");
+                }
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to get the tone index.");
+            }
+
+            return result;
+        }
+
+        public void V21_TONES_SET_TONE_FREQ (UInt16 tone_frequency)
+        {
+            try
+            {
+                v2p0_send_uint16(185, tone_frequency, 0);
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to set the tone frequency.");
+            }
+        }
+
+        public int V21_TONES_RETURN_TONE_FREQ ()
+        {
+            int tone_frequency_result = -1;
+
+            try
+            {
+                UInt16? result = v2p0_simple_return_uint16(184);
+                if (result.HasValue)
+                {
+                    tone_frequency_result = result.Value;
+                }
+                else
+                {
+                    throw new Exception("Error while attempting to get the tone frequency.");
+                }
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to get the tone frequency.");
+            }
+
+            return tone_frequency_result;
+        }
+
+        public void V21_TONES_SET_TONE_DUR (UInt16 tone_duration_ms)
+        {
+            try
+            {
+                v2p0_send_uint16(187, tone_duration_ms, 0);
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to set the tone duration.");
+            }
+        }
+
+        public int V21_TONES_GET_TONE_DUR ()
+        {
+            int result = -1;
+
+            try
+            {
+                UInt16? tone_duration_result = v2p0_simple_return_uint16(186);
+                if (tone_duration_result.HasValue)
+                {
+                    result = tone_duration_result.Value;
+                }
+                else
+                {
+                    throw new Exception("Error while attempting to get the tone duration.");
+                }
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to get the tone duration.");
+            }
+
+            return result;
+        }
+
+        public void V21_TONES_SET_TONE_MON (byte monitored_input_index)
+        {
+            try
+            {
+                v2p0_send_uint8(191, monitored_input_index, 0);
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to set the tone monitored input index.");
+            }
+        }
+
+        public int V21_TONES_RETURN_TONE_MON ()
+        {
+            int result = -1;
+
+            try
+            {
+                int? uint8_result = v2p0_simple_return_uint8(190);
+                if (uint8_result.HasValue)
+                {
+                    result = uint8_result.Value;
+                }
+                else
+                {
+                    throw new Exception("Error while attempting to get the tone monitored input index.");
+                }
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to get the tone monitored input index.");
+            }
+
+            return result;
+        }
+
+        public void V21_TONES_SET_TONE_TYPE (byte trigger_type)
+        {
+            try
+            {
+                v2p0_send_uint8(189, trigger_type, 0);
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to set the tone trigger type.");
+            }
+        }
+
+        public int V21_TONES_RETURN_TONE_TYPE ()
+        {
+            int result = -1;
+
+            try
+            {
+                int? uint8_result = v2p0_simple_return_uint8(188);
+                if (uint8_result.HasValue)
+                {
+                    result = uint8_result.Value;
+                }
+                else
+                {
+                    throw new Exception("Error while attempting to get the tone trigger type.");
+                }
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to get the tone trigger type.");
+            }
+
+            return result;
+        }
+
+        public void V21_TONES_SET_TONE_THRESH (Int16 threshold)
+        {
+            try
+            {
+                v2p0_send_int16(193, threshold, 0);
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to set the tone initiation threshold.");
+            }
+        }
+
+        public int V21_TONES_RETURN_TONE_THRESH ()
+        {
+            int result = Int32.MinValue;
+
+            try
+            {
+                Int16? int16_result = v2p0_simple_return_int16(192);
+                if (int16_result.HasValue)
+                {
+                    result = int16_result.Value;
+                }
+                else
+                {
+                    throw new Exception("Error while attempting to get the tone initiation threshold.");
+                }
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to get the tone initiation threshold.");
+            }
+
+            return result;
+        }
+
+        public int V21_TONES_RETURN_MAX_TONES ()
+        {
+            int result = -1;
+
+            try
+            {
+                int? uint8_result = v2p0_simple_return_uint8(194);
+                if (uint8_result.HasValue)
+                {
+                    result = uint8_result.Value;
+                }
+                else
+                {
+                    throw new Exception("Error while attempting to get the maximum number of tones");
+                }
+            }
+            catch (Exception)
+            {
+                MotoTrakMessaging.GetInstance().AddMessage("Error while attempting to get the maximum number of tones");
+            }
+
+            return result;
+        }
+
+        private void v2p0_send_uint8 (byte command, byte parameter, int num_dummy_bytes)
+        {
+            //Form the message
+            List<byte> message = new List<byte>();
+            message.Add(command);
+            message.Add(parameter);
+            for(int i = 0; i < num_dummy_bytes; i++)
+            {
+                message.Add(0);
+            }
+
+            //Send the message
+            SerialConnection.Write(message.ToArray(), 0, message.Count);
+        }
+
+        private void v2p0_send_uint16(byte command, UInt16 parameter, int num_dummy_bytes)
+        {
+            //Form the message
+            List<byte> message = new List<byte>();
+            message.Add(command);
+            message.AddRange(BitConverter.GetBytes(parameter));
+            for (int i = 0; i < num_dummy_bytes; i++)
+            {
+                message.Add(0);
+            }
+
+            //Send the message
+            SerialConnection.Write(message.ToArray(), 0, message.Count);
+        }
+
+        private void v2p0_send_int16(byte command, Int16 parameter, int num_dummy_bytes)
+        {
+            //Form the message
+            List<byte> message = new List<byte>();
+            message.Add(command);
+            message.AddRange(BitConverter.GetBytes(parameter));
+            for (int i = 0; i < num_dummy_bytes; i++)
+            {
+                message.Add(0);
+            }
+
+            //Send the message
+            SerialConnection.Write(message.ToArray(), 0, message.Count);
+        }
+
+        private void v2p0_simple_command (byte command)
+        {
+            SerialConnection.Write(new byte[] { command }, 0, 1);
+        }
+
+        private int? v2p0_simple_return_uint8 (byte command)
+        {
+            //Instantiate a variable to hold the result
+            int? result = null;
+
+            //Write the command
+            SerialConnection.Write(new byte[] { command }, 0, 1);
+
+            //Get the response
+            DateTime timeout = DateTime.Now + TimeSpan.FromMilliseconds(100);
+            while (DateTime.Now < timeout)
+            {
+                if (SerialConnection.BytesToRead > 0)
+                {
+                    result = SerialConnection.ReadByte();
+                    break;
+                }
+            }
+
+            //Return the result
+            return result;
+        }
+
+        private UInt16? v2p0_simple_return_uint16 (byte command)
+        {
+            UInt16? result = null;
+
+            //Write the command
+            SerialConnection.Write(new byte[] { command }, 0, 1);
+
+            //Get the response
+            DateTime timeout = DateTime.Now + TimeSpan.FromMilliseconds(100);
+            while (DateTime.Now < timeout)
+            {
+                if (SerialConnection.BytesToRead >= 2)
+                {
+                    byte[] buffer = new byte[2] { 0, 0 };
+                    int bytes_read = SerialConnection.Read(buffer, 0, 2);
+                    if (bytes_read == 2)
+                    {
+                        result = BitConverter.ToUInt16(buffer, 0);
+                    }
+
+                    break;
+                }
+            }
+
+            //Return the result
+            return result;
+        }
+
+        private Int16? v2p0_simple_return_int16 (byte command)
+        {
+            Int16? result = null;
+
+            //Write the command
+            SerialConnection.Write(new byte[] { command }, 0, 1);
+
+            //Get the response
+            DateTime timeout = DateTime.Now + TimeSpan.FromMilliseconds(100);
+            while (DateTime.Now < timeout)
+            {
+                if (SerialConnection.BytesToRead >= 2)
+                {
+                    byte[] buffer = new byte[2] { 0, 0 };
+                    int bytes_read = SerialConnection.Read(buffer, 0, 2);
+                    if (bytes_read == 2)
+                    {
+                        result = BitConverter.ToInt16(buffer, 0);
+                    }
+
+                    break;
+                }
+            }
+
+            //Return the result
+            return result;
         }
 
         #endregion

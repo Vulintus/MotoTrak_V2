@@ -19,28 +19,34 @@ namespace MotoTrakBase
         /// <returns>Stage parameter (MotoTrak V1)</returns>
         public static MotoTrak_V1_StageParameters ConvertToMotorStageParameterType(string description)
         {
-            var type = typeof(MotoTrak_V1_StageParameters);
-
-            foreach (var field in type.GetFields())
+            var description_parts = description.Trim().Split(new char[] { '(' }).ToList();
+            if (description_parts.Count > 0)
             {
-                var attribute = Attribute.GetCustomAttribute(field,
-                    typeof(MotoTrak_V1_SpreadsheetColumnHeadingAttribute)) as MotoTrak_V1_SpreadsheetColumnHeadingAttribute;
-                if (attribute != null)
+                var description_first_part = description_parts[0].Trim();
+
+                var type = typeof(MotoTrak_V1_StageParameters);
+
+                foreach (var field in type.GetFields())
                 {
-                    if (attribute.SpreadsheetColumnHeading != null)
+                    var attribute = Attribute.GetCustomAttribute(field,
+                        typeof(MotoTrak_V1_SpreadsheetColumnHeadingAttribute)) as MotoTrak_V1_SpreadsheetColumnHeadingAttribute;
+                    if (attribute != null)
                     {
-                        foreach (var a in attribute.SpreadsheetColumnHeading)
+                        if (attribute.SpreadsheetColumnHeading != null)
                         {
-                            if (description.Trim().Equals(a.Trim(), StringComparison.InvariantCultureIgnoreCase))
+                            foreach (var a in attribute.SpreadsheetColumnHeading)
                             {
-                                return (MotoTrak_V1_StageParameters)field.GetValue(null);
+                                if (description_first_part.Trim().Equals(a.Trim(), StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    return (MotoTrak_V1_StageParameters)field.GetValue(null);
+                                }
                             }
                         }
                     }
                 }
             }
 
-            return MotoTrak_V1_StageParameters.Description;
+            return MotoTrak_V1_StageParameters.Unknown;
         }
 
         /// <summary>

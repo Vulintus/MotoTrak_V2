@@ -114,6 +114,19 @@ namespace MotoTrak
         private BackgroundWorker _background_thread = null;
         private BackgroundWorker _history_loader = null;
 
+        //New additions to handle tones
+        private bool _hit_window_finished_flag = false;
+        private int _is_tone_on_hit_window = 0;
+        private int _is_tone_on_miss = 0;
+        private int _is_tone_on_cue = 0;
+        private int _is_tone_on_hit = 0;
+        private TimeSpan _cue_tone_period = TimeSpan.Zero;
+        private DateTime _cue_tone_time = DateTime.MinValue;
+        private MotorStageParameterTone _hit_window_tone = null;
+        private MotorStageParameterTone _miss_tone = null;
+        private MotorStageParameterTone _cue_tone = null;
+        private MotorStageParameterTone _hit_tone = null;
+
         #endregion
 
         #region Data locks for multithreading
@@ -125,6 +138,16 @@ namespace MotoTrak
         #endregion
 
         #region Public properties
+
+        private MotorBoard motorboard
+        {
+            get
+            {
+                return (ControllerBoard as MotorBoard);
+            }
+        }
+
+        public bool NewStageSelectedFlag { get; set; } = true;
 
         /// <summary>
         /// The motor controller board object
@@ -909,6 +932,16 @@ namespace MotoTrak
                     BackgroundPropertyChanged("Position");
                 }
 
+                //Handle a new stage being selected
+                if (NewStageSelectedFlag)
+                {
+                    //Set the flag to false
+                    NewStageSelectedFlag = false;
+
+                    //Handle the new stage selection
+                    LoadNewlySelectedStageParametersOnMicrocontroller();
+                }
+
                 //Run the autopositioner
                 MotoTrakAutopositioner.GetInstance().RunAutopositioner();
 
@@ -1095,6 +1128,20 @@ namespace MotoTrak
                 case TrialRunState.TrialSetup:
 
                     //Do any necessary work to set up a new trial here
+                    if (_hit_window_tone != null)
+                    {
+                        _is_tone_on_hit_window = 1;
+                    }
+
+                    if (_miss_tone != null)
+                    {
+                        _is_tone_on_miss = 1;
+                    }
+
+                    if (_hit_tone != null)
+                    {
+                        _is_tone_on_hit = 1;
+                    }
 
                     //Wait for a new trial to begin.
                     TrialState = TrialRunState.TrialWait;
@@ -1104,6 +1151,16 @@ namespace MotoTrak
 
                     //Set the trial initiation index to a default value
                     int trial_initiation_index = -1;
+
+                    //Play a cue tone if necessary
+                    if (_is_tone_on_cue == 1 && _cue_tone != null && DateTime.Now >= _cue_tone_time)
+                    {
+                        if (motorboard != null)
+                        {
+                            motorboard.V21_TONES_PLAY_TONE(_cue_tone.ToneIndex);
+                            _cue_tone_time = DateTime.Now + _cue_tone_period;
+                        }
+                    }
 
                     try
                     {
@@ -1142,9 +1199,20 @@ namespace MotoTrak
 
                             //Add the trial initation event to the current trial
                             CurrentTrial.TrialEvents.Add(trial_initiation_event);
+
+                            //If necessary, play a tone to mark the beginning of the hit window
+                            if (_hit_window_tone != null && _is_tone_on_hit_window == 1)
+                            {
+                                if (motorboard != null)
+                                {
+                                    motorboard.V21_TONES_PLAY_TONE(_hit_window_tone.ToneIndex);
+                                    _is_tone_on_hit_window = 2;
+                                }
+                            }
                             
                             //Change the session state
                             TrialState = TrialRunState.TrialRun;
+                            _hit_window_finished_flag = false;
                         }
                         catch
                         {
@@ -1213,6 +1281,27 @@ namespace MotoTrak
                                             //Add this event to the TrialEventsQueue, which is what the GUI can access
                                             TrialEventsQueue.Enqueue(new Tuple<MotorTrialEventType, int>(evt.EventType, evt.EventIndex));
                                             BackgroundPropertyChanged("TrialEventsQueue");
+
+                                            //Handle the hit tone
+                                            if (_is_tone_on_hit == 1 && _hit_tone != null)
+                                            {
+                                                if (motorboard != null)
+                                                {
+                                                    motorboard.V21_TONES_PLAY_TONE(_hit_tone.ToneIndex);
+                                                }
+
+                                                _is_tone_on_hit = 2;
+                                                _is_tone_on_miss = 0;
+                                            }
+                                            else if (_is_tone_on_hit_window == 2)
+                                            {
+                                                if (motorboard != null)
+                                                {
+                                                    motorboard.V21_TONES_STOP_TONE();
+                                                }
+
+                                                _is_tone_on_hit_window = 0;
+                                            }
                                         }
                                     }
                                 }
@@ -1285,6 +1374,30 @@ namespace MotoTrak
                             CurrentTrial.Result = MotorTrialResult.Miss;
                         }
 
+                        if (CurrentTrial.Result == MotorTrialResult.Miss)
+                        {
+                            if (_is_tone_on_miss == 1 && _miss_tone != null)
+                            {
+                                if (motorboard != null)
+                                {
+                                    motorboard.V21_TONES_PLAY_TONE(_miss_tone.ToneIndex);
+                                }
+
+                                _is_tone_on_miss = 2;
+                            }
+
+                            if (_is_tone_on_hit_window == 2)
+                            {
+                                if (motorboard != null)
+                                {
+                                    motorboard.V21_TONES_STOP_TONE();
+                                }
+                            }
+
+                            _is_tone_on_hit_window = 0;
+                            _is_tone_on_hit = 0;
+                        }
+
                         //Raise a "trial end" event
                         MotorTrialEvent evt = new MotorTrialEvent()
                         {
@@ -1316,7 +1429,41 @@ namespace MotoTrak
                         //Change the session state to end this trial.
                         TrialState = TrialRunState.TrialEnd;
                     }
+
+                    //If the hit window has not yet been completed
+                    if (!_hit_window_finished_flag)
+                    {
+                        int samples_hw = CurrentSession.SelectedStage.TotalRecordedSamplesBeforeHitWindow + CurrentSession.SelectedStage.TotalRecordedSamplesDuringHitWindow;
+                        if (samples_collected >= samples_hw)
+                        {
+                            //Set the flag indicating the hit window has been completed
+                            _hit_window_finished_flag = true;
+
+                            //Handle events that need to take place at the end of the hit window
+                            if (_is_tone_on_hit_window == 2)
+                            {
+                                if (motorboard != null)
+                                {
+                                    motorboard.V21_TONES_STOP_TONE();
+                                    _is_tone_on_hit_window = 0;
+                                }
+                            }
+
+                            if (CurrentTrial.Result != MotorTrialResult.Hit)
+                            {
+                                if (_miss_tone != null && _is_tone_on_miss == 1)
+                                {
+                                    if (motorboard != null)
+                                    {
+                                        motorboard.V21_TONES_PLAY_TONE(_miss_tone.ToneIndex);
+                                        _is_tone_on_miss = 2;
+                                    }
+                                }
+                            }
+                        }
+                    }
                     
+
                     //Report progress on this trial to the main UI thread
                     CopyDataToMonitoredSignal(CurrentTrial.TrialData);
 
@@ -1324,6 +1471,12 @@ namespace MotoTrak
                 case TrialRunState.TrialEnd:
 
                     //In this state, we finalize a trial and save it to the disk.
+
+                    //Cue tone
+                    if (_is_tone_on_cue > 0)
+                    {
+                        _cue_tone_time = DateTime.Now + _cue_tone_period;
+                    }
 
                     //Resolve some values for the trial
                     CurrentTrial.HitWindowDurationInSeconds = CurrentSession.SelectedStage.HitWindowInSeconds.CurrentValue;
@@ -1403,6 +1556,16 @@ namespace MotoTrak
                     break;
                 case TrialRunState.TrialManualFeed:
 
+                    //Stop any tones
+                    if (_is_tone_on_hit_window == 2)
+                    {
+                        if (motorboard != null)
+                        {
+                            motorboard.V21_TONES_STOP_TONE();
+                            _is_tone_on_hit_window = 0;
+                        }
+                    }
+                    
                     //Trigger a manual feed
                     ControllerBoard.TriggerFeeder();
 
@@ -1414,6 +1577,12 @@ namespace MotoTrak
                     
                     //Create a new "feed" trial and save it to the session
                     CurrentSession.ManualFeeds.Add(DateTime.Now);
+
+                    //Save the manual feed trial to the data file
+                    if (PrimarySaveLocation != null)
+                    {
+                        PrimarySaveLocation.SaveEvent(MotoTrakFileSave.BlockType.ManualFeed, DateTime.Now);
+                    }
 
                     //Add a message to the GUI indicating a manual feed occurred
                     MotoTrakMessaging.GetInstance().AddMessage(DateTime.Now.ToShortTimeString() + " - Manual feed");
@@ -1481,9 +1650,25 @@ namespace MotoTrak
                     
                     //Set the session state to be running
                     SessionState = SessionRunState.SessionRunning;
-
+                    
                     //Set the trial state
                     TrialState = TrialRunState.TrialSetup;
+
+                    //Set up some tone stuff
+                    _hit_window_tone = CurrentSession.SelectedStage.ToneStageParameters.Where(x => x.ToneEvent == MotorStageParameterTone.ToneEventType.HitWindow).FirstOrDefault();
+                    _miss_tone = CurrentSession.SelectedStage.ToneStageParameters.Where(x => x.ToneEvent == MotorStageParameterTone.ToneEventType.Miss).FirstOrDefault();
+                    _cue_tone = CurrentSession.SelectedStage.ToneStageParameters.Where(x => x.ToneEvent == MotorStageParameterTone.ToneEventType.Cue).FirstOrDefault();
+                    _hit_tone = CurrentSession.SelectedStage.ToneStageParameters.Where(x => x.ToneEvent == MotorStageParameterTone.ToneEventType.Hit).FirstOrDefault();
+
+                    _is_tone_on_hit_window = (_hit_window_tone != null) ? 1 : 0;
+                    _is_tone_on_miss = (_miss_tone != null) ? 1 : 0;
+                    _is_tone_on_cue = (_cue_tone != null) ? 1 : 0;
+                    _is_tone_on_hit = (_hit_tone != null) ? 1 : 0;
+                    if (_cue_tone != null)
+                    {
+                        _cue_tone_period = TimeSpan.FromMilliseconds(_cue_tone.ToneThreshold);
+                        _cue_tone_time = DateTime.Now + _cue_tone_period;
+                    }
 
                     break;
                 case SessionRunState.SessionRunning:
@@ -1694,6 +1879,110 @@ namespace MotoTrak
             }
         }
         
+        private void LoadNewlySelectedStageParametersOnMicrocontroller ()
+        {
+            //Get the current stage
+            var stage = CurrentSession.SelectedStage;
+
+            //Iterate over each tone that exist for this stage
+            foreach (var tone in stage.ToneStageParameters)
+            {
+                //Set the parameters for this tone on the microcontroller
+                SetToneParameters(tone);
+            }
+        }
+
+        private void SetToneParameters (MotorStageParameterTone tone_parameters)
+        {
+            var motorboard = ControllerBoard as MotorBoard;
+            if (motorboard != null)
+            {
+                //Set the tone index
+                motorboard.V21_TONES_SET_TONE_INDEX(tone_parameters.ToneIndex);
+
+                //Set the tone frequency
+                motorboard.V21_TONES_SET_TONE_FREQ(tone_parameters.ToneFrequency);
+
+                //Set the tone duration
+                if (tone_parameters.ToneEvent == MotorStageParameterTone.ToneEventType.HitWindow)
+                {
+                    //If the tone event is the hit window
+                    motorboard.V21_TONES_SET_TONE_DUR(30_000);
+                }
+                else
+                {
+                    //Otherwise, if it is not the hit window
+                    var millis = Convert.ToUInt16(tone_parameters.ToneDuration.TotalMilliseconds);
+                    motorboard.V21_TONES_SET_TONE_DUR(millis);
+                }
+
+                //If the initiation event is any of the following types
+                if (tone_parameters.ToneEvent == MotorStageParameterTone.ToneEventType.Rising ||
+                    tone_parameters.ToneEvent == MotorStageParameterTone.ToneEventType.Falling)
+                {
+                    if (tone_parameters.ToneThreshold > Int32.MinValue)
+                    {
+                        //Calculate the threshold as a controller analog-read value
+                        double thresh = Convert.ToDouble(tone_parameters.ToneThreshold);
+                        thresh = Math.Round(thresh / CurrentSession.Device.Slope) + CurrentSession.Device.Baseline;
+
+                        //Set the tone initiation threshold on the controller
+                        motorboard.V21_TONES_SET_TONE_THRESH(Convert.ToInt16(Math.Round(thresh)));
+
+                        //Switch between the recognied devices
+                        switch (CurrentSession.Device.DeviceType)
+                        {
+                            case MotorDeviceType.Pull:
+                            case MotorDeviceType.Lever:
+
+                                //Set the monitored input to 1
+                                motorboard.V21_TONES_SET_TONE_MON(1);
+
+                                //Switch between the recognized tone initiation event types
+                                if (tone_parameters.ToneEvent == MotorStageParameterTone.ToneEventType.Rising)
+                                {
+                                    motorboard.V21_TONES_SET_TONE_TYPE(1);
+                                }
+                                else if (tone_parameters.ToneEvent == MotorStageParameterTone.ToneEventType.Falling)
+                                {
+                                    motorboard.V21_TONES_SET_TONE_TYPE(2);
+                                }
+
+                                break;
+                            case MotorDeviceType.Knob:
+
+                                //Set the monitored input to 6
+                                motorboard.V21_TONES_SET_TONE_MON(6);
+
+                                //Switch between the recognized tone initiation event types
+                                if (tone_parameters.ToneEvent == MotorStageParameterTone.ToneEventType.Rising)
+                                {
+                                    motorboard.V21_TONES_SET_TONE_TYPE(2);
+                                }
+                                else if (tone_parameters.ToneEvent == MotorStageParameterTone.ToneEventType.Falling)
+                                {
+                                    motorboard.V21_TONES_SET_TONE_TYPE(1);
+                                }
+
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        //Set the trigger type to "software trigger"
+                        motorboard.V21_TONES_SET_TONE_TYPE(0);
+                    }
+                }
+                else
+                {
+                    //Set the trigger type to "software trigger"
+                    motorboard.V21_TONES_SET_TONE_TYPE(0);
+                }
+            }
+        }
+
         #endregion
 
         #region Background property changed

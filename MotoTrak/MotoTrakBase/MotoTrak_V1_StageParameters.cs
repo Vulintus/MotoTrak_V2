@@ -70,6 +70,8 @@ namespace MotoTrakBase
         TrialInitiationThreshold,
 
         [MotoTrak_V1_SpreadsheetColumnHeading(new string[] { "stage definition", "task definition", "stage definition file", "task definition file"})]
-        TaskDefinitionFile
+        TaskDefinitionFile,
+
+        Unknown
     }
 }

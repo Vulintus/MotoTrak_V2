@@ -63,7 +63,9 @@
   <ItemGroup>
     <Compile Include="IMotorBoard.cs" />
     <Compile Include="MotorBoardSimulator.cs" />
+    <Compile Include="MotorStageParameterTone.cs" />
     <Compile Include="MotoTrakBoothPairing.cs" />
+    <Compile Include="MotoTrakStringExtensionMethods.cs" />
     <Compile Include="MotoTrak_V1_SpreadsheetColumnHeadingAttribute.cs" />
     <Compile Include="MotoTrak_V1_SpreadsheetColumnValueAttribute.cs" />
     <Compile Include="MotoTrak_V1_StageParameters.cs" />

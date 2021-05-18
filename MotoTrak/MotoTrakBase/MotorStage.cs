@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using MotoTrakUtilities;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Linq;
 
 namespace MotoTrakBase
 {
@@ -81,7 +82,8 @@ namespace MotoTrakBase
         };
 
         private ConcurrentDictionary<string, MotorStageParameter> _stage_parameters = new ConcurrentDictionary<string, MotorStageParameter>();
-        
+        private List<MotorStageParameterTone> _tone_stage_parameters = new List<MotorStageParameterTone>();
+
         private string _output_trigger_type = string.Empty;
         
         private List<MotorBoardDataStreamType> _data_streams = new List<MotorBoardDataStreamType>()
@@ -236,6 +238,18 @@ namespace MotoTrakBase
             set
             {
                 _stage_parameters = value;
+            }
+        }
+
+        public List<MotorStageParameterTone> ToneStageParameters
+        {
+            get
+            {
+                return _tone_stage_parameters;
+            }
+            set
+            {
+                _tone_stage_parameters = value;
             }
         }
 
@@ -989,9 +1003,94 @@ namespace MotoTrakBase
                 var h = headers[i];
                 var val = stage_params[i];
 
+                if (h.StartsWith("tone", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var tone_parameter_name_parts = h.Split(new char[] { ' ' });
+                    if (tone_parameter_name_parts.Length >= 3)
+                    {
+                        string tone_number_string = tone_parameter_name_parts[1].Trim();
+                        string tone_parameter = tone_parameter_name_parts[2].Trim();
+
+                        bool tone_number_parse_success = byte.TryParse(tone_number_string, out byte tone_number);
+                        if (tone_number_parse_success)
+                        {
+                            //Instantiate the tone stage parameter object if necessary
+                            var tone_stage_parameter = stage.ToneStageParameters.Where(x => x.ToneIndex == tone_number).FirstOrDefault();
+                            if (tone_stage_parameter == null)
+                            {
+                                tone_stage_parameter = new MotorStageParameterTone()
+                                {
+                                    ToneIndex = tone_number
+                                };
+
+                                stage.ToneStageParameters.Add(tone_stage_parameter);
+                            }
+
+                            //Set the appropriate sub-parameter
+                            if (tone_parameter.Contains("frequency", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                bool frequency_parse_success = UInt16.TryParse(val, out UInt16 tone_freq);
+                                if (frequency_parse_success)
+                                {
+                                    tone_stage_parameter.ToneFrequency = tone_freq;
+                                }
+                            }
+                            else if (tone_parameter.Contains("duration", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                bool duration_parse_success = Int32.TryParse(val, out int duration_ms);
+                                if (duration_parse_success)
+                                {
+                                    tone_stage_parameter.ToneDuration = TimeSpan.FromMilliseconds(duration_ms);
+                                }
+                            }
+                            else if (tone_parameter.Contains("event", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                MotorStageParameterTone.ToneEventType tone_event = MotorStageParameterTone.ToneEventType.Unknown;
+                                if (val.Contains("hit", StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    tone_event = MotorStageParameterTone.ToneEventType.Hit;
+                                }
+                                else if (val.Contains("miss", StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    tone_event = MotorStageParameterTone.ToneEventType.Miss;
+                                }
+                                else if (val.Contains("hitwin", StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    tone_event = MotorStageParameterTone.ToneEventType.HitWindow;
+                                }
+                                else if (val.Contains("rising", StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    tone_event = MotorStageParameterTone.ToneEventType.Rising;
+                                }
+                                else if (val.Contains("falling", StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    tone_event = MotorStageParameterTone.ToneEventType.Falling;
+                                }
+                                else if (val.Contains("cue", StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    tone_event = MotorStageParameterTone.ToneEventType.Cue;
+                                }
+
+                                tone_stage_parameter.ToneEvent = tone_event;
+                            }
+                            else if (tone_parameter.Contains("thresh", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                bool thresh_parse_success = Int16.TryParse(val, out Int16 tone_thresh);
+                                if (thresh_parse_success)
+                                {
+                                    tone_stage_parameter.ToneThreshold = tone_thresh;
+                                }
+                            }
+                        }
+                    }
+
+                    //Now skip the rest of the loop body and go to the next iteration of the loop
+                    continue;
+                }
+
                 //Figure out which parameter is being set
                 MotoTrak_V1_StageParameters p = MotoTrak_V1_StageParameters_Converter.ConvertToMotorStageParameterType(h);
-                
+
                 switch (p)
                 {
                     case MotoTrak_V1_StageParameters.StageNumber:
@@ -1113,6 +1212,7 @@ namespace MotoTrakBase
                         user_defined_task_definition = val.Trim();
 
                         break;
+
                     default:
                         break;
                 }
@@ -1314,6 +1414,25 @@ namespace MotoTrakBase
             }
             
             return stage;
+        }
+
+        private static MotorStageParameter SimpleParseDouble(string val)
+        {
+            MotorStageParameter result = new MotorStageParameter();
+            bool success = Double.TryParse(val, out double double_val);
+            result.InitialValue = double_val;
+            result.CurrentValue = result.InitialValue;
+            result.AdaptiveThresholdType = MotorStageAdaptiveThresholdType.Static;
+
+            return result;
+        }
+
+        private static MotorStageParameter SimpleParseString(string val)
+        {
+            MotorStageParameter result = new MotorStageParameter();
+            result.NominalValue = val;
+            result.IsQuantitative = false;
+            return result;
         }
 
         /// <summary>

@@ -266,8 +266,8 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
         #Get the device stream data
         device_stream = trial.TrialData[1]
         try:
-            peak_force = device_stream.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max()
-            PythonKnobStageImplementation_TXBDC_KnobWindow.Maximal_Turn_Angle_List.append(peak_force)
+            peak_turn_angle = device_stream.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max()
+            PythonKnobStageImplementation_TXBDC_KnobWindow.Maximal_Turn_Angle_List.append(peak_turn_angle)
             
             msg += "Trial " + str(trial_number) + " "
             if trial.Result == MotorTrialResult.Hit:
@@ -275,6 +275,7 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
             else:
                 msg += "MISS, "
 
+            msg += "peak turn angle = " + System.Convert.ToInt32(System.Math.Floor(peak_turn_angle)).ToString() + " degrees. "
             msg += peaks_std_msg
 
             return msg
