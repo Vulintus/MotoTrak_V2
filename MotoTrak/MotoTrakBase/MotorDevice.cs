@@ -89,12 +89,7 @@ namespace MotoTrakBase
 
         ~MotorDevice()
         {
-            if (DeviceType == MotorDeviceType.Knob)
-            {
-                //Turn off SPI communication for the knob.
-                IMotorBoard board = MotorBoard.GetInstance();
-                board.KnobToggle(0);
-            }
+            //empty
         }
 
         #endregion
