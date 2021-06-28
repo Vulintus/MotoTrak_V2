@@ -684,31 +684,45 @@ namespace MotoTrakBase
                             }
                             else if (parameter.Equals("Stage Parameter"))
                             {
-                                MotorStageParameter p = MotorStage.ParseMotorStageParameterWithName(parameter_string_parts[1]);
+                                if (parameter_string_parts.Length > 1)
+                                {
+                                    MotorStageParameter p = MotorStage.ParseMotorStageParameterWithName(parameter_string_parts[1]);
 
-                                if (p.ParameterName.Equals(stage.PreTrialSamplingPeriodInSeconds.ParameterName))
-                                {
-                                    stage.PreTrialSamplingPeriodInSeconds = p;
+                                    if (p.ParameterName.Equals(stage.PreTrialSamplingPeriodInSeconds.ParameterName))
+                                    {
+                                        stage.PreTrialSamplingPeriodInSeconds = p;
+                                    }
+                                    else if (p.ParameterName.Equals(stage.HitWindowInSeconds.ParameterName))
+                                    {
+                                        stage.HitWindowInSeconds = p;
+                                    }
+                                    else if (p.ParameterName.Equals(stage.PostTrialSamplingPeriodInSeconds.ParameterName))
+                                    {
+                                        stage.PostTrialSamplingPeriodInSeconds = p;
+                                    }
+                                    else if (p.ParameterName.Equals(stage.PostTrialTimeoutInSeconds.ParameterName))
+                                    {
+                                        stage.PostTrialTimeoutInSeconds = p;
+                                    }
+                                    else if (p.ParameterName.Equals(stage.Position.ParameterName))
+                                    {
+                                        stage.Position = p;
+                                    }
+                                    else
+                                    {
+                                        stage.StageParameters[p.ParameterName] = p;
+                                    }
                                 }
-                                else if (p.ParameterName.Equals(stage.HitWindowInSeconds.ParameterName))
+                            }
+                            else if (parameter.Equals("Stage Tone"))
+                            {
+                                if (parameter_string_parts.Length > 1)
                                 {
-                                    stage.HitWindowInSeconds = p;
-                                }
-                                else if (p.ParameterName.Equals(stage.PostTrialSamplingPeriodInSeconds.ParameterName))
-                                {
-                                    stage.PostTrialSamplingPeriodInSeconds = p;
-                                }
-                                else if (p.ParameterName.Equals(stage.PostTrialTimeoutInSeconds.ParameterName))
-                                {
-                                    stage.PostTrialTimeoutInSeconds = p;
-                                }
-                                else if (p.ParameterName.Equals(stage.Position.ParameterName))
-                                {
-                                    stage.Position = p;
-                                }
-                                else
-                                {
-                                    stage.StageParameters[p.ParameterName] = p;
+                                    MotorStageParameterTone t = MotorStage.ParseMotorStageTone(parameter_string_parts[1]);
+                                    if (t != null)
+                                    {
+                                        stage.ToneStageParameters.Add(t);
+                                    }
                                 }
                             }
                         }
@@ -1534,6 +1548,84 @@ namespace MotoTrakBase
             output += p.Increment.ToString();
 
             return output;
+        }
+
+        private static MotorStageParameterTone ParseMotorStageTone (string tone_parameters)
+        {
+            MotorStageParameterTone result = null;
+
+            //String format:
+            //Tone number, frequency, duration, event, threshold
+            var parts = tone_parameters.Split(new char[] { ',' }).ToList();
+
+            if (parts.Count >= 4)
+            {
+                bool success = false;
+
+                //Parse the tone index
+                success = byte.TryParse(parts[0], out byte tone_index);
+
+                //Parse the tone frequency
+                success &= UInt16.TryParse(parts[1], out UInt16 tone_frequency);
+
+                //Parse the tone duration
+                success &= Int32.TryParse(parts[2], out int tone_duration);
+
+                //Parse the tone event
+                var val = parts[3].Trim();
+                MotorStageParameterTone.ToneEventType tone_event = MotorStageParameterTone.ToneEventType.Unknown;
+                if (val.Contains("hit", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    tone_event = MotorStageParameterTone.ToneEventType.Hit;
+                }
+                else if (val.Contains("miss", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    tone_event = MotorStageParameterTone.ToneEventType.Miss;
+                }
+                else if (val.Contains("hitwin", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    tone_event = MotorStageParameterTone.ToneEventType.HitWindow;
+                }
+                else if (val.Contains("rising", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    tone_event = MotorStageParameterTone.ToneEventType.Rising;
+                }
+                else if (val.Contains("falling", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    tone_event = MotorStageParameterTone.ToneEventType.Falling;
+                }
+                else if (val.Contains("cue", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    tone_event = MotorStageParameterTone.ToneEventType.Cue;
+                }
+                else
+                {
+                    success &= false;
+                }
+
+                if (success)
+                {
+                    result = new MotorStageParameterTone()
+                    {
+                        ToneIndex = tone_index,
+                        ToneFrequency = tone_frequency,
+                        ToneDuration = TimeSpan.FromMilliseconds(tone_duration),
+                        ToneEvent = tone_event
+                    };
+
+                    //Optional 5th parameter - tone threshold
+                    if (parts.Count >= 5)
+                    {
+                        success = Int32.TryParse(parts[4], out int tone_threshold);
+                        if (success)
+                        {
+                            result.ToneThreshold = tone_threshold;
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
 
         #endregion
