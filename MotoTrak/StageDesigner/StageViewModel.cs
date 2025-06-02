@@ -88,7 +88,7 @@ namespace StageDesigner
         private void RefreshView ()
         {
             //Get the task parameters
-            PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
+            PythonTaskImplementation k = StageModel.StageImplementation as PythonTaskImplementation;
             if (k != null)
             {
                 //Create view-models for the basic stage parameters
@@ -135,7 +135,7 @@ namespace StageDesigner
 
             //Reset the output trigger type
             StageModel.OutputTriggerType = string.Empty;
-            PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
+            PythonTaskImplementation k = StageModel.StageImplementation as PythonTaskImplementation;
             if (k != null)
             {
                 if (k.TaskDefinition.OutputTriggerOptions != null && k.TaskDefinition.OutputTriggerOptions.Count > 0)
@@ -147,18 +147,18 @@ namespace StageDesigner
             RefreshView();
         }
 
-        private List<Tuple<string, PythonStageImplementation>> GetOrderedListOfPythonStageImplementations ()
+        private List<Tuple<string, PythonTaskImplementation>> GetOrderedListOfPythonStageImplementations ()
         {
-            List<Tuple<string, PythonStageImplementation>> result = new List<Tuple<string, PythonStageImplementation>>();
+            List<Tuple<string, PythonTaskImplementation>> result = new List<Tuple<string, PythonTaskImplementation>>();
             var stage_implementations = MotoTrakConfiguration.GetInstance().PythonStageImplementations.ToList();
             stage_implementations.Sort((x, y) => x.Key.CompareTo(y.Key));
 
             foreach (var kvp in stage_implementations)
             {
-                PythonStageImplementation this_stage_impl = kvp.Value as PythonStageImplementation;
+                PythonTaskImplementation this_stage_impl = kvp.Value as PythonTaskImplementation;
                 if (this_stage_impl != null)
                 {
-                    result.Add(new Tuple<string, PythonStageImplementation>(kvp.Key, this_stage_impl));
+                    result.Add(new Tuple<string, PythonTaskImplementation>(kvp.Key, this_stage_impl));
                 }
             }
             
@@ -169,7 +169,7 @@ namespace StageDesigner
         /// Returns the currently selected PythonStageImplementation object, based on what
         /// the selected index is in the UI.
         /// </summary>
-        private PythonStageImplementation GetCurrentlySelectedPythonStageImplementation()
+        private PythonTaskImplementation GetCurrentlySelectedPythonStageImplementation()
         {
             var ordered_list_of_stage_impls = GetOrderedListOfPythonStageImplementations();
             if (ordered_list_of_stage_impls != null && SelectedTaskIndex < ordered_list_of_stage_impls.Count)
@@ -185,7 +185,7 @@ namespace StageDesigner
             var ordered_list_of_stage_impls = GetOrderedListOfPythonStageImplementations();
             if (ordered_list_of_stage_impls != null)
             {
-                int index = ordered_list_of_stage_impls.Select(x => x.Item2).ToList().IndexOf(StageModel.StageImplementation as PythonStageImplementation);
+                int index = ordered_list_of_stage_impls.Select(x => x.Item2).ToList().IndexOf(StageModel.StageImplementation as PythonTaskImplementation);
                 return index;
             }
 
@@ -240,7 +240,7 @@ namespace StageDesigner
             StageParameters.Clear();
 
             //Fetch the list of required task parameters
-            PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
+            PythonTaskImplementation k = StageModel.StageImplementation as PythonTaskImplementation;
             if (k != null)
             {
                 var task_parameters = k.TaskDefinition.TaskParameters;
@@ -716,7 +716,7 @@ namespace StageDesigner
             get
             {
                 List<string> result = new List<string>();
-                PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
+                PythonTaskImplementation k = StageModel.StageImplementation as PythonTaskImplementation;
                 if (k != null)
                 {
                     result = k.TaskDefinition.OutputTriggerOptions;
@@ -735,7 +735,7 @@ namespace StageDesigner
             get
             {
                 int index = 0;
-                PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
+                PythonTaskImplementation k = StageModel.StageImplementation as PythonTaskImplementation;
                 if (k != null)
                 {
                     index = k.TaskDefinition.OutputTriggerOptions.IndexOf(StageModel.OutputTriggerType);
@@ -745,7 +745,7 @@ namespace StageDesigner
             }
             set
             {
-                PythonStageImplementation k = StageModel.StageImplementation as PythonStageImplementation;
+                PythonTaskImplementation k = StageModel.StageImplementation as PythonTaskImplementation;
                 if (k != null)
                 {
                     int index = value;

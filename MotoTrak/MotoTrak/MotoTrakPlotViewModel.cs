@@ -653,7 +653,7 @@ namespace MotoTrak
                 var sp = Model.CurrentSession.SelectedStage.StageParameters[sp_key];
 
                 //Now check to see if this stage parameter should be added as an annotation
-                var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
+                var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonTaskImplementation;
                 if (stage_impl != null)
                 {
                     var parameter_to_plot = stage_impl.TaskDefinition.TaskParameters.Where(x => x.ParameterName.Equals(sp_key)).FirstOrDefault();
@@ -801,7 +801,7 @@ namespace MotoTrak
                     var sp = Model.CurrentSession.SelectedStage.StageParameters[k];
 
                     //Now check to see if this stage parameter is a "plotted" parameter
-                    var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonStageImplementation;
+                    var stage_impl = Model.CurrentSession.SelectedStage.StageImplementation as PythonTaskImplementation;
                     if (stage_impl != null)
                     {
                         var task_parameter = stage_impl.TaskDefinition.TaskParameters.Where(x => x.ParameterName.Equals(k)).FirstOrDefault();

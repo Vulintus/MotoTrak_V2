@@ -9,7 +9,7 @@ clr.ImportExtensions(System.Linq)
 from System.Linq import Enumerable
 
 clr.AddReference('MotoTrakBase')
-from MotoTrakBase import IMotorStageImplementation
+from MotoTrakBase import IMotorTaskImplementation
 from MotoTrakBase import MotorStage
 from MotoTrakBase import MotorTrialResult
 from MotoTrakBase import MotorTrialAction
@@ -28,33 +28,33 @@ from MotoTrakBase import MotoTrakSession
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
 
-class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation):
-
-    #Variables used by this task
-    Autopositioner_Trial_Interval = 50
-    Autopositioner_Trial_Count_Handled = []
-    Mean_Peak_List_Last_Ten = []
-    Std_Dev_List = []
-    Maximal_Turn_Angle_List = []
-    Turn_Angle_Threshold_List = []
-    Ending_Value_Of_Last_Trial = 0
-    Mean_Peak_List_All_Trials = []
-
-    Position_Of_Last_Trough = 0
-    Position_Of_Hit = 0
-
-    #Declare string parameters for this stage
-    TaskDefinition = MotorTaskDefinition()
+class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorTaskImplementation):
 
     def __init__(self):
 
-        PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskName = "Knob task with degree window (TXBDC Version)"
-        PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskDescription = "This version of the knob task has an upper and a lower bound to the turn angle. The rat must maintain an angle within the window."
-        PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.RequiredDeviceType = MotorDeviceType.Knob
-        PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On", "Beginning of every trial"])
+        #Variables used by this task
+        self.Autopositioner_Trial_Interval = 50
+        self.Autopositioner_Trial_Count_Handled = []
+        self.Mean_Peak_List_Last_Ten = []
+        self.Std_Dev_List = []
+        self.Maximal_Turn_Angle_List = []
+        self.Turn_Angle_Threshold_List = []
+        self.Ending_Value_Of_Last_Trial = 0
+        self.Mean_Peak_List_All_Trials = []
 
-        PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.DevicePosition.IsAdaptive = True
-        PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
+        self.Position_Of_Last_Trough = 0
+        self.Position_Of_Hit = 0
+
+        #Declare string parameters for this stage
+        self.TaskDefinition = MotorTaskDefinition()
+
+        self.TaskDefinition.TaskName = "Knob task with degree window (TXBDC Version)"
+        self.TaskDefinition.TaskDescription = "This version of the knob task has an upper and a lower bound to the turn angle. The rat must maintain an angle within the window."
+        self.TaskDefinition.RequiredDeviceType = MotorDeviceType.Knob
+        self.TaskDefinition.OutputTriggerOptions = List[System.String](["Off", "On", "Beginning of every trial"])
+
+        self.TaskDefinition.DevicePosition.IsAdaptive = True
+        self.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
 
         lower_bound_parameter = MotorTaskParameter("Lower bound turn angle threshold", "degrees", True, True, True)
         upper_bound_parameter = MotorTaskParameter("Upper bound turn angle threshold", "degrees", True, True, True)
@@ -62,23 +62,23 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
         mean_parameter = MotorTaskParameter("Mean turn angle target", "degrees", True, True, True)
         percent_stddev = MotorTaskParameter("Percent of standard deviation", "percent", False, True, True)
         
-        PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters.Add(lower_bound_parameter)
-        PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters.Add(upper_bound_parameter)
-        PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters.Add(initiation_threshold_parameter)
-        PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters.Add(mean_parameter)
-        PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters.Add(percent_stddev)
+        self.TaskDefinition.TaskParameters.Add(lower_bound_parameter)
+        self.TaskDefinition.TaskParameters.Add(upper_bound_parameter)
+        self.TaskDefinition.TaskParameters.Add(initiation_threshold_parameter)
+        self.TaskDefinition.TaskParameters.Add(mean_parameter)
+        self.TaskDefinition.TaskParameters.Add(percent_stddev)
 
         return
 
     def AdjustBeginningStageParameters(self, recent_behavior_sessions, current_session_stage):
 
-        PythonKnobStageImplementation_TXBDC_KnobWindow.Ending_Value_Of_Last_Trial = 0
-        PythonKnobStageImplementation_TXBDC_KnobWindow.Maximal_Turn_Angle_List = []
-        PythonKnobStageImplementation_TXBDC_KnobWindow.Turn_Angle_Threshold_List = []
-        PythonKnobStageImplementation_TXBDC_KnobWindow.Autopositioner_Trial_Count_Handled = []
-        PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_Last_Ten = []
-        PythonKnobStageImplementation_TXBDC_KnobWindow.Std_Dev_List = []
-        PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_All_Trials = []
+        self.Ending_Value_Of_Last_Trial = 0
+        self.Maximal_Turn_Angle_List = []
+        self.Turn_Angle_Threshold_List = []
+        self.Autopositioner_Trial_Count_Handled = []
+        self.Mean_Peak_List_Last_Ten = []
+        self.Std_Dev_List = []
+        self.Mean_Peak_List_All_Trials = []
 
         #Take only recent behavior sessions that have at least 50 successful trials
         total_hits = 0
@@ -115,7 +115,7 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
             stream_data = new_data_from_controller[i]
             transformed_stream_data = List[System.Double]()
             if (i is 1):
-                transformed_stream_data = List[System.Double](stream_data.Select(lambda x: -System.Double(device.Slope * (x - device.Baseline)) - PythonKnobStageImplementation_TXBDC_KnobWindow.Ending_Value_Of_Last_Trial).ToList())
+                transformed_stream_data = List[System.Double](stream_data.Select(lambda x: -System.Double(device.Slope * (x - device.Baseline)) - self.Ending_Value_Of_Last_Trial).ToList())
             else:
                 transformed_stream_data = List[System.Double](stream_data.Select(lambda x: System.Double(x)).ToList())
             result.Add(transformed_stream_data)
@@ -126,7 +126,7 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
         return_value = -1
 
         #Get the name of the initiation threshold parameter
-        initiation_threshold_parameter_name = PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters[2].ParameterName
+        initiation_threshold_parameter_name = self.TaskDefinition.TaskParameters[2].ParameterName
 
         #Look to see if the Initiation Threshold key exists
         if stage.StageParameters.ContainsKey(initiation_threshold_parameter_name):
@@ -149,8 +149,8 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
 
                 if maximal_value >= init_thresh:
                     return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
-                    PythonKnobStageImplementation_TXBDC_KnobWindow.Position_Of_Last_Trough = return_value
-                    PythonKnobStageImplementation_TXBDC_KnobWindow.Position_Of_Hit = -1
+                    self.Position_Of_Last_Trough = return_value
+                    self.Position_Of_Hit = -1
                 
         return return_value
 
@@ -159,13 +159,13 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
         result = List[Tuple[MotorTrialEventType, System.Int32]]()
 
         #Get the name of the lower bound force threshold
-        lower_bound_force_threshold_name = PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters[0].ParameterName
+        lower_bound_force_threshold_name = self.TaskDefinition.TaskParameters[0].ParameterName
 
         #Get the name of the upper bound force threshold
-        upper_bound_force_threshold_name = PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters[1].ParameterName
+        upper_bound_force_threshold_name = self.TaskDefinition.TaskParameters[1].ParameterName
 
         #Get the name of the initiation threshold parameter
-        initiation_threshold_parameter_name = PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters[2].ParameterName
+        initiation_threshold_parameter_name = self.TaskDefinition.TaskParameters[2].ParameterName
 
         #Only proceed if a hit threshold has been defined for this stage
         if stage.StageParameters.ContainsKey(lower_bound_force_threshold_name) and \
@@ -193,7 +193,7 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
                     elif (pull_state != 1 and stream_data[i] < current_initiation_threshold):
                         #Otherwise, if it is below the initiation threshold, set the pull state to be "unknown"    
                         pull_state = 0
-                        PythonKnobStageImplementation_TXBDC_KnobWindow.Position_Of_Last_Trough = i
+                        self.Position_Of_Last_Trough = i
                     elif (pull_state == 0):
                         #Otherwise, if the pull state is unknown, and the pull is between the lower and upper bounds, set it to be valid
                         if (stream_data[i] >= current_lower_bound and stream_data[i] < current_upper_bound):
@@ -203,7 +203,7 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
                     if (pull_state == 1 and stream_data[i] < current_lower_bound):
                         #Add the point at which the success occurred to the result
                         result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, i))
-                        PythonKnobStageImplementation_TXBDC_KnobWindow.Position_Of_Hit = i
+                        self.Position_Of_Hit = i
 
                         #Break out of the loop to return the result immediately
                         break
@@ -251,23 +251,23 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
         msg += System.DateTime.Now.ToShortTimeString() + ", "
 
         #Get the name of the mean force target parameter
-        mean_force_target_parameter_name = PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters[3].ParameterName
+        mean_force_target_parameter_name = self.TaskDefinition.TaskParameters[3].ParameterName
 
         #Grab the mean force target
         mean_force_target = stage.StageParameters[mean_force_target_parameter_name].CurrentValue
 
         peaks_std_msg = "(StdDev not yet calculated)"
-        if (len(PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_Last_Ten) == 10):
-            peaks_list = List[System.Double](PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_Last_Ten)
+        if (len(self.Mean_Peak_List_Last_Ten) == 10):
+            peaks_list = List[System.Double](self.Mean_Peak_List_Last_Ten)
             peaks_std = MotorMath.StdDevAroundMean(peaks_list, mean_force_target)
-            PythonKnobStageImplementation_TXBDC_KnobWindow.Std_Dev_List.append(peaks_std)
+            self.Std_Dev_List.append(peaks_std)
             peaks_std_msg = "(StdDev = " + System.Convert.ToInt32(System.Math.Floor(peaks_std)).ToString() + " degrees)"
 
         #Get the device stream data
         device_stream = trial.TrialData[1]
         try:
             peak_turn_angle = device_stream.GetRange(stage.TotalRecordedSamplesBeforeHitWindow, stage.TotalRecordedSamplesDuringHitWindow).Max()
-            PythonKnobStageImplementation_TXBDC_KnobWindow.Maximal_Turn_Angle_List.append(peak_turn_angle)
+            self.Maximal_Turn_Angle_List.append(peak_turn_angle)
             
             msg += "Trial " + str(trial_number) + " "
             if trial.Result == MotorTrialResult.Hit:
@@ -283,10 +283,10 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
             return System.String.Empty;
 
     def CalculateYValueForSessionOverviewPlot(self, trial, stage):
-        if PythonKnobStageImplementation_TXBDC_KnobWindow.Position_Of_Hit > -1:
+        if self.Position_Of_Hit > -1:
             max_force = stream_data.Where(lambda val, index: \
-                (index >= PythonKnobStageImplementation_TXBDC_KnobWindow.Position_Of_Last_Trough) and \
-                (index < PythonKnobStageImplementation_TXBDC_KnobWindow.Position_Of_Hit)).Max()
+                (index >= self.Position_Of_Last_Trough) and \
+                (index < self.Position_Of_Hit)).Max()
 
             return max_force
 
@@ -294,19 +294,19 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
 
     def AdjustDynamicStageParameters(self, all_trials, current_trial, stage):
         #Get the name of the lower bound force threshold
-        lower_bound_force_threshold_name = PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters[0].ParameterName
+        lower_bound_force_threshold_name = self.TaskDefinition.TaskParameters[0].ParameterName
 
         #Get the name of the lower bound force threshold
-        upper_bound_force_threshold_name = PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters[1].ParameterName
+        upper_bound_force_threshold_name = self.TaskDefinition.TaskParameters[1].ParameterName
 
         #Get the name of the initiation threshold parameter
-        initiation_threshold_parameter_name = PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters[2].ParameterName
+        initiation_threshold_parameter_name = self.TaskDefinition.TaskParameters[2].ParameterName
 
         #Get the name of the mean force target parameter
-        mean_force_target_parameter_name = PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters[3].ParameterName
+        mean_force_target_parameter_name = self.TaskDefinition.TaskParameters[3].ParameterName
 
         #Get the name of the mean force target parameter
-        percent_stddev_parameter_name = PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters[4].ParameterName
+        percent_stddev_parameter_name = self.TaskDefinition.TaskParameters[4].ParameterName
 
         #Adjust the hit threshold
         if stage.StageParameters.ContainsKey(mean_force_target_parameter_name):
@@ -343,14 +343,14 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
                     if (this_peak_diff < cur_peak_diff):
                         cur_peak_pos = p.Item2
                         cur_peak_mag = this_peak_mag
-                PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_Last_Ten.append(cur_peak_mag)
-                PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_All_Trials.append(cur_peak_mag)
-                if (len(PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_Last_Ten) > 10):
-                    PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_Last_Ten.pop(0)
+                self.Mean_Peak_List_Last_Ten.append(cur_peak_mag)
+                self.Mean_Peak_List_All_Trials.append(cur_peak_mag)
+                if (len(self.Mean_Peak_List_Last_Ten) > 10):
+                    self.Mean_Peak_List_Last_Ten.pop(0)
             
-                if (len(PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_Last_Ten) == 10):
+                if (len(self.Mean_Peak_List_Last_Ten) == 10):
                     #Calculate the standard deviation of the peaks from the last 10 trials
-                    peaks_list = List[System.Double](PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_Last_Ten)
+                    peaks_list = List[System.Double](self.Mean_Peak_List_Last_Ten)
                     peaks_std = MotorMath.StdDevAroundMean(peaks_list, mean_force_target)
                     
                     #Now calculate a fraction of the standard deviation, based on the stage definition
@@ -379,11 +379,11 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
         #Adjust the position of the auto-positioner, according to the stage settings
         if stage.Position.ParameterType == MotorStageParameter.StageParameterType.Variable:
             hit_count = all_trials.Where(lambda t: t.Result == MotorTrialResult.Hit).Count()
-            hit_count_modulus = hit_count % PythonKnobStageImplementation_TXBDC_KnobWindow.Autopositioner_Trial_Interval
+            hit_count_modulus = hit_count % self.Autopositioner_Trial_Interval
             if hit_count > 0 and hit_count_modulus is 0:
-                if not PythonKnobStageImplementation_TXBDC_KnobWindow.Autopositioner_Trial_Count_Handled.Contains(hit_count):
+                if not self.Autopositioner_Trial_Count_Handled.Contains(hit_count):
                     if stage.Position.CurrentValue < 2.0:
-                        PythonKnobStageImplementation_TXBDC_KnobWindow.Autopositioner_Trial_Count_Handled.append(hit_count)
+                        self.Autopositioner_Trial_Count_Handled.append(hit_count)
                         stage.Position.CurrentValue = stage.Position.CurrentValue + 0.5
                         MotoTrakAutopositioner.GetInstance().SetPosition(stage.Position.CurrentValue)
                 
@@ -392,7 +392,7 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
     def CreateEndOfSessionMessage(self, current_session):
         
         #Get the name of the mean force target parameter
-        mean_force_target_parameter_name = PythonKnobStageImplementation_TXBDC_KnobWindow.TaskDefinition.TaskParameters[3].ParameterName
+        mean_force_target_parameter_name = self.TaskDefinition.TaskParameters[3].ParameterName
 
         #Grab the mean force target
         mean_force_target = current_session.SelectedStage.StageParameters[mean_force_target_parameter_name].CurrentValue
@@ -406,15 +406,15 @@ class PythonKnobStageImplementation_TXBDC_KnobWindow (IMotorStageImplementation)
 
         #Median of std deviations
         median_msg = "No median std dev calculated."
-        if (len(PythonKnobStageImplementation_TXBDC_KnobWindow.Std_Dev_List) > 0):
-            med_std = MotorMath.Median(List[System.Double](PythonKnobStageImplementation_TXBDC_KnobWindow.Std_Dev_List))
+        if (len(self.Std_Dev_List) > 0):
+            med_std = MotorMath.Median(List[System.Double](self.Std_Dev_List))
             median_msg = "Median StdDev: " + System.Convert.ToInt32(med_std).ToString()
         end_of_session_messages.Add(median_msg)
 
         #Overall std deviation
         std_dev_msg = "No overall std dev calculated."
-        if (len(PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_All_Trials) > 0):
-            std_dev_all = MotorMath.StdDevAroundMean(List[System.Double](PythonKnobStageImplementation_TXBDC_KnobWindow.Mean_Peak_List_All_Trials), mean_force_target)
+        if (len(self.Mean_Peak_List_All_Trials) > 0):
+            std_dev_all = MotorMath.StdDevAroundMean(List[System.Double](self.Mean_Peak_List_All_Trials), mean_force_target)
             std_dev_msg = "Overall StdDev: " + System.Convert.ToInt32(std_dev_all).ToString()
         end_of_session_messages.Add(std_dev_msg)
 

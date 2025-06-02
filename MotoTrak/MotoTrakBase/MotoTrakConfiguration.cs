@@ -53,7 +53,7 @@ namespace MotoTrakBase
 
         #region Properties
 
-        public ConcurrentDictionary<string, IMotorStageImplementation> PythonStageImplementations = new ConcurrentDictionary<string, IMotorStageImplementation>();
+        public ConcurrentDictionary<string, IMotorTaskImplementation> PythonStageImplementations = new ConcurrentDictionary<string, IMotorTaskImplementation>();
         public ConcurrentBag<MotoTrakBoothPairing> BoothPairings = new ConcurrentBag<MotoTrakBoothPairing>();
         
         public int ConfigurationVersion { get; set; }
@@ -335,7 +335,7 @@ namespace MotoTrakBase
                 //Load in each file
                 foreach (string f in files)
                 {
-                    PythonStageImplementation new_stage_implementation = new PythonStageImplementation(f);
+                    PythonTaskImplementation new_stage_implementation = new PythonTaskImplementation(f);
                     string file_name_only = Path.GetFileName(f);
                     PythonStageImplementations[file_name_only] = new_stage_implementation;
                 }

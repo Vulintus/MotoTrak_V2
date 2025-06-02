@@ -28,7 +28,7 @@ namespace MotoTrakBase
         /// <summary>
         /// This will hold the stage implementation code
         /// </summary>
-        private IMotorStageImplementation _stageImplementation = null;
+        private IMotorTaskImplementation _stageImplementation = null;
 
         /// <summary>
         /// Strings that hold the path and file name of where this stage is located
@@ -256,7 +256,7 @@ namespace MotoTrakBase
         /// <summary>
         /// References the functions that know how to run this stage within a session.
         /// </summary>
-        public IMotorStageImplementation StageImplementation
+        public IMotorTaskImplementation StageImplementation
         {
             get
             {

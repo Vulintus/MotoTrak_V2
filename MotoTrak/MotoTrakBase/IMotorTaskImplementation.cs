@@ -9,7 +9,7 @@ namespace MotoTrakBase
     /// <summary>
     /// This interface defines a set of methods that MotoTrak stages can use to handle incoming streaming data.
     /// </summary>
-    public interface IMotorStageImplementation
+    public interface IMotorTaskImplementation
     {
         /// <summary>
         /// This function takes in data from recent previous behavior sessions and sets some stage parameters based on what happened

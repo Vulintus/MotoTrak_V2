@@ -27,7 +27,7 @@ namespace SessionRunner
                 var session = MotoTrakBase.MotoTrakFileRead.ReadFile(file_name);
 
                 var stage_impl = MotoTrakBase.MotoTrakConfiguration.GetInstance().PythonStageImplementations["PythonPullStageImplementation_FWIR.py"];
-                var p_stage_impl = stage_impl as MotoTrakBase.PythonStageImplementation;
+                var p_stage_impl = stage_impl as MotoTrakBase.PythonTaskImplementation;
 
                 //Iterate over all trials
                 for (int t = 0; t < session.Trials.Count; t++)
