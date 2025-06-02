@@ -146,10 +146,19 @@ namespace MotoTrakBase
         {
             try
             {
+                //Instantiate a serial port
                 SerialConnection = new SerialPort(portName, 115200);
                 SerialConnection.DtrEnable = true;
+                SerialConnection.ReadTimeout = 500;
 
+                //Open the connection
                 SerialConnection.Open();
+
+                //Wait for the "READY" string to be received. The MotoTrak board
+                //outputs the "READY" string upon new connections. If we don't
+                //receive the "READY" string within 2 seconds, then let's fail out.
+                var start_time = DateTime.Now;
+                var end_time = start_time + TimeSpan.FromSeconds(2.0);
 
                 bool success = false;
                 string ardyResponse = SerialConnection.ReadLine().Trim();
@@ -167,6 +176,14 @@ namespace MotoTrakBase
                     else
                     {
                         ardyResponse = SerialConnection.ReadLine().Trim();
+                    }
+
+                    //Check to see if we have timed out
+                    if (DateTime.Now >= end_time)
+                    {
+                        //If so, then return false indicating that the connection
+                        //is not successful (it's not a valid MotoTrak device).
+                        return false;
                     }
                 }
 
