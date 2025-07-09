@@ -27,6 +27,8 @@ from MotoTrakBase import MotoTrakSession
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
 
+import time
+
 class PythonPullStageImplementation (IMotorStageImplementation):
 
     #Variables used by this task
@@ -34,6 +36,8 @@ class PythonPullStageImplementation (IMotorStageImplementation):
     Autopositioner_Trial_Count_Handled = []
     Maximal_Force_List = []
     Force_Threshold_List = []
+    
+    UpcomingRewardTimes = []
 
     #Declare string parameters for this stage
     TaskDefinition = MotorTaskDefinition()
@@ -50,9 +54,11 @@ class PythonPullStageImplementation (IMotorStageImplementation):
 
         hit_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.HitThreshold, "grams", True, True, True)
         initiation_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.InitiationThreshold, "grams", True, True, True)
+        reward_delay_parameter = MotorTaskParameter("Reward Delay", "seconds", False, False, False)
         
         PythonPullStageImplementation.TaskDefinition.TaskParameters.Add(hit_threshold_parameter)
         PythonPullStageImplementation.TaskDefinition.TaskParameters.Add(initiation_threshold_parameter)
+        PythonPullStageImplementation.TaskDefinition.TaskParameters.Add(reward_delay_parameter)
 
         return
 
@@ -61,6 +67,7 @@ class PythonPullStageImplementation (IMotorStageImplementation):
         PythonPullStageImplementation.Maximal_Force_List = []
         PythonPullStageImplementation.Force_Threshold_List = []
         PythonPullStageImplementation.Autopositioner_Trial_Count_Handled = []
+        PythonPullStageImplementation.UpcomingRewardTimes = []
 
         #Take only recent behavior sessions that have at least 50 successful trials
         total_hits = 0
@@ -165,7 +172,29 @@ class PythonPullStageImplementation (IMotorStageImplementation):
         return result
 
     def ReactToTrialEvents(self, trial, stage):
+        #Create an object to hold the result of this function
         result = List[MotorTrialAction]()
+    
+        #Get the name of the reward delay parameter
+        reward_delay_millis = 0
+        reward_delay_parameter_name = PythonPullStageImplementation.TaskDefinition.TaskParameters[2].ParameterName
+        if (stage.StageParameters.ContainsKey(reward_delay_parameter_name)):
+            #Get the reward delay value
+            reward_delay_millis = stage.StageParameters[reward_delay_parameter_name].CurrentValue * 1000
+        
+        if (len(PythonPullStageImplementation.UpcomingRewardTimes) > 0):
+            current_millis = time.time() * 1000
+            first_feed_time = PythonPullStageImplementation.UpcomingRewardTimes[0]
+            
+            if (first_feed_time >= current_millis):
+                #If it's time to feed, remove the timestamp from the upcoming feed times list
+                PythonPullStageImplementation.UpcomingRewardTimes.pop(0)
+                
+                #If it's time to feed, then add the feed action to the result
+                new_action = MotorTrialAction()
+                new_action.ActionType = MotorTrialActionType.TriggerFeeder
+                result.append(new_action)
+    
         trial_events = trial.TrialEvents.Where(lambda x: x.Handled is False)
         for evt in trial_events:
             event_type = evt.EventType
@@ -184,7 +213,16 @@ class PythonPullStageImplementation (IMotorStageImplementation):
                 #If a successful trial happened, then feed the animal
                 new_action = MotorTrialAction()
                 new_action.ActionType = MotorTrialActionType.TriggerFeeder
-                result.Add(new_action)
+                
+                #Check to see if the feed action should be delayed
+                if (reward_delay_millis > 0):
+                    #Calculate the current time in milliseconds
+                    current_millis = time.time() * 1000
+                    
+                    #Determine the time at which the feed should occur, and append it to the list of upcoming feed times
+                    PythonPullStageImplementation.UpcomingRewardTimes.append(current_millis + reward_delay_millis)
+                else:
+                    result.Add(new_action)
 
                 #If stimulation is on for this stage, stimulate the animal
                 output_trigger_type = str(stage.OutputTriggerType)
