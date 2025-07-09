@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,13 +14,82 @@ namespace MotoTrakBase
 
         public enum ToneEventType
         {
+            [Description("hit")]
             Hit,
+
+            [Description("miss")]
             Miss,
+
+            [Description("hitwin")]
             HitWindow,
+
+            [Description("rising")]
             Rising,
+
+            [Description("falling")]
             Falling,
+
+            [Description("cue")]
             Cue,
+
+            [Description("unknown")]
             Unknown
+        }
+
+        #endregion
+
+        #region Tone event type converter
+
+        public class ToneEventTypeConverter
+        {
+            /// <summary>
+            /// Converts a string to a tone event type
+            /// </summary>
+            /// <param name="description">String description of a tone event type</param>
+            /// <returns>The tone event type</returns>
+            public static ToneEventType ConvertToToneEventType(string description)
+            {
+                var type = typeof(ToneEventType);
+
+                foreach (var field in type.GetFields())
+                {
+                    var attribute = Attribute.GetCustomAttribute(field,
+                        typeof(DescriptionAttribute)) as DescriptionAttribute;
+                    if (attribute != null)
+                    {
+                        if (String.Equals(attribute.Description, description, StringComparison.OrdinalIgnoreCase))
+                            return (ToneEventType)field.GetValue(null);
+                    }
+                    else
+                    {
+                        if (String.Equals(field.Name, description, StringComparison.OrdinalIgnoreCase))
+                            return (ToneEventType)field.GetValue(null);
+                    }
+                }
+
+                return ToneEventType.Unknown;
+            }
+
+            /// <summary>
+            /// Converts a tone event type to a string description.
+            /// </summary>
+            /// <param name="tone_event_type">The tone event type</param>
+            /// <returns>String description of the tone event type.</returns>
+            public static string ConvertToDescription(ToneEventType tone_event_type)
+            {
+                FieldInfo fi = tone_event_type.GetType().GetField(tone_event_type.ToString());
+
+                DescriptionAttribute[] attributes =
+                    (DescriptionAttribute[])fi.GetCustomAttributes(
+                    typeof(DescriptionAttribute),
+                    false);
+
+                if (attributes != null &&
+                    attributes.Length > 0)
+                    return attributes[0].Description;
+                else
+                    return tone_event_type.ToString();
+            }
         }
 
         #endregion
