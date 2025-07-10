@@ -170,11 +170,7 @@ namespace MotoTrakBase
                         success = true;
                         break;
                     }
-                    else if (SerialConnection.BytesToRead < 1)
-                    {
-                        break;
-                    }
-                    else
+                    else if (SerialConnection.BytesToRead > 0)
                     {
                         ardyResponse = SerialConnection.ReadLine().Trim();
                     }

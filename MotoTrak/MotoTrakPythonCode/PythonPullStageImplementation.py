@@ -4,6 +4,8 @@ from System.Collections.Generic import List
 from System import Tuple
 
 import System
+from System import DateTime, TimeSpan
+from System.Diagnostics import Debug
 clr.ImportExtensions(System.Linq)
 from System.Linq import Enumerable
 
@@ -26,8 +28,6 @@ from MotoTrakBase import MotoTrakSession
 
 clr.AddReference('MotoTrakUtilities')
 from MotoTrakUtilities import MotorMath
-
-import time
 
 class PythonPullStageImplementation (IMotorStageImplementation):
 
@@ -137,6 +137,7 @@ class PythonPullStageImplementation (IMotorStageImplementation):
                 maximal_value = stream_data_to_use.Max()
 
                 if maximal_value >= init_thresh:
+                    PythonPullStageImplementation.UpcomingRewardTimes = []
                     return_value = stream_data_to_use.IndexOf(maximal_value) + difference_in_size
                 
         return return_value
@@ -182,19 +183,6 @@ class PythonPullStageImplementation (IMotorStageImplementation):
             #Get the reward delay value
             reward_delay_millis = stage.StageParameters[reward_delay_parameter_name].CurrentValue * 1000
         
-        if (len(PythonPullStageImplementation.UpcomingRewardTimes) > 0):
-            current_millis = time.time() * 1000
-            first_feed_time = PythonPullStageImplementation.UpcomingRewardTimes[0]
-            
-            if (first_feed_time >= current_millis):
-                #If it's time to feed, remove the timestamp from the upcoming feed times list
-                PythonPullStageImplementation.UpcomingRewardTimes.pop(0)
-                
-                #If it's time to feed, then add the feed action to the result
-                new_action = MotorTrialAction()
-                new_action.ActionType = MotorTrialActionType.TriggerFeeder
-                result.append(new_action)
-    
         trial_events = trial.TrialEvents.Where(lambda x: x.Handled is False)
         for evt in trial_events:
             event_type = evt.EventType
@@ -217,11 +205,16 @@ class PythonPullStageImplementation (IMotorStageImplementation):
                 #Check to see if the feed action should be delayed
                 if (reward_delay_millis > 0):
                     #Calculate the current time in milliseconds
-                    current_millis = time.time() * 1000
+                    current_time = DateTime.Now
+                    
+                    #Calculate the expected feed time
+                    expected_feed_time = current_time + TimeSpan.FromMilliseconds(reward_delay_millis)
                     
                     #Determine the time at which the feed should occur, and append it to the list of upcoming feed times
-                    PythonPullStageImplementation.UpcomingRewardTimes.append(current_millis + reward_delay_millis)
+                    PythonPullStageImplementation.UpcomingRewardTimes.append(expected_feed_time)
+                    #Debug.WriteLine("Current = " + str(current_time) + ", expected = " + str(expected_feed_time))
                 else:
+                    #Debug.WriteLine("Fed immediately")
                     result.Add(new_action)
 
                 #If stimulation is on for this stage, stimulate the animal
@@ -235,6 +228,21 @@ class PythonPullStageImplementation (IMotorStageImplementation):
 
     def PerformActionDuringTrial(self, trial, stage):
         result = List[MotorTrialAction]()
+        
+        if (len(PythonPullStageImplementation.UpcomingRewardTimes) > 0):
+            current_time = DateTime.Now
+            first_feed_time = PythonPullStageImplementation.UpcomingRewardTimes[0]
+            
+            if (current_time >= first_feed_time):
+                #Debug.WriteLine("Time to feed!")
+                #If it's time to feed, remove the timestamp from the upcoming feed times list
+                PythonPullStageImplementation.UpcomingRewardTimes.pop(0)
+                
+                #If it's time to feed, then add the feed action to the result
+                new_action = MotorTrialAction()
+                new_action.ActionType = MotorTrialActionType.TriggerFeeder
+                result.Add(new_action)
+        
         return result
 
     def CreateEndOfTrialMessage(self, trial_number, trial, stage):
