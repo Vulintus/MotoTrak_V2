@@ -1157,7 +1157,7 @@ namespace MotoTrak
                     {
                         if (motorboard != null)
                         {
-                            motorboard.V21_TONES_PLAY_TONE(_cue_tone.ToneIndex);
+                            motorboard.V21_TONES_PLAY_TONE_ASYNC(_cue_tone);
                             _cue_tone_time = DateTime.Now + _cue_tone_period;
                         }
                     }
@@ -1205,7 +1205,7 @@ namespace MotoTrak
                             {
                                 if (motorboard != null)
                                 {
-                                    motorboard.V21_TONES_PLAY_TONE(_hit_window_tone.ToneIndex);
+                                    motorboard.V21_TONES_PLAY_TONE_ASYNC(_hit_window_tone);
                                     _is_tone_on_hit_window = 2;
                                 }
                             }
@@ -1287,7 +1287,7 @@ namespace MotoTrak
                                             {
                                                 if (motorboard != null)
                                                 {
-                                                    motorboard.V21_TONES_PLAY_TONE(_hit_tone.ToneIndex);
+                                                    motorboard.V21_TONES_PLAY_TONE_ASYNC(_hit_tone);
                                                 }
 
                                                 _is_tone_on_hit = 2;
@@ -1380,7 +1380,7 @@ namespace MotoTrak
                             {
                                 if (motorboard != null)
                                 {
-                                    motorboard.V21_TONES_PLAY_TONE(_miss_tone.ToneIndex);
+                                    motorboard.V21_TONES_PLAY_TONE_ASYNC(_miss_tone);
                                 }
 
                                 _is_tone_on_miss = 2;
@@ -1455,7 +1455,7 @@ namespace MotoTrak
                                 {
                                     if (motorboard != null)
                                     {
-                                        motorboard.V21_TONES_PLAY_TONE(_miss_tone.ToneIndex);
+                                        motorboard.V21_TONES_PLAY_TONE_ASYNC(_miss_tone);
                                         _is_tone_on_miss = 2;
                                     }
                                 }

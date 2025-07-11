@@ -5,6 +5,7 @@ using System.Text;
 using System.IO.Ports;
 using System.Management;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace MotoTrakBase
 {
@@ -169,11 +170,7 @@ namespace MotoTrakBase
                         success = true;
                         break;
                     }
-                    else if (SerialConnection.BytesToRead < 1)
-                    {
-                        break;
-                    }
-                    else
+                    else if (SerialConnection.BytesToRead > 0)
                     {
                         ardyResponse = SerialConnection.ReadLine().Trim();
                     }
@@ -1041,6 +1038,35 @@ namespace MotoTrakBase
         #endregion
 
         #region MotoTrak Controller V2.1 Serial Functions
+
+        public void V21_TONES_PLAY_TONE_ASYNC (MotorStageParameterTone tone_parameter)
+        {
+            if (tone_parameter != null && tone_parameter.ToneDelayMilliseconds <= 0)
+            {
+                V21_TONES_PLAY_TONE(tone_parameter.ToneIndex);
+            }
+            else
+            {
+                Task.Run(async () =>
+                {
+                    if (tone_parameter != null)
+                    {
+                        if (tone_parameter.ToneDelayMilliseconds > 0)
+                        {
+                            await Task.Delay(tone_parameter.ToneDelayMilliseconds);
+                        }
+
+                        V21_TONES_PLAY_TONE(tone_parameter.ToneIndex);
+                    }
+                }).ContinueWith(t =>
+                {
+                    if (t.Exception != null)
+                    {
+                        ErrorLoggingService.GetInstance().LogStringError($"Error playing tone: {t.Exception.Message}");
+                    }
+                }, TaskContinuationOptions.OnlyOnFaulted);
+            }
+        }
 
         public void V21_TONES_PLAY_TONE (byte tone_index)
         {
