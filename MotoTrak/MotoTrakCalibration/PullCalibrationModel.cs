@@ -1,4 +1,5 @@
 ﻿using MotoTrakBase;
+using MotoTrakUtilities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -249,6 +250,47 @@ namespace MotoTrakCalibration
                 //Null out the previous calibration
                 OldCalibrationValues = null;
             }
+        }
+
+        /// <summary>
+        /// This function verifies that the calibration values currently on the board match
+        /// the calibration values that we expect.
+        /// </summary>
+        /// <returns></returns>
+        public bool VerifyCalibration ()
+        {
+            //Get the board instance
+            var board = MotorBoard.GetInstance();
+
+            //Stop streaming
+            board.EnableStreaming(0);
+
+            //Wait for a little bit
+            Thread.Sleep(500);
+
+            //Clear the stream
+            board.ClearStream();
+
+            //Query the current device
+            var pull_device = board.GetMotorDevice();
+
+            //Re-enable streaming
+            board.EnableStreaming(1);
+
+            //Make sure the current device's calibration values match what we have in memory
+            bool result = true;
+            for (int i = 0; i < pull_device.Coefficients.Count; i++)
+            {
+                var a = pull_device.Coefficients[i];
+                var b = PullDevice.Coefficients[i];
+                if (!MotorMath.EqualsApproximately(a, b, 0.0001))
+                {
+                    result = false;
+                    break;
+                }
+            }
+
+            return result;
         }
 
         #endregion
@@ -516,7 +558,7 @@ namespace MotoTrakCalibration
                     double new_baseline = _current_calibration_values[0];
 
                     //Save the new calibration values
-                    PullDevice.Baseline = new_baseline;
+                    PullDevice.Baseline = Convert.ToInt32(new_baseline);
                 }
             }
 

@@ -1,4 +1,5 @@
 ﻿using MotoTrakBase;
+using MotoTrakUtilities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace MotoTrakCalibration
 {
@@ -189,6 +191,47 @@ namespace MotoTrakCalibration
 
         #region Background thread methods
 
+        /// <summary>
+        /// This function verifies that the calibration values currently on the board match
+        /// the calibration values that we expect.
+        /// </summary>
+        /// <returns></returns>
+        private bool _verify_calibration (MotorDevice device_expected)
+        {
+            //Get the board instance
+            var board = MotorBoard.GetInstance();
+
+            //Stop streaming
+            board.EnableStreaming(0);
+
+            //Wait for a little bit
+            Thread.Sleep(500);
+
+            //Clear the stream
+            board.ClearStream();
+
+            //Query the current device
+            var device_actual = board.GetMotorDevice();
+
+            //Re-enable streaming
+            board.EnableStreaming(1);
+
+            //Make sure the current device's calibration values match what we have in memory
+            bool result = true;
+            for (int i = 0; i < device_actual.Coefficients.Count; i++)
+            {
+                var a = device_actual.Coefficients[i];
+                var b = device_expected.Coefficients[i];
+                if (!MotorMath.EqualsApproximately(a, b, 0.0001))
+                {
+                    result = false;
+                    break;
+                }
+            }
+
+            return result;
+        }
+
         private ConcurrentBag<string> _property_names = new ConcurrentBag<string>();
 
         private void _background_property_changed(string propertyName)
@@ -222,6 +265,17 @@ namespace MotoTrakCalibration
             {
                 LeverDevice.Baseline = MaxValue;
                 LeverDevice.Slope = -Convert.ToDouble(MotorDevice.LeverRangeInDegrees) / Convert.ToDouble(MaxValue - MinValue);
+            }
+
+            //Verify the calibration values were saved as expected
+            bool calibration_success = _verify_calibration(LeverDevice);
+            if (calibration_success)
+            {
+                MessageBox.Show("Calibration successful!", "MotoTrak Calibration", MessageBoxButton.OK);
+            }
+            else
+            {
+                MessageBox.Show("Calibration FAILED!", "MotoTrak Calibration", MessageBoxButton.OK);
             }
         }
 

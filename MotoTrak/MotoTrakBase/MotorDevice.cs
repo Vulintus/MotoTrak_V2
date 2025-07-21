@@ -124,7 +124,7 @@ namespace MotoTrakBase
             }
             set
             {
-                Coefficients[0] = value;
+                Coefficients[0] = Convert.ToInt32(value);
             }
         }
 

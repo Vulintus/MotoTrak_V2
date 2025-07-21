@@ -155,6 +155,9 @@ namespace MotoTrakBase
                 //Open the connection
                 SerialConnection.Open();
 
+                //Wait a couple of seconds
+                Thread.Sleep(2000);
+
                 //Wait for the "READY" string to be received. The MotoTrak board
                 //outputs the "READY" string upon new connections. If we don't
                 //receive the "READY" string within 2 seconds, then let's fail out.

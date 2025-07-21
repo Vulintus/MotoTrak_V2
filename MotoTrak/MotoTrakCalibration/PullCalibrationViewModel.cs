@@ -572,7 +572,21 @@ namespace MotoTrakCalibration
 
         private void SaveCalibration ()
         {
+            //Save the calibration
             Model.SaveCalibration();
+
+            //Verify the calibration
+            bool is_calibration_good = Model.VerifyCalibration();
+
+            //Display a dialog to the user
+            if (is_calibration_good)
+            {
+                MessageBox.Show("Calibration successful!", "MotoTrak Calibration", MessageBoxButton.OK);
+            }
+            else
+            {
+                MessageBox.Show("Calibration FAILED!", "MotoTrak Calibration", MessageBoxButton.OK);
+            }
         }
 
         #endregion

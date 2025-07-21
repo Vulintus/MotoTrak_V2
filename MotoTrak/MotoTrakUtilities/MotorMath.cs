@@ -10,6 +10,18 @@ namespace MotoTrakUtilities
     public static class MotorMath
     {
         /// <summary>
+        /// This function can be used to check if two 64-bit floating point numbers are equal/approximately equal.
+        /// </summary>
+        /// <param name="a">The first value to compare</param>
+        /// <param name="b">The second value to compare</param>
+        /// <param name="epsilon">The smallest acceptable difference between the two numbers</param>
+        /// <returns></returns>
+        public static bool EqualsApproximately (double a, double b, double epsilon = Double.Epsilon)
+        {
+            return (Math.Abs(a - b) <= epsilon);
+        }
+
+        /// <summary>
         /// Converts a .NET DateTime object into a 64-bit floating-point value that
         /// is the same format that Matlab uses to represents dates and times.
         /// </summary>
