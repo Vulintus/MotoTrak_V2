@@ -54,7 +54,7 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
         PythonPullStageImplementation_Sustained.TaskDefinition.DevicePosition.IsAdaptabilityCustomizeable = False
 
         force_threshold = MotorTaskParameter("Force threshold", "grams", True, True, True)
-        time_threshold = MotorTaskParameter("Sustained force duration threshold", "milliseconds", True, True, True)
+        time_threshold = MotorTaskParameter("Sustained force duration threshold", "milliseconds", False, True, True)
         initiation_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.InitiationThreshold, "grams", True, True, True)
         
         PythonPullStageImplementation_Sustained.TaskDefinition.TaskParameters.Add(force_threshold)

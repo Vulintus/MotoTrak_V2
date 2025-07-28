@@ -5,7 +5,7 @@
 #include "C:/Program Files (x86)/Inno Download Plugin/idp.iss"
 
 #define MyAppName "MotoTrak"
-#define MyAppVersion "2.4.0"
+#define MyAppVersion "2.5.0"
 #define MyAppPublisher "Vulintus"
 #define MyAppURL "http://www.vulintus.com"
 #define MyAppExeName "MotoTrakLauncher.exe"
@@ -27,7 +27,7 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 ;OutputDir=C:\Users\dtp110020\Documents\mototrak-2.0\MotoTrak\Installer
 OutputDir=..\Installer
-OutputBaseFilename=MotoTrak_Setup_V2_4_0_20250721
+OutputBaseFilename=MotoTrak_Setup_V2_5_0_20250728
 Compression=lzma
 SolidCompression=yes
 
