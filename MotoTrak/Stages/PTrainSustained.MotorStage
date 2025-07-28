@@ -1,0 +1,15 @@
+Stage File Version: 1
+Stage Name: PTrainSustained
+Stage Description: Pre-lesion sustained pull training for animals
+Stage Implementation: PythonPullStageImplementation_Sustained.py
+Stage Output Trigger: On
+Stage Device: Pull
+Stage Sampling Rate: 10
+Stage Parameter: Pre-Trial Duration, seconds, Fixed, Undefined, 1, NaN, NaN, NaN
+Stage Parameter: Hit Window Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Post-Trial Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Post-Trial Timeout Period, seconds, Fixed, Undefined, 0, NaN, NaN, NaN
+Stage Parameter: Device Position, centimeters, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Force threshold, grams, Fixed, Undefined, 40, NaN, NaN, NaN
+Stage Parameter: Initiation Threshold, grams, Fixed, Undefined, 10, NaN, NaN, NaN
+Stage Parameter: Sustained force duration threshold, milliseconds, Fixed, Undefined, 1000, NaN, NaN, NaN
