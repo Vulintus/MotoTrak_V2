@@ -1,0 +1,18 @@
+Stage File Version: 1
+Stage Name: KTrainSustainedDelayExample
+Stage Description: Knob training
+Stage Implementation: PythonKnobStageImplementation_Sustained.py
+Stage Output Trigger: Off
+Stage Device: Knob
+Stage Sampling Rate: 10
+Stage Parameter: Pre-Trial Duration, seconds, Fixed, Undefined, 1, NaN, NaN, NaN
+Stage Parameter: Hit Window Duration, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Post-Trial Duration, seconds, Fixed, Undefined, 3, NaN, NaN, NaN
+Stage Parameter: Post-Trial Timeout Period, seconds, Fixed, Undefined, 0, NaN, NaN, NaN
+Stage Parameter: Device Position, centimeters, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Parameter: Weight, grams, Fixed, Undefined, 6, NaN, NaN, NaN
+Stage Parameter: Initiation Threshold, degrees, Fixed, Undefined, 3, NaN, NaN, NaN
+Stage Parameter: Hit Threshold, degrees, Variable, 50th percentile, 15, 15, 60, 10
+Stage Parameter: Sustained rotation duration threshold, milliseconds, Fixed, Undefined, 1000, NaN, NaN, NaN
+Stage Parameter: Reward Delay, seconds, Fixed, Undefined, 2, NaN, NaN, NaN
+Stage Tone: 0, 4000, 1000, hit, 0, 2000

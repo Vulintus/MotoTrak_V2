@@ -44,6 +44,9 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
     Position_Of_Hit = 0
     Longest_Sustained_Force = 0
 
+    Longest_Sustained_Force_List = []
+    Sustained_Duration_Threshold_List = []
+
     #Declare string parameters for this stage
     TaskDefinition = MotorTaskDefinition()
 
@@ -75,6 +78,8 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
         PythonPullStageImplementation_Sustained.Force_Threshold_List = []
         PythonPullStageImplementation_Sustained.Autopositioner_Trial_Count_Handled = []
         PythonPullStageImplementation_Sustained.UpcomingRewardTimes = []
+        PythonPullStageImplementation_Sustained.Longest_Sustained_Force_List = []
+        PythonPullStageImplementation_Sustained.Sustained_Duration_Threshold_List = []
 
         #Take only recent behavior sessions that have at least 50 successful trials
         total_hits = 0
@@ -197,6 +202,8 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
                         if (time_above_force_threshold >= current_time_threshold and not hit_found):
                             result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, i))
                             PythonPullStageImplementation_Sustained.Position_Of_Hit = i
+                            PythonPullStageImplementation_Sustained.Longest_Sustained_Force_List.append(time_above_force_threshold)
+                            PythonPullStageImplementation_Sustained.Sustained_Duration_Threshold_List.append(current_time_threshold)
                             hit_found = True
                     else:
                         #Otherwise, set the state indicating the force has fallen below the force threshold...
@@ -350,11 +357,72 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
         return
 
     def CreateEndOfSessionMessage(self, current_session):
+        #Get the name of the hit threshold parameter
+        force_threshold_parameter_name = PythonPullStageImplementation_Sustained.TaskDefinition.TaskParameters[0].ParameterName
+
+        #Get the name of the lower bound force threshold
+        time_threshold_name = PythonPullStageImplementation_Sustained.TaskDefinition.TaskParameters[1].ParameterName
+
+        # Find the percentage of trials that exceeded the maximum possible hit threshold in this session
+        maximal_hit_threshold = current_session.SelectedStage.StageParameters[force_threshold_parameter_name].MaximumValue
+        number_of_trials_greater_than_max = sum(i >= maximal_hit_threshold for i in PythonPullStageImplementation_Sustained.Maximal_Force_List)
+        total_trials = len(PythonPullStageImplementation_Sustained.Maximal_Force_List)        
+        percent_trials_greater_than_max = 0        
+        if len(PythonPullStageImplementation_Sustained.Maximal_Force_List) > 0:
+            percent_trials_greater_than_max = (System.Double(number_of_trials_greater_than_max) / System.Double(total_trials)) * 100
+        
+        # Find the percentage of trials that exceeded the maximal duration threshold
+        maximal_duration_threshold = current_session.SelectedStage.StageParameters[time_threshold_name].MaximumValue
+        number_of_trials_greater_than_max_duration_thresh = sum(i >= maximal_duration_threshold for i in PythonPullStageImplementation_Sustained.Longest_Sustained_Force_List)
+        percent_trials_greater_than_max_duration_thresh = 0
+        if (len(PythonPullStageImplementation_Sustained.Longest_Sustained_Force_List) > 0):
+            percent_trials_greater_than_max_duration_thresh = (System.Double(number_of_trials_greater_than_max_duration_thresh) / System.Double(total_trials)) * 100
+        
         # Find the number of feedings that occurred in this session
         number_of_feedings = current_session.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count();
+
+        # Find the median maximal force from the sesion
+        net_max_force_list = List[System.Double]()
+        for i in PythonPullStageImplementation_Sustained.Maximal_Force_List:
+            net_max_force_list.Add(i)
+        median_maximal_force = MotorMath.Median(net_max_force_list)
+        if (System.Double.IsNaN(median_maximal_force)):
+            median_maximal_force = 0
+
+        # Find the median force threshold from this session
+        net_threshold_list = List[System.Double]()
+        for i in PythonPullStageImplementation_Sustained.Force_Threshold_List:
+            net_threshold_list.Add(i)
+        median_force_threshold = MotorMath.Median(net_threshold_list)
+        if (System.Double.IsNaN(median_force_threshold)):
+            median_force_threshold = 0
+        
+        # Find the median maximal duration from the session
+        net_max_duration_list = List[System.Double]()
+        for i in PythonPullStageImplementation_Sustained.Longest_Sustained_Force_List:
+            net_max_duration_list.Add(i)
+        median_maximal_duration = MotorMath.Median(net_max_duration_list)
+        if (System.Double.IsNan(median_maximal_duration)):
+            median_maximal_duration = 0
+        
+        # Find the median duration threshold from this session
+        net_duration_threshold_list = List[System.Double]()
+        for i in PythonPullStageImplementation_Sustained.Sustained_Duration_Threshold_List:
+            net_duration_threshold_list.Add(i)
+        median_duration_threshold = MotorMath.Median(net_duration_threshold_list)
+        if (System.Double.IsNaN(median_duration_threshold)):
+            median_duration_threshold = 0
 
         end_of_session_messages = List[System.String]()
         end_of_session_messages.Add(System.DateTime.Now.ToShortTimeString() + " - Session ended.")
         end_of_session_messages.Add("Pellets fed: " + System.Convert.ToInt32(number_of_feedings).ToString())
+        
+        end_of_session_messages.Add("Median Peak Force: " + System.Convert.ToInt32(median_maximal_force).ToString())
+        end_of_session_messages.Add("% Trials > Maximum force threshold: " + System.Convert.ToInt32(percent_trials_greater_than_max).ToString())
+        end_of_session_messages.Add("Median Force Threshold: " + System.Convert.ToInt32(median_force_threshold).ToString())
+
+        end_of_session_messages.Add("Median Sustained Duration: " + System.Convert.ToInt32(median_maximal_duration).ToString())
+        end_of_session_messages.Add("% Trials > Maximum duration threshold: " + System.Convert.ToInt32(percent_trials_greater_than_max_duration_thresh).ToString())
+        end_of_session_messages.Add("Median duration threshold: " + System.Convert.ToInt32(median_duration_threshold).ToString())
 
         return end_of_session_messages
