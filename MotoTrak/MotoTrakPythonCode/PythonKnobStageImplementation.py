@@ -426,6 +426,6 @@ class PythonKnobStageImplementation (IMotorStageImplementation):
         end_of_session_messages.Add("Pellets fed: " + System.Convert.ToInt32(number_of_feedings).ToString())
         end_of_session_messages.Add("Median Peak Turn Angle: " + System.Convert.ToInt32(median_peak_turn_angle).ToString())
         end_of_session_messages.Add("% Trials > Maximum turn angle threshold: " + System.Convert.ToInt32(percent_trials_greater_than_max).ToString())
-        end_of_session_messages.Add("Median Force Threshold: " + System.Convert.ToInt32(median_turn_angle_threshold).ToString())
+        end_of_session_messages.Add("Median Turn Angle Threshold: " + System.Convert.ToInt32(median_turn_angle_threshold).ToString())
 
         return end_of_session_messages

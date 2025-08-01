@@ -5,6 +5,8 @@ from System import Tuple
 from System import Math
 
 import System
+from System import DateTime, TimeSpan
+from System.Diagnostics import Debug
 clr.ImportExtensions(System.Linq)
 from System.Linq import Enumerable
 
@@ -36,9 +38,14 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
     Maximal_Force_List = []
     Force_Threshold_List = []
 
+    UpcomingRewardTimes = []
+
     Position_Of_Last_Trough = 0
     Position_Of_Hit = 0
     Longest_Sustained_Force = 0
+
+    Longest_Sustained_Force_List = []
+    Sustained_Duration_Threshold_List = []
 
     #Declare string parameters for this stage
     TaskDefinition = MotorTaskDefinition()
@@ -56,10 +63,12 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
         force_threshold = MotorTaskParameter("Force threshold", "grams", True, True, True)
         time_threshold = MotorTaskParameter("Sustained force duration threshold", "milliseconds", False, True, True)
         initiation_threshold_parameter = MotorTaskParameter(MotoTrak_V1_CommonParameters.InitiationThreshold, "grams", True, True, True)
+        reward_delay_parameter = MotorTaskParameter("Reward Delay", "seconds", False, False, False)
         
         PythonPullStageImplementation_Sustained.TaskDefinition.TaskParameters.Add(force_threshold)
         PythonPullStageImplementation_Sustained.TaskDefinition.TaskParameters.Add(time_threshold)
         PythonPullStageImplementation_Sustained.TaskDefinition.TaskParameters.Add(initiation_threshold_parameter)
+        PythonPullStageImplementation_Sustained.TaskDefinition.TaskParameters.Add(reward_delay_parameter)
 
         return
 
@@ -68,6 +77,9 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
         PythonPullStageImplementation_Sustained.Maximal_Force_List = []
         PythonPullStageImplementation_Sustained.Force_Threshold_List = []
         PythonPullStageImplementation_Sustained.Autopositioner_Trial_Count_Handled = []
+        PythonPullStageImplementation_Sustained.UpcomingRewardTimes = []
+        PythonPullStageImplementation_Sustained.Longest_Sustained_Force_List = []
+        PythonPullStageImplementation_Sustained.Sustained_Duration_Threshold_List = []
 
         #Take only recent behavior sessions that have at least 50 successful trials
         total_hits = 0
@@ -141,6 +153,7 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
                     PythonPullStageImplementation_Sustained.Position_Of_Last_Trough = return_value
                     PythonPullStageImplementation_Sustained.Position_Of_Hit = -1
                     PythonPullStageImplementation_Sustained.Longest_Sustained_Force = 0
+                    PythonPullStageImplementation_Sustained.UpcomingRewardTimes = []
                 
         return return_value
 
@@ -189,6 +202,8 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
                         if (time_above_force_threshold >= current_time_threshold and not hit_found):
                             result.Add(Tuple[MotorTrialEventType, int](MotorTrialEventType.SuccessfulTrial, i))
                             PythonPullStageImplementation_Sustained.Position_Of_Hit = i
+                            PythonPullStageImplementation_Sustained.Longest_Sustained_Force_List.append(time_above_force_threshold)
+                            PythonPullStageImplementation_Sustained.Sustained_Duration_Threshold_List.append(current_time_threshold)
                             hit_found = True
                     else:
                         #Otherwise, set the state indicating the force has fallen below the force threshold...
@@ -207,6 +222,14 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
 
     def ReactToTrialEvents(self, trial, stage):
         result = List[MotorTrialAction]()
+
+        #Get the name of the reward delay parameter
+        reward_delay_millis = 0
+        reward_delay_parameter_name = PythonPullStageImplementation_Sustained.TaskDefinition.TaskParameters[3].ParameterName
+        if (stage.StageParameters.ContainsKey(reward_delay_parameter_name)):
+            #Get the reward delay value
+            reward_delay_millis = stage.StageParameters[reward_delay_parameter_name].CurrentValue * 1000
+
         trial_events = trial.TrialEvents.Where(lambda x: x.Handled is False)
         for evt in trial_events:
             event_type = evt.EventType
@@ -225,7 +248,21 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
                 #If a successful trial happened, then feed the animal
                 new_action = MotorTrialAction()
                 new_action.ActionType = MotorTrialActionType.TriggerFeeder
-                result.Add(new_action)
+
+                #Check to see if the feed action should be delayed
+                if (reward_delay_millis > 0):
+                    #Calculate the current time in milliseconds
+                    current_time = DateTime.Now
+                    
+                    #Calculate the expected feed time
+                    expected_feed_time = current_time + TimeSpan.FromMilliseconds(reward_delay_millis)
+                    
+                    #Determine the time at which the feed should occur, and append it to the list of upcoming feed times
+                    PythonPullStageImplementation_Sustained.UpcomingRewardTimes.append(expected_feed_time)
+                    #Debug.WriteLine("Current = " + str(current_time) + ", expected = " + str(expected_feed_time))
+                else:
+                    #Debug.WriteLine("Fed immediately")
+                    result.Add(new_action)
 
                 #If stimulation is on for this stage, stimulate the animal
                 if stage.OutputTriggerType == "On":
@@ -237,6 +274,21 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
 
     def PerformActionDuringTrial(self, trial, stage):
         result = List[MotorTrialAction]()
+
+        if (len(PythonPullStageImplementation_Sustained.UpcomingRewardTimes) > 0):
+            current_time = DateTime.Now
+            first_feed_time = PythonPullStageImplementation_Sustained.UpcomingRewardTimes[0]
+            
+            if (current_time >= first_feed_time):
+                #Debug.WriteLine("Time to feed!")
+                #If it's time to feed, remove the timestamp from the upcoming feed times list
+                PythonPullStageImplementation_Sustained.UpcomingRewardTimes.pop(0)
+                
+                #If it's time to feed, then add the feed action to the result
+                new_action = MotorTrialAction()
+                new_action.ActionType = MotorTrialActionType.TriggerFeeder
+                result.Add(new_action)
+
         return result
 
     def CreateEndOfTrialMessage(self, trial_number, trial, stage):
@@ -305,11 +357,72 @@ class PythonPullStageImplementation_Sustained (IMotorStageImplementation):
         return
 
     def CreateEndOfSessionMessage(self, current_session):
+        #Get the name of the hit threshold parameter
+        force_threshold_parameter_name = PythonPullStageImplementation_Sustained.TaskDefinition.TaskParameters[0].ParameterName
+
+        #Get the name of the lower bound force threshold
+        time_threshold_name = PythonPullStageImplementation_Sustained.TaskDefinition.TaskParameters[1].ParameterName
+
+        # Find the percentage of trials that exceeded the maximum possible hit threshold in this session
+        maximal_hit_threshold = current_session.SelectedStage.StageParameters[force_threshold_parameter_name].MaximumValue
+        number_of_trials_greater_than_max = sum(i >= maximal_hit_threshold for i in PythonPullStageImplementation_Sustained.Maximal_Force_List)
+        total_trials = len(PythonPullStageImplementation_Sustained.Maximal_Force_List)        
+        percent_trials_greater_than_max = 0        
+        if len(PythonPullStageImplementation_Sustained.Maximal_Force_List) > 0:
+            percent_trials_greater_than_max = (System.Double(number_of_trials_greater_than_max) / System.Double(total_trials)) * 100
+        
+        # Find the percentage of trials that exceeded the maximal duration threshold
+        maximal_duration_threshold = current_session.SelectedStage.StageParameters[time_threshold_name].MaximumValue
+        number_of_trials_greater_than_max_duration_thresh = sum(i >= maximal_duration_threshold for i in PythonPullStageImplementation_Sustained.Longest_Sustained_Force_List)
+        percent_trials_greater_than_max_duration_thresh = 0
+        if (len(PythonPullStageImplementation_Sustained.Longest_Sustained_Force_List) > 0):
+            percent_trials_greater_than_max_duration_thresh = (System.Double(number_of_trials_greater_than_max_duration_thresh) / System.Double(total_trials)) * 100
+        
         # Find the number of feedings that occurred in this session
         number_of_feedings = current_session.Trials.Where(lambda x: x.Result == MotorTrialResult.Hit).Count();
+
+        # Find the median maximal force from the sesion
+        net_max_force_list = List[System.Double]()
+        for i in PythonPullStageImplementation_Sustained.Maximal_Force_List:
+            net_max_force_list.Add(i)
+        median_maximal_force = MotorMath.Median(net_max_force_list)
+        if (System.Double.IsNaN(median_maximal_force)):
+            median_maximal_force = 0
+
+        # Find the median force threshold from this session
+        net_threshold_list = List[System.Double]()
+        for i in PythonPullStageImplementation_Sustained.Force_Threshold_List:
+            net_threshold_list.Add(i)
+        median_force_threshold = MotorMath.Median(net_threshold_list)
+        if (System.Double.IsNaN(median_force_threshold)):
+            median_force_threshold = 0
+        
+        # Find the median maximal duration from the session
+        net_max_duration_list = List[System.Double]()
+        for i in PythonPullStageImplementation_Sustained.Longest_Sustained_Force_List:
+            net_max_duration_list.Add(i)
+        median_maximal_duration = MotorMath.Median(net_max_duration_list)
+        if (System.Double.IsNan(median_maximal_duration)):
+            median_maximal_duration = 0
+        
+        # Find the median duration threshold from this session
+        net_duration_threshold_list = List[System.Double]()
+        for i in PythonPullStageImplementation_Sustained.Sustained_Duration_Threshold_List:
+            net_duration_threshold_list.Add(i)
+        median_duration_threshold = MotorMath.Median(net_duration_threshold_list)
+        if (System.Double.IsNaN(median_duration_threshold)):
+            median_duration_threshold = 0
 
         end_of_session_messages = List[System.String]()
         end_of_session_messages.Add(System.DateTime.Now.ToShortTimeString() + " - Session ended.")
         end_of_session_messages.Add("Pellets fed: " + System.Convert.ToInt32(number_of_feedings).ToString())
+        
+        end_of_session_messages.Add("Median Peak Force: " + System.Convert.ToInt32(median_maximal_force).ToString())
+        end_of_session_messages.Add("% Trials > Maximum force threshold: " + System.Convert.ToInt32(percent_trials_greater_than_max).ToString())
+        end_of_session_messages.Add("Median Force Threshold: " + System.Convert.ToInt32(median_force_threshold).ToString())
+
+        end_of_session_messages.Add("Median Sustained Duration: " + System.Convert.ToInt32(median_maximal_duration).ToString())
+        end_of_session_messages.Add("% Trials > Maximum duration threshold: " + System.Convert.ToInt32(percent_trials_greater_than_max_duration_thresh).ToString())
+        end_of_session_messages.Add("Median duration threshold: " + System.Convert.ToInt32(median_duration_threshold).ToString())
 
         return end_of_session_messages

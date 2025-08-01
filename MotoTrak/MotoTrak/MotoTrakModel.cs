@@ -1307,7 +1307,7 @@ namespace MotoTrak
                                 }
                             }
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
                             //Log the error
                             MotoTrakMessaging.GetInstance().AddMessage("Error while checking for trial events within stage implementation");
